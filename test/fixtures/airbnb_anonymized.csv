@@ -1,0 +1,5 @@
+Date,Arrivée au plus tard le,Type,Code de confirmation,Date de réservation,Date de début,Date de fin,Nuits,Voyageur,Logement,Détails,Code de référence,Devise,Montant,Versé,Frais de service,Frais de Versement sur carte bancaire,Frais de ménage,Frais pour le linge de maison,Revenus bruts,Taxes de séjour,Année des revenus
+01/05/2025,01/10/2025,Payout,,,,,,,,"Transfert vers Moi, IBAN 0000 (EUR)",PAYOUT123,EUR,,500.00,,,,,,,
+01/05/2025,,Réservation,RESA001,01/01/2025,01/01/2025,01/04/2025,3,John Doe,Appart Test,,,EUR,500.00,,15.00,,30.00,10.00,515.00,5.00,2025
+02/10/2025,02/15/2025,Payout,,,,,,,,"Transfert vers Moi, IBAN 0000 (EUR)",PAYOUT456,EUR,,950.50,,,,,,,
+02/10/2025,,Réservation,RESA002,02/01/2025,02/05/2025,02/09/2025,4,Jane Smith,Appart Test,,,EUR,950.50,,30.50,,40.00,15.00,981.00,8.00,2025

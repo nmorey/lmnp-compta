@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+
+# Add lib to load path
+$LOAD_PATH.unshift File.expand_path('../lib', __dir__)
+
+require 'lmnp_compta'
+require 'lmnp_compta/command'
+
+# Load Settings
+LMNPCompta::Settings.load('lmnp.yaml')
+
+# Check if config file exists, otherwise warn
+unless File.exist?('lmnp.yaml')
+  puts "⚠️  Warning: 'lmnp.yaml' not found. Using default values."
+  puts "   You should create a 'lmnp.yaml' file with: siren, annee, journal_file, stock_file, immo_file."
+end
+
+# Auto-load all commands
+Dir.glob(File.join(__dir__, '../lib/lmnp_compta/commands/*.rb')).each do |file|
+  require file
+end
+
+command_name = ARGV.shift
+
+if command_name.nil? || command_name == '--help' || command_name == '-h'
+  puts "Usage: lmnp <command> [options]"
+  puts "\nAvailable commands:"
+  LMNPCompta::Command.registry.sort.each do |name, info|
+    puts "  #{name.ljust(20)} #{info[:description]}"
+  end
+  exit 0
+end
+
+cmd_info = LMNPCompta::Command.registry[command_name]
+
+if cmd_info
+  begin
+    cmd_info[:class].new(ARGV).execute
+  rescue => e
+    puts "❌ Error: #{e.message}"
+    puts e.backtrace if ARGV.include?('--debug')
+    exit 1
+  end
+else
+  puts "❌ Unknown command: #{command_name}"
+  puts "Run 'lmnp --help' for a list of commands."
+  exit 1
+end

@@ -1,0 +1,53 @@
+name: Ruby Build & Test
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby-version: ['3.1', '3.2', '3.3']
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+
+    - name: Install dependencies (system)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y poppler-utils # For pdftotext used in invoice parsing tests
+
+    - name: Run tests
+      run: bundle exec rake
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3'
+
+    - name: Build Gem
+      run: gem build lmnp_compta.gemspec
+
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: lmnp_compta-gem
+        path: "*.gem"

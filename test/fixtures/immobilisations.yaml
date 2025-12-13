@@ -1,0 +1,23 @@
+- nom: "Appartement Test"
+  date_achat: "2024-01-01"
+  date_mise_en_location: "2024-01-01"
+  valeur_achat: 150000.0
+  composants:
+    - nom: "Terrain"
+      valeur: 30000.0
+      duree: 0
+    - nom: "Gros Oeuvre"
+      valeur: 60000.0
+      duree: 50
+    - nom: "Façade"
+      valeur: 15000.0
+      duree: 20
+    - nom: "Installations Générales"
+      valeur: 20000.0
+      duree: 15
+    - nom: "Agencements"
+      valeur: 15000.0
+      duree: 15
+    - nom: "Mobilier"
+      valeur: 10000.0
+      duree: 10

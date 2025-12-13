@@ -1,0 +1,7 @@
+*~
+# LMNP Compta specific files
+lmnp.yaml
+data/*.yaml
+test/fixtures/*.yaml
+/tmp_test/
+[0-9]*FEC[0-9]*.txt
