@@ -21,7 +21,7 @@ _lmnp_completion()
             return 0
             ;;
         creer-immo)
-            opts="--valeur --date --nom --force --help"
+            opts="--valeur --date --nom --terrain --gros-oeuvre --facade --installations --agencements --force --help"
             COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             return 0
             ;;
