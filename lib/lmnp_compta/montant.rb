@@ -98,15 +98,10 @@ module LMNPCompta
     end
 
     def to_s
-      # Toujours 2 décimales, séparateur point
-      format('%.2f', to_f)
-    end
-    
-    # Pour l'affichage formaté français (optionnel, si besoin un jour)
-    def to_s_fr
+      # Toujours 2 décimales, séparateur virgule
       format('%.2f', to_f).gsub('.', ',')
     end
-
+    
     def inspect
       "#<LMNPCompta::Montant: #{to_s} €>"
     end

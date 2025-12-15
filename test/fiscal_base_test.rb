@@ -27,6 +27,6 @@ class FiscalBaseTest < Minitest::Test
     analyzer = TestFiscal.new(entries, [], {}, 2025)
     
     # 606000 should sum only 100 (from 2025), ignoring 200 (from 2024)
-    assert_equal "100.00", analyzer.sum_prefix("60").to_s
+    assert_equal "100,00", analyzer.sum_prefix("60").to_s
   end
 end

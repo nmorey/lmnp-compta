@@ -17,8 +17,8 @@ class EntryTest < Minitest::Test
     @entry.add_credit("512000", 100)
 
     assert_equal 2, @entry.lines.length
-    assert_equal "100.00", @entry.lines[0][:debit].to_s
-    assert_equal "100.00", @entry.lines[1][:credit].to_s
+    assert_equal "100,00", @entry.lines[0][:debit].to_s
+    assert_equal "100,00", @entry.lines[1][:credit].to_s
   end
 
   def test_balance
@@ -26,7 +26,7 @@ class EntryTest < Minitest::Test
     @entry.add_credit("512000", 80)
 
     # 100 (Debit) - 80 (Credit) = 20
-    assert_equal "20.00", @entry.balance.to_s
+    assert_equal "20,00", @entry.balance.to_s
     refute @entry.balanced?
 
     @entry.add_credit("512000", 20)
@@ -55,6 +55,6 @@ class EntryTest < Minitest::Test
     assert_equal "2025-01-01", hash['date']
     assert_equal 2, hash['lignes'].length
     # Check string formatting in hash
-    assert_equal "100.00", hash['lignes'][0]['debit']
+    assert_equal "100,00", hash['lignes'][0]['debit']
   end
 end

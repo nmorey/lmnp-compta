@@ -6,7 +6,7 @@ class AmortizationTest < Minitest::Test
   def test_full_year_amortization
     # 1000€ over 10 years = 100€ per year
     dotation = LMNPCompta::Amortization.calcul_dotation(1000, 10, "2024-01-01", 2025)
-    assert_equal "100.00", dotation.to_s
+    assert_equal "100,00", dotation.to_s
   end
 
   def test_prorata_temporis_start
@@ -17,7 +17,7 @@ class AmortizationTest < Minitest::Test
     # Expected: 100 * (184/365) = 50.4109... -> 50.41
     
     dotation = LMNPCompta::Amortization.calcul_dotation(1000, 10, "2025-07-01", 2025)
-    assert_equal "50.41", dotation.to_s
+    assert_equal "50,41", dotation.to_s
   end
 
   def test_end_of_amortization
@@ -26,11 +26,11 @@ class AmortizationTest < Minitest::Test
     # 2024: 50
     # 2025: 0 (Finished)
     dotation = LMNPCompta::Amortization.calcul_dotation(100, 2, "2023-01-01", 2025)
-    assert_equal "0.00", dotation.to_s
+    assert_equal "0,00", dotation.to_s
   end
 
   def test_zero_duration
     dotation = LMNPCompta::Amortization.calcul_dotation(1000, 0, "2025-01-01", 2025)
-    assert_equal "0.00", dotation.to_s
+    assert_equal "0,00", dotation.to_s
   end
 end

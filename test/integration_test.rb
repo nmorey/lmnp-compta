@@ -70,9 +70,9 @@ class IntegrationTest < Minitest::Test
     l_com = entry1['lignes'].find { |l| l['compte'] == '622600' }
     l_ban = entry1['lignes'].find { |l| l['compte'] == '512000' }
     
-    assert_equal "515.00", l_rev['credit']
-    assert_equal "15.00", l_com['debit']
-    assert_equal "500.00", l_ban['debit']
+    assert_equal "515,00", l_rev['credit']
+    assert_equal "15,00", l_com['debit']
+    assert_equal "500,00", l_ban['debit']
 
     # Test for Add Entry CLI
     puts "\n--- Test: Add Entry CLI ---"
@@ -97,9 +97,9 @@ class IntegrationTest < Minitest::Test
     l_debit = entry_copro['lignes'].find { |l| l['compte'] == '614000' }
     l_credit = entry_copro['lignes'].find { |l| l['compte'] == '512000' }
 
-    assert_equal "302.01", l_debit['debit']
+    assert_equal "302,01", l_debit['debit']
     assert_nil l_debit['credit']
-    assert_equal "302.01", l_credit['credit']
+    assert_equal "302,01", l_credit['credit']
     assert_nil l_credit['debit']
     
     # Update expected journal length for subsequent tests
@@ -123,7 +123,7 @@ class IntegrationTest < Minitest::Test
     # Total = 1200 + 750 + 1333.33 + 1000 + 1000 = 5283.33
     
     l_dot = entry_amort['lignes'].find { |l| l['compte'] == '681100' }
-    assert_equal "5283.33", l_dot['debit']
+    assert_equal "5283,33", l_dot['debit']
 
     # 3. Close Year (Clôture)
     puts "\n--- Test: Close Year ---"
@@ -140,7 +140,7 @@ class IntegrationTest < Minitest::Test
     assert entry_close, "Closure entry should exist"
     
     l_bq = entry_close['lignes'].find { |l| l['compte'] == '512000' }
-    assert_equal "1148.49", l_bq['credit']
+    assert_equal "1148,49", l_bq['credit']
 
     # 4. Report (Liasse)
     puts "\n--- Test: Report (Liasse) ---"
@@ -158,7 +158,7 @@ class IntegrationTest < Minitest::Test
     # Amort deduct: 1450.50
     # ARD Cree: 5283.33 - 1148.49 = 4134.84
     
-    assert_in_delta 4134.84, stock['stock_ard'], 0.01
+    assert_in_delta 4134,84, stock['stock_ard'], 0.01
 
     # 5. Export FEC
     puts "\n--- Test: Export FEC ---"
