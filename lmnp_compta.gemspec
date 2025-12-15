@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = Gem::Requirement.new(">= 3.0.0")
 
   # Specify which files should be added to the gem when it is released.
-  spec.files = Dir.glob("{bin,lib}/**/*") + %w[README.md LICENSE]
+  spec.files = Dir.glob("{bin,lib}/**/*") + %w[README.md LICENSE lmnp-completion.bash]
   
   spec.bindir        = "bin"
   spec.executables   = ["lmnp"]
