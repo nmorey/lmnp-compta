@@ -21,7 +21,7 @@ module LMNPCompta
 
     def save!
       # Sort by date
-      sorted = @entries.sort_by { |e| Date.parse(e.date.to_s) }
+      sorted = @entries.sort_by { |e| e.id }
       FileUtils.mkdir_p(File.dirname(@file_path))
       File.write(@file_path, sorted.map(&:to_h).to_yaml)
     end
