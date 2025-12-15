@@ -55,7 +55,20 @@ module LMNPCompta
 
         begin
           parsed_data = parser.parse
+          target_year = LMNPCompta::Settings.instance.annee
+
           parsed_data.each do |data|
+            if data[:date].year != target_year
+                entry = LMNPCompta::Entry.new(
+                    file: File.basename(file_path),
+                    libelle: "❌ Erreur en traitant: #{file_path} #{data[:date]}",
+                    date: data[:date].strftime("%d/%m/%Y"),
+                    error: "# ⚠️  Ignored invoice from #{data[:date]} (Year #{data[:date].year} != #{target_year})"
+                )
+              add_or_merge_entry(entries_list, entry)
+              next
+            end
+
             entry = LMNPCompta::Entry.new(
               file: File.basename(file_path),
               type: parser.class.parser_name.upcase,

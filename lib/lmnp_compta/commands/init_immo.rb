@@ -100,11 +100,11 @@ module LMNPCompta
         }]
 
         # Confirm write in interactive mode
-        if options[:valeur].nil? # assume interactive
+        if options[:valeur].nil? then
           print "\nConfirmer l'enregistrement ? (O/n) "
           r = STDIN.gets.chomp.downcase
           return if r == 'n'
-        }
+        end
 
         FileUtils.mkdir_p(File.dirname(immo_file))
         File.write(immo_file, data.to_yaml)

@@ -24,7 +24,7 @@ module LMNPCompta
           raise "Fichier source introuvable. Lancez d'abord la saisie."
         end
 
-        journal = LMNPCompta::Journal.new(journal_file)
+        journal = LMNPCompta::Journal.new(journal_file, year: annee)
 
         puts "Génération du FEC..."
 

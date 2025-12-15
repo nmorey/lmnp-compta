@@ -18,7 +18,7 @@ module LMNPCompta
         immo_file = settings.immo_file
         journal_file = settings.journal_file
         annee = settings.annee
-        journal = LMNPCompta::Journal.new(journal_file)
+        journal = LMNPCompta::Journal.new(journal_file, year: annee)
 
         assets = YAML.load_file(immo_file)
         lines = []

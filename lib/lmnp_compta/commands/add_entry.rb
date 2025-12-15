@@ -66,7 +66,7 @@ module LMNPCompta
         end.parse!(@args)
 
         journal_file = LMNPCompta::Settings.instance.journal_file
-        journal = LMNPCompta::Journal.new(journal_file)
+        journal = LMNPCompta::Journal.new(journal_file, year: LMNPCompta::Settings.instance.annee)
         puts "\n=== NOUVELLE ÉCRITURE (ID: #{journal.next_id}) ==="
 
         entry = if options[:lines].any?

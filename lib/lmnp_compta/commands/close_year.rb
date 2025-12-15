@@ -19,7 +19,7 @@ module LMNPCompta
         journal_file = settings.journal_file
         annee = settings.annee
 
-        journal = LMNPCompta::Journal.new(journal_file)
+        journal = LMNPCompta::Journal.new(journal_file, year: annee)
 
         puts "==========================================================="
         puts "       CLÔTURE ANNUELLE DE TRÉSORERIE (Année #{annee})"

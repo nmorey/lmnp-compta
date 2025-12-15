@@ -23,7 +23,7 @@ module LMNPCompta
         Dir.mkdir('data') unless Dir.exist?('data')
         
         journal_file = LMNPCompta::Settings.instance.journal_file
-        journal = LMNPCompta::Journal.new(journal_file)
+        journal = LMNPCompta::Journal.new(journal_file, year: LMNPCompta::Settings.instance.annee)
 
         puts "📂 Lecture : #{options[:file]}"
 

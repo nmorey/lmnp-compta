@@ -16,6 +16,9 @@ module LMNPCompta
 
       def calculate_balances
         @entries.each do |e|
+          # Strict filtering: only include entries from the fiscal year
+          next if Date.parse(e.date.to_s).year != @year
+
           e.lines.each do |l|
             debit = l[:debit]
             credit = l[:credit]

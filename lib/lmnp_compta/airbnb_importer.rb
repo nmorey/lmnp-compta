@@ -70,6 +70,12 @@ module LMNPCompta
           start_str = start_period ? start_period.strftime("%d/%m") : "??"
           end_str   = end_period ? end_period.strftime("%d/%m") : "??"
 
+          # Year consistency check
+          if @journal.year && date_virement.year != @journal.year
+            puts "⚠️  Ignored Airbnb entry from #{date_virement} (Year #{date_virement.year} != #{@journal.year})"
+            next
+          end
+
           if is_duplicate?(code, date_virement)
             next
           end
