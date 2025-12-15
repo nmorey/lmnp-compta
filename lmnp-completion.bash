@@ -6,7 +6,7 @@ _lmnp_completion()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Liste des commandes principales
-    commands="init ajouter importer-airbnb importer-facture amortir cloturer liasse export-fec help"
+    commands="init ajouter importer-airbnb importer-facture amortir cloturer liasse export-fec creer-immo help"
 
     if [[ ${COMP_CWORD} -eq 1 ]]; then
         COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
@@ -17,6 +17,11 @@ _lmnp_completion()
     case "${prev}" in
         init)
             opts="--siren --annee --journal --stock --immo --force --help"
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+            ;;
+        creer-immo)
+            opts="--valeur --date --nom --force --help"
             COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             return 0
             ;;
