@@ -1,5 +1,6 @@
 require 'yaml'
 require 'date'
+require 'fileutils'
 require_relative 'entry'
 
 module LMNPCompta
@@ -20,6 +21,7 @@ module LMNPCompta
     def save!
       # Sort by date
       sorted = @entries.sort_by { |e| Date.parse(e.date.to_s) }
+      FileUtils.mkdir_p(File.dirname(@file_path))
       File.write(@file_path, sorted.map(&:to_h).to_yaml)
     end
 

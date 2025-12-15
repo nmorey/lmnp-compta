@@ -2,6 +2,7 @@ require 'lmnp_compta/command'
 require 'lmnp_compta/journal'
 require 'lmnp_compta/fiscal_analyzer'
 require 'yaml'
+require 'fileutils'
 
 module LMNPCompta
   module Commands
@@ -103,6 +104,7 @@ module LMNPCompta
         end
         puts "==========================================================="
 
+        FileUtils.mkdir_p(File.dirname(stock_file))
         File.write(stock_file, {
           'stock_ard' => result[:stock_ard_fin].to_f,
           'stock_deficit' => result[:stock_deficit_fin].to_f
