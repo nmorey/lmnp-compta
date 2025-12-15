@@ -122,6 +122,15 @@ module LMNPCompta
             end
         end
     end
+
+    def self.load_external_parsers
+        dir = LMNPCompta::Settings.instance.extra_invoice_dir
+        if dir && Dir.exist?(dir)
+            Dir.glob(File.join(dir, '*.rb')).each do |file|
+                require file
+            end
+        end
+    end
 end
 
 # Auto-load all parsers from the 'invoice_parsers' directory

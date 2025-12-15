@@ -3,7 +3,7 @@ require 'date'
 
 module LMNPCompta
     class Settings
-        attr_reader :siren, :annee, :journal_file, :stock_file, :immo_file
+        attr_reader :siren, :annee, :journal_file, :stock_file, :immo_file, :extra_invoice_dir
 
         def initialize(config_file = 'lmnp.yaml')
             config = {}
@@ -16,6 +16,7 @@ module LMNPCompta
             @journal_file = config['journal_file'] || "data/journal_#{@annee}.yaml"
             @stock_file = config['stock_file'] || "data/stock_fiscal.yaml"
             @immo_file = config['immo_file'] || "data/immobilisations.yaml"
+            @extra_invoice_dir = config['extra_invoice_dir']
         end
 
         def self.load(config_file = 'lmnp.yaml')

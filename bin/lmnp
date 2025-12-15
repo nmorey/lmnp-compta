@@ -9,6 +9,9 @@ require 'lmnp_compta/command'
 # Load Settings
 LMNPCompta::Settings.load('lmnp.yaml')
 
+# Load custom parsers if configured
+LMNPCompta.load_external_parsers
+
 # Check if config file exists, otherwise warn
 unless File.exist?('lmnp.yaml')
   puts "⚠️  Warning: 'lmnp.yaml' not found. Using default values."
