@@ -9,6 +9,7 @@ require_relative 'lmnp_compta/airbnb_importer'
 require_relative 'lmnp_compta/invoice_parser'
 require_relative 'lmnp_compta/entry'
 require_relative 'lmnp_compta/journal'
+require_relative 'lmnp_compta/asset'
 require_relative 'lmnp_compta/settings'
 
 module LMNPCompta

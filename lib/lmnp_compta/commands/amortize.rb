@@ -1,6 +1,7 @@
 require 'lmnp_compta/command'
 require 'lmnp_compta/journal'
 require 'lmnp_compta/entry'
+require 'lmnp_compta/asset'
 require 'lmnp_compta/amortization'
 require 'yaml'
 
@@ -20,34 +21,35 @@ module LMNPCompta
                 annee = settings.annee
                 journal = LMNPCompta::Journal.new(journal_file, year: annee)
 
-                assets = YAML.load_file(immo_file)
+                assets_data = YAML.load_file(immo_file) || []
+                assets = assets_data.map { |a| LMNPCompta::Asset.new(a) }
+
                 lines = []
                 total = Montant.new(0)
 
                 puts "Calcul pour #{annee}..."
                 assets.each do |bien|
-                    bien['composants'].each do |comp|
-                        next if comp['duree'] == 0
+                    bien.composants.each do |comp|
+                        next if comp.duree == 0
 
                         mt = LMNPCompta::Amortization.calcul_dotation(
-                            comp['valeur'],
-                            comp['duree'],
-                            bien['date_mise_en_location'],
+                            comp.valeur,
+                            comp.duree,
+                            bien.date_mise_en_location,
                             annee
                         )
 
                         if mt > Montant.new(0)
                             total += mt
-                            c_amort = case comp['nom']
+                            c_amort = case comp.nom
                                       when /Meuble|Mobilier/ then "281840"
                                       when /Gros Oeuvre|Façade/ then "281300"
                                       else "281200"
                                       end
-                            lines << { "compte" => c_amort, "credit" => mt, "libelle_ligne" => "Amort. #{bien['nom']} - #{comp['nom']}" }
+                            lines << { "compte" => c_amort, "credit" => mt, "libelle_ligne" => "Amort. #{bien.nom} - #{comp.nom}" }
                         end
                     end
                 end
-
                 entry = LMNPCompta::Entry.new(
                     date: "#{annee}-12-31",
                     journal: "OD",

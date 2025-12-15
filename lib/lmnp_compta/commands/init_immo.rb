@@ -1,5 +1,6 @@
 require 'lmnp_compta/command'
 require 'lmnp_compta/montant'
+require 'lmnp_compta/asset'
 require 'yaml'
 require 'date'
 require 'readline'
@@ -12,11 +13,11 @@ module LMNPCompta
             register 'creer-immo', 'Générer le fichier d\'immobilisations avec une ventilation par défaut'
 
             DEFAULT_BREAKDOWN = [
-                { name: "Terrain", percent: 15, duration: 0 },
-                { name: "Gros Oeuvre", percent: 40, duration: 50 },
-                { name: "Façade", percent: 15, duration: 25 },
-                { name: "Installations Générales", percent: 15, duration: 20 },
-                { name: "Agencements Intérieurs", percent: 15, duration: 15 }
+                Asset::Component.new(nom: "Terrain", valeur: 15, duree: 0 ),
+                Asset::Component.new(nom: "Gros Oeuvre", valeur: 40, duree: 50 ),
+                Asset::Component.new(nom: "Façade", valeur: 15, duree: 25 ),
+                Asset::Component.new(nom: "Installations Générales", valeur: 15, duree: 20 ),
+                Asset::Component.new(nom: "Agencements Intérieurs", valeur: 15, duree: 15 )
             ]
 
             def execute
@@ -48,15 +49,13 @@ module LMNPCompta
 
                 # Apply overrides to breakdown
                 breakdown = DEFAULT_BREAKDOWN.map do |item|
-                    {
-                        name: item[:name],
-                        percent: overrides[item[:name]] || item[:percent],
-                        duration: item[:duration]
-                    }
+                    Asset::Component.new(nom: item.nom,
+                                         valeur: overrides[item.nom] || item.valeur,
+                                         duree: item.duree)
                 end
 
                 # Validation: Total must be 100% if customized
-                total_percent = breakdown.sum { |i| i[:percent] }
+                total_percent = breakdown.sum { |i| i.valeur }
                 if overrides.any? && total_percent != 100
                     raise "Erreur: Le total des pourcentages doit être égal à 100% (Actuel: #{total_percent}%). Veuillez ajuster les options."
                 end
@@ -66,8 +65,8 @@ module LMNPCompta
                     puts "=== Création du fichier d'immobilisations ==="
                     puts "Ventilation appliquée :"
                     breakdown.each do |c|
-                        duration = c[:duration] == 0 ? "Non amortissable" : "#{c[:duration]} ans"
-                        puts "  - #{c[:name].ljust(25)} : #{c[:percent]}% (#{duration})"
+                        duration = c.duree == 0 ? "Non amortissable" : "#{c.duree} ans"
+                        puts "  - #{c.nom.ljust(25)} : #{c.valeur}% (#{duration})"
                     end
                     puts ""
                 end
@@ -88,16 +87,16 @@ module LMNPCompta
 
                 breakdown.each do |item|
                     # Montant * Percent / 100
-                    valeur_compo = valeur_totale * (item[:percent] / 100.0)
+                    valeur_compo = valeur_totale * (item.valeur / 100.0)
                     check_total += valeur_compo
 
-                    puts "  - #{item[:name].ljust(25)} : #{valeur_compo} €"
+                    puts "  - #{item.nom.ljust(25)} : #{valeur_compo} €"
 
-                    composants << {
-                        'nom' => item[:name],
-                        'valeur' => valeur_compo.to_f,
-                        'duree' => item[:duration]
-                    }
+                    composants << Asset::Component.new(
+                        nom: item.nom,
+                        valeur: valeur_compo,
+                        duree: item.duree
+                    )
                 end
 
                 # Adjust rounding errors
@@ -105,18 +104,18 @@ module LMNPCompta
                 unless diff.zero?
                     max_comp_name = breakdown.max_by { |b| b[:percent] }[:name]
                     puts "  (Ajustement arrondi : #{diff} € sur #{max_comp_name})"
-                    comp_to_adjust = composants.find { |c| c['nom'] == max_comp_name }
-                    comp_to_adjust['valeur'] = (Montant.new(comp_to_adjust['valeur']) + diff).to_f
+                    comp_to_adjust = composants.find { |c| c.nom == max_comp_name }
+                    comp_to_adjust.valeur = (Montant.new(comp_to_adjust.valeur) + diff).to_f
                 end
 
                 # New asset structure
-                new_asset = {
-                    'nom' => nom,
-                    'date_achat' => date_str,
-                    'date_mise_en_location' => date_str,
-                    'valeur_achat' => valeur_totale.to_f,
-                    'composants' => composants
-                }
+                new_asset = LMNPCompta::Asset.new(
+                    nom: nom,
+                    date_achat: date_str,
+                    date_mise_en_location: date_str,
+                    valeur_achat: valeur_totale.to_f,
+                    composants: composants
+                )
 
                 # Check for duplicates by name
                 if existing_assets.any? { |a| a['nom'] == nom }
@@ -133,12 +132,12 @@ module LMNPCompta
                     return if r == 'n'
                 end
 
-                existing_assets << new_asset
+                # Append serialized hash
+                existing_assets << new_asset.to_h
 
                 FileUtils.mkdir_p(File.dirname(immo_file))
                 File.write(immo_file, existing_assets.to_yaml)
-                puts "✅ Bien ajouté au fichier : #{immo_file}"
-            end
+                puts "✅ Bien ajouté au fichier : #{immo_file}"            end
 
             private
 
