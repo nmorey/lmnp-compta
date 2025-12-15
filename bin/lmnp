@@ -5,6 +5,7 @@ $LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 
 require 'lmnp_compta'
 require 'lmnp_compta/command'
+require 'optparse'
 
 # Load Settings
 LMNPCompta::Settings.load('lmnp.yaml')
@@ -14,38 +15,63 @@ LMNPCompta.load_external_parsers
 
 # Check if config file exists, otherwise warn
 unless File.exist?('lmnp.yaml')
-  puts "⚠️  Warning: 'lmnp.yaml' not found. Using default values."
-  puts "   You should create a 'lmnp.yaml' file with: siren, annee, journal_file, stock_file, immo_file."
+    puts "⚠️  Warning: 'lmnp.yaml' not found. Using default values."
+    puts "   You should create a 'lmnp.yaml' file with: siren, annee, journal_file, stock_file, immo_file."
 end
 
 # Auto-load all commands
 Dir.glob(File.join(__dir__, '../lib/lmnp_compta/commands/*.rb')).each do |file|
-  require file
+    require file
+end
+
+# Parse global options
+global_options = { debug: false }
+
+parser = OptionParser.new do |opts|
+    opts.banner = "Usage: lmnp [global options] <command> [command options]"
+
+    opts.on("-d", "--debug", "Enable debug output (stack traces)") do
+        global_options[:debug] = true
+    end
+
+    opts.on("-h", "--help", "Show help") do
+        puts opts
+        puts "\nAvailable commands:"
+        LMNPCompta::Command.registry.sort.each do |name, info|
+            puts "  #{name.ljust(20)} #{info[:description]}"
+        end
+        exit 0
+    end
+end
+
+begin
+    # Parse global args, stopping at the first non-option (which should be the command)
+    parser.order!(ARGV)
+rescue OptionParser::InvalidOption => e
+    puts "❌ Error: #{e.message}"
+    puts parser
+    exit 1
 end
 
 command_name = ARGV.shift
 
-if command_name.nil? || command_name == '--help' || command_name == '-h'
-  puts "Usage: lmnp <command> [options]"
-  puts "\nAvailable commands:"
-  LMNPCompta::Command.registry.sort.each do |name, info|
-    puts "  #{name.ljust(20)} #{info[:description]}"
-  end
-  exit 0
+if command_name.nil?
+    puts parser
+    exit 1
 end
 
 cmd_info = LMNPCompta::Command.registry[command_name]
 
 if cmd_info
-  begin
-    cmd_info[:class].new(ARGV).execute
-  rescue => e
-    puts "❌ Error: #{e.message}"
-    puts e.backtrace if ARGV.include?('--debug')
-    exit 1
-  end
+    begin
+        cmd_info[:class].new(ARGV).execute
+    rescue => e
+        puts "❌ Error: #{e.message}"
+        puts e.backtrace if global_options[:debug]
+        exit 1
+    end
 else
-  puts "❌ Unknown command: #{command_name}"
-  puts "Run 'lmnp --help' for a list of commands."
-  exit 1
+    puts "❌ Unknown command: #{command_name}"
+    puts "Run 'lmnp --help' for a list of commands."
+    exit 1
 end
