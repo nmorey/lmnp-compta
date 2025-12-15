@@ -12,9 +12,9 @@ require_relative 'lmnp_compta/journal'
 require_relative 'lmnp_compta/settings'
 
 module LMNPCompta
-  def self.format_date(date_str)
-    Date.parse(date_str).strftime("%Y%m%d")
-  rescue
-    raise "ERREUR: Date invalide #{date_str}"
-  end
+    def self.format_date(date_str)
+        Date.parse(date_str).strftime("%Y%m%d")
+    rescue
+        raise "ERREUR: Date invalide #{date_str}"
+    end
 end
