@@ -2,7 +2,9 @@ require 'date'
 
 module LMNPCompta
     module InvoiceParser
-        class ParsingError < StandardError; end
+        class ParsingError < StandardError
+            attr_accessor :ftype
+        end
 
         class Base
             @registry = []

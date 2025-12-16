@@ -27,6 +27,14 @@ module LMNPCompta
 
                 @args.each do |file_path|
                     process_file(file_path, options, entries_list)
+                rescue InvoiceParser::ParsingError => e
+                    entry = LMNPCompta::Entry.new(
+                        file: File.basename(file_path),
+                        type: e.ftype,
+                        libelle: "❌ Erreur en traitant: #{file_path}",
+                        error: "# ❌ Erreur: #{e.message.gsub(/\n/, "\n# ")}",
+                    )
+                    add_or_merge_entry(entries_list, entry)
                 rescue => e
                     entry = LMNPCompta::Entry.new(
                         file: File.basename(file_path),
@@ -84,7 +92,8 @@ module LMNPCompta
                         add_or_merge_entry(entries_list, entry)
                     end
                 rescue InvoiceParser::ParsingError => e
-                    raise e.message
+                    e.ftype =  parser.class.parser_name.upcase
+                    raise e
                 end
             end
 
