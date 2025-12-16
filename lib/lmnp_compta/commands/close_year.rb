@@ -15,11 +15,11 @@ module LMNPCompta
                     opts.banner = "Usage: lmnp cloturer"
                 end.parse!(@args)
 
-                settings = LMNPCompta::Settings.instance
+                settings = Settings.instance
                 journal_file = settings.journal_file
                 annee = settings.annee
 
-                journal = LMNPCompta::Journal.new(journal_file, year: annee)
+                journal = Journal.new(journal_file, year: annee)
 
                 puts "==========================================================="
                 puts "       CLÔTURE ANNUELLE DE TRÉSORERIE (Année #{annee})"
@@ -46,7 +46,7 @@ module LMNPCompta
 
                 montant_abs = solde_banque.abs
 
-                new_entry = LMNPCompta::Entry.new(
+                new_entry = Entry.new(
                     date: "#{annee}-12-31",
                     journal: "OD",
                     libelle: "Virement solde trésorerie vers compte privé (Clôture)",

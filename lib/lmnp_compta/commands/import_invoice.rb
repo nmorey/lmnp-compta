@@ -45,12 +45,12 @@ module LMNPCompta
                 raise "Fichier introuvable." unless File.exist?(file_path)
 
                 content = extract_text(file_path)
-                parser = LMNPCompta::InvoiceParser::Factory.build(options[:type], content)
+                parser = InvoiceParser::Factory.build(options[:type], content)
                 raise "Type non reconnu" unless parser
 
                 begin
                     parsed_data = parser.parse
-                    target_year = LMNPCompta::Settings.instance.annee
+                    target_year = Settings.instance.annee
 
                     parsed_data.each do |data|
                         if data[:date].year != target_year
@@ -58,7 +58,7 @@ module LMNPCompta
                             next
                         end
 
-                        entry = LMNPCompta::Entry.new(
+                        entry = Entry.new(
                             file: File.basename(file_path),
                             type: parser.class.parser_name.upcase,
                             date: data[:date].strftime("%d/%m/%Y"),
@@ -72,7 +72,7 @@ module LMNPCompta
 
                         add_or_merge_entry(entries_list, entry)
                     end
-                rescue LMNPCompta::InvoiceParser::ParsingError => e
+                rescue InvoiceParser::ParsingError => e
                     raise e.message
                 end
             end

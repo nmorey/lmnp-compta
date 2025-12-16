@@ -37,7 +37,7 @@ module LMNPCompta
 
         # Ajoute une écriture au journal
         #
-        # @param entry [LMNPCompta::Entry] L'écriture à ajouter
+        # @param entry [Entry] L'écriture à ajouter
         # @raise [RuntimeError] Si l'année ne correspond pas ou si la référence existe déjà
         def add_entry(entry)
             entry.id = next_id if entry.id.nil?
@@ -72,7 +72,7 @@ module LMNPCompta
 
         # Trouve une écriture par son ID
         # @param id [Integer] L'ID de l'écriture
-        # @return [LMNPCompta::Entry, nil] L'écriture trouvée
+        # @return [Entry, nil] L'écriture trouvée
         def find(id)
             @entries.find { |e| e.id == id }
         end

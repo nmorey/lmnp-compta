@@ -15,14 +15,14 @@ module LMNPCompta
                     opts.banner = "Usage: lmnp amortir"
                 end.parse!(@args)
 
-                settings = LMNPCompta::Settings.instance
+                settings = Settings.instance
                 immo_file = settings.immo_file
                 journal_file = settings.journal_file
                 annee = settings.annee
-                journal = LMNPCompta::Journal.new(journal_file, year: annee)
+                journal = Journal.new(journal_file, year: annee)
 
                 assets_data = YAML.load_file(immo_file) || []
-                assets = assets_data.map { |a| LMNPCompta::Asset.new(a) }
+                assets = assets_data.map { |a| Asset.new(a) }
 
                 lines = []
                 total = Montant.new(0)
@@ -32,7 +32,7 @@ module LMNPCompta
                     bien.composants.each do |comp|
                         next if comp.duree == 0
 
-                        mt = LMNPCompta::Amortization.calcul_dotation(
+                        mt = Amortization.calcul_dotation(
                             comp.valeur,
                             comp.duree,
                             bien.date_mise_en_location,
@@ -51,7 +51,7 @@ module LMNPCompta
                     end
                 end
 
-                entry = LMNPCompta::Entry.new(
+                entry = Entry.new(
                     date: "#{annee}-12-31",
                     journal: "OD",
                     libelle: "Dotations Amortissements #{annee}",

@@ -5,7 +5,7 @@ module LMNPCompta
         end
 
         def self.register(name, description)
-            LMNPCompta::Command.registry[name.to_s] = { class: self, description: description }
+            Command.registry[name.to_s] = { class: self, description: description }
         end
 
         def initialize(args)

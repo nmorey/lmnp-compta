@@ -21,7 +21,7 @@ module LMNPCompta
                 },
                 journal: ->(input) {
                     code = input.upcase
-                    LMNPCompta::JOURNAUX.key?(code) ? code : nil
+                    JOURNAUX.key?(code) ? code : nil
                 },
                 compte: ->(input) {
                     clean = input.to_s.gsub(/\s+/, "")
@@ -65,8 +65,8 @@ module LMNPCompta
                     end
                 end.parse!(@args)
 
-                journal_file = LMNPCompta::Settings.instance.journal_file
-                journal = LMNPCompta::Journal.new(journal_file, year: LMNPCompta::Settings.instance.annee)
+                journal_file = Settings.instance.journal_file
+                journal = Journal.new(journal_file, year: Settings.instance.annee)
                 puts "\n=== NOUVELLE ÉCRITURE (ID: #{journal.next_id}) ==="
 
                 entry = if options[:lines].any?
@@ -127,7 +127,7 @@ module LMNPCompta
 
                 ref_val = options[:ref] || "N/A"
 
-                entry = LMNPCompta::Entry.new(
+                entry = Entry.new(
                     date: date_val,
                     journal: journal_val,
                     libelle: libelle_val,
@@ -152,7 +152,7 @@ module LMNPCompta
                         entry.add_credit(c_ok, m_ok)
                     end
 
-                    acc_name = LMNPCompta::PLAN_COMPTABLE[c_ok] ? "(#{LMNPCompta::PLAN_COMPTABLE[c_ok] })" : ""
+                    acc_name = PLAN_COMPTABLE[c_ok] ? "(#{PLAN_COMPTABLE[c_ok] })" : ""
                     puts "   Ligne #{idx+1}: #{c_ok} #{acc_name} | #{s_ok} | #{m_ok} €"
                 end
 
@@ -173,14 +173,14 @@ module LMNPCompta
                     !!res
                 end
 
-                help_j = -> { LMNPCompta::JOURNAUX.each { |c, d| puts "  #{c}: #{d}" } }
+                help_j = -> { JOURNAUX.each { |c, d| puts "  #{c}: #{d}" } }
                 journal_in = prompt("Journal", default: (options[:journal] || "BQ"), help: help_j) do |input|
                     !!VALIDATORS[:journal].call(input)
                 end.upcase
 
                 libelle_in = prompt("Libellé", default: options[:libelle]) { |i| !!VALIDATORS[:libelle].call(i) }
 
-                entry = LMNPCompta::Entry.new(
+                entry = Entry.new(
                     date: date_in,
                     journal: journal_in,
                     libelle: libelle_in,
@@ -196,15 +196,15 @@ module LMNPCompta
                         puts "\n--- Déséquilibre: \e[31m#{bal} €\e[0m ---"
                     end
 
-                    help_c = -> { LMNPCompta::PLAN_COMPTABLE.sort.each { |n, nm| puts "  #{n}: #{nm}" } }
+                    help_c = -> { PLAN_COMPTABLE.sort.each { |n, nm| puts "  #{n}: #{nm}" } }
                     compte = prompt("Compte", help: help_c) do |input|
                         clean = VALIDATORS[:compte].call(input)
                         input.replace(clean) if clean
                         !!clean
                     end
 
-                    if LMNPCompta::PLAN_COMPTABLE[compte]
-                        puts "  -> \e[36m#{LMNPCompta::PLAN_COMPTABLE[compte]}\e[0m"
+                    if PLAN_COMPTABLE[compte]
+                        puts "  -> \e[36m#{PLAN_COMPTABLE[compte]}\e[0m"
                     else
                         puts "  -> \e[33m(Nouveau compte)\e[0m"
                     end

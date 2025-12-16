@@ -10,7 +10,7 @@ module LMNPCompta
             # 1. Essayer de charger l'année spécifique
             begin
                 require_relative "fiscal/year_#{year}"
-                klass_name = "LMNPCompta::Fiscal::Year#{year}"
+                klass_name = "Fiscal::Year#{year}"
                 return Object.const_get(klass_name).new(entries, assets, stock, year)
             rescue LoadError, NameError
                 # 2. Repli sur la dernière année disponible

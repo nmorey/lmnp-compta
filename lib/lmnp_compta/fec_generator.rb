@@ -10,7 +10,7 @@ module LMNPCompta
     ]
 
         # Génère le contenu CSV du FEC
-        # @param entries [Array<LMNPCompta::Entry>] Liste des écritures
+        # @param entries [Array<Entry>] Liste des écritures
         # @return [String] Contenu CSV
         def self.generate(entries)
             CSV.generate(col_sep: "\t") do |csv|
@@ -37,7 +37,7 @@ module LMNPCompta
                 total_debit += debit
                 total_credit += credit
 
-                journal_lib = LMNPCompta::JOURNAUX[entry.journal] || "Journal #{entry.journal}"
+                journal_lib = JOURNAUX[entry.journal] || "Journal #{entry.journal}"
                 compte_lib = LMNPCompta.get_compte_lib(ligne[:compte])
 
                 row = [

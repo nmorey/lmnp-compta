@@ -8,7 +8,7 @@ module LMNPCompta
         attr_reader :new_entries
 
         # @param file_path [String] Chemin vers le fichier CSV
-        # @param journal [LMNPCompta::Journal] Instance du journal pour vérifier les doublons
+        # @param journal [Journal] Instance du journal pour vérifier les doublons
         def initialize(file_path, journal)
             @file_path = file_path
             @journal = journal
@@ -16,7 +16,7 @@ module LMNPCompta
         end
 
         # Exécute l'importation
-        # @return [Array<LMNPCompta::Entry>] La liste des nouvelles écritures générées
+        # @return [Array<Entry>] La liste des nouvelles écritures générées
         def import
             reservations_map = parse_csv
             generate_entries(reservations_map)

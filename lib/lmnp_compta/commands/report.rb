@@ -14,7 +14,7 @@ module LMNPCompta
                     opts.banner = "Usage: lmnp liasse"
                 end.parse!(@args)
 
-                settings = LMNPCompta::Settings.instance
+                settings = Settings.instance
                 journal_file = settings.journal_file
                 immo_file = settings.immo_file
                 stock_file = settings.stock_file
@@ -24,12 +24,12 @@ module LMNPCompta
                     raise "Fichier journal introuvable (#{journal_file})"
                 end
 
-                journal = LMNPCompta::Journal.new(journal_file, year: annee)
+                journal = Journal.new(journal_file, year: annee)
                 entries = journal.entries
                 assets = File.exist?(immo_file) ? YAML.load_file(immo_file) : []
                 stock = File.exist?(stock_file) ? YAML.load_file(stock_file) : { 'stock_ard' => 0.0, 'stock_deficit' => 0.0 }
 
-                analyzer = LMNPCompta::FiscalAnalyzer.new(entries, assets, stock, annee)
+                analyzer = FiscalAnalyzer.new(entries, assets, stock, annee)
 
                 puts "\n==========================================================="
                 puts "       AIDE À LA DÉCLARATION LMNP (Année #{annee})"

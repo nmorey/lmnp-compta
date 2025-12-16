@@ -104,7 +104,7 @@ module LMNPCompta
         end
 
         def inspect
-            "#<LMNPCompta::Montant: #{to_s} €>"
+            "#<Montant: #{to_s} €>"
         end
 
         # --- YAML ---

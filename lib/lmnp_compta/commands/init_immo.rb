@@ -38,7 +38,7 @@ module LMNPCompta
                 end
                 parser.parse!(@args)
 
-                settings = LMNPCompta::Settings.instance
+                settings = Settings.instance
                 immo_file = settings.immo_file
 
                 # Load existing assets or initialize empty list
@@ -109,7 +109,7 @@ module LMNPCompta
                 end
 
                 # New asset structure
-                new_asset = LMNPCompta::Asset.new(
+                new_asset = Asset.new(
                     nom: nom,
                     date_achat: date_str,
                     date_mise_en_location: date_str,

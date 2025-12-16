@@ -12,7 +12,7 @@ module LMNPCompta
                     opts.banner = "Usage: lmnp export-fec"
                 end.parse!(@args)
 
-                settings = LMNPCompta::Settings.instance
+                settings = Settings.instance
                 siren = settings.siren
                 annee = settings.annee
                 journal_file = settings.journal_file
@@ -24,12 +24,12 @@ module LMNPCompta
                     raise "Fichier source introuvable. Lancez d'abord la saisie."
                 end
 
-                journal = LMNPCompta::Journal.new(journal_file, year: annee)
+                journal = Journal.new(journal_file, year: annee)
 
                 puts "Génération du FEC..."
 
                 begin
-                    csv_content = LMNPCompta::FECGenerator.generate(journal.entries)
+                    csv_content = FECGenerator.generate(journal.entries)
                     File.write(output_file, csv_content)
                     puts "✅ Fichier FEC généré: #{output_file}"
                 rescue => e

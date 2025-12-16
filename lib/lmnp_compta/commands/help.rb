@@ -8,7 +8,7 @@ module LMNPCompta
             def execute
                 puts "Usage: lmnp <commande> [options]"
                 puts "\nCommandes disponibles :"
-                LMNPCompta::Command.registry.sort.each do |name, info|
+                Command.registry.sort.each do |name, info|
                     puts "  #{name.ljust(20)} #{info[:description]}"
                 end
                 puts "\nLancez 'lmnp <commande> --help' pour voir les options d\'une commande spécifique."

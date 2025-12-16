@@ -22,12 +22,12 @@ module LMNPCompta
                 # Ensure data directory exists
                 Dir.mkdir('data') unless Dir.exist?('data')
 
-                journal_file = LMNPCompta::Settings.instance.journal_file
-                journal = LMNPCompta::Journal.new(journal_file, year: LMNPCompta::Settings.instance.annee)
+                journal_file = Settings.instance.journal_file
+                journal = Journal.new(journal_file, year: Settings.instance.annee)
 
                 puts "📂 Lecture : #{options[:file]}"
 
-                importer = LMNPCompta::AirbnbImporter.new(options[:file], journal)
+                importer = AirbnbImporter.new(options[:file], journal)
                 new_entries = importer.import
 
                 puts "\n✅ Importation terminée. #{new_entries.length} écritures générées."
