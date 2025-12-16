@@ -170,4 +170,31 @@ class IntegrationTest < Minitest::Test
         assert_match /JournalCode\tJournalLib/, content
         assert_match /Airbnb - RESA001/, content
     end
+
+    def test_importer_facture_unknown_invoice_output_format
+        puts "\n--- Test: Import Unknown Invoice Output ---"
+
+        # Create a dummy unknown PDF file
+        File.write("unknown_invoice.pdf", "This is not a real PDF invoice.")
+
+        # Capture output from the command
+        out, err = capture_io do
+            LMNPCompta::Commands::ImportInvoice.new(["unknown_invoice.pdf"]).execute
+        end
+
+        # Assert that every non-empty line in the output starts with '#'
+        non_empty_lines = out.strip.split("\n").reject(&:empty?)
+        assert non_empty_lines.any?, "Output should not be empty"
+        non_empty_lines.each do |line|
+            assert_match /^#/, line, "Line '#{line}' does not start with '#'"
+        end
+
+        # Also check stderr, as some parsing errors might go there
+        # For now, let's assume all relevant output goes to stdout.
+        # If the actual implementation puts non-#-prefixed errors to stderr, this might need adjustment.
+        # However, the user specifically mentioned "output can be executed by a shell script",
+        # which implies stdout should be clean or commented.
+        assert err.empty?, "Stderr should be empty for a clean output."
+
+    end
 end
