@@ -3,7 +3,7 @@ module LMNPCompta
         class Assurance < Base
             def self.parser_name; :assurance; end
             def self.match?(content)
-                content.match?(/Direct Assurance/i) || content.match?(/AVIS D'ÉCHÉANCE/i)
+                content.match?(/Direct Assurance/i)
             end
 
             def charge_account; "616000"; end
