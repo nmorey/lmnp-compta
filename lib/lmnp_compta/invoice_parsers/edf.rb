@@ -26,7 +26,7 @@ module LMNPCompta
                 matches.each do |match|
                     date_prelev = parse_slash_date(match[0])
                     montant = clean_amount(match[1])
-                    ref_mois = "EDF #{date_prelev.strftime('%m/%Y')}"
+                    ref_mois = "EDF-F#{doc_date.strftime('%m/%Y')}-P#{date_prelev.strftime('%m/%Y')}"
 
                     entries << {
                         date: date_prelev,

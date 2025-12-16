@@ -8,12 +8,16 @@ module LMNPCompta
 
             def charge_account; "615000"; end
 
-            def extract_ref
+            def extract_internal_ref
                 if content.match(/Numéro\s*:\s*([^\n\r]+)/i)
                     $1.strip
                 else
                     raise ParsingError, "Numéro de facture Ménage introuvable"
                 end
+            end
+            def extract_ref
+                d = extract_date
+                "MENAGE-#{d.strftime('%d/%m/%Y')}"
             end
 
             def extract_date

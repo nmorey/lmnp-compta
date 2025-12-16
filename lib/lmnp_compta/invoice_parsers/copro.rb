@@ -10,9 +10,9 @@ module LMNPCompta
 
             def extract_ref
                 if content.match(/Appel, Du\s+(\d{2}\/\d{2}\/\d{4})/i)
-                    "Appel #{$1}"
+                    "COPRO-#{$1}"
                 else
-                    "Appel Fonds"
+                     raise ParsingError, "Date d'appel introuvable"
                 end
             end
 

@@ -15,7 +15,7 @@ class InvoiceParserTest < Minitest::Test
 
         data = parser.parse.first
         assert_equal Date.new(2025, 1, 15), data[:date]
-        assert_equal "123456789", data[:ref]
+        assert_equal "SOSH-01/2025", data[:ref]
         assert_equal "25.99", data[:montant].to_s
         assert_equal "Internet Sosh Janvier 2025", data[:libelle]
     end

@@ -8,14 +8,24 @@ module LMNPCompta
 
             def charge_account; "635000"; end
 
+            def is_foncier?()
+                content.match?(/Taxes foncières/i)
+            end
+
+            def is_habitation?()
+                content.match?(/Taxe d'habitation/i)
+            end
+
             def extract_ref
+                r = is_foncier?() ? "FONCIER-" : "HABITATION-"
                 if content.match(/Référence de l'avis\s*:\s*([\d\s]+)/i)
-                    $1.gsub(/\s/, '')
+                    r += $1.gsub(/\s/, '')
                 elsif content.match(/\(C\)\s*:[^\n]*\n\s*([\d\s]+\d+)/i)
-                    $1.gsub(/\s/, '')
+                    r += $1.gsub(/\s/, '')
                 else
                     raise ParsingError, "Référence Avis Impôt introuvable"
                 end
+                r
             end
 
             def extract_date

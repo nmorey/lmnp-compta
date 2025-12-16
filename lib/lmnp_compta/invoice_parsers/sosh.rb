@@ -8,12 +8,17 @@ module LMNPCompta
 
             def charge_account; "626000"; end
 
-            def extract_ref
+            def extract_internal_ref
                 if content.match(/n°?\s*de facture\s*:\s*(.*?)(?=\s*date de facture|\n|$)/i)
-                    $1.strip.gsub(/date de facture.*/i, '').strip
+                    $1.strip.gsub(/date de facture.*/i, '').gsub(/ /, '').strip
                 else
                     raise ParsingError, "Référence facture Sosh introuvable"
                 end
+            end
+
+            def extract_ref
+                d = extract_date
+                "SOSH-#{d.strftime('%m/%Y')}"
             end
 
             def extract_date
@@ -34,6 +39,7 @@ module LMNPCompta
 
             def extract_label
                 d = extract_date
+                r = extract_internal_ref
                 "Internet Sosh #{MOIS_INDICE[d.month]} #{d.year}"
             end
         end
