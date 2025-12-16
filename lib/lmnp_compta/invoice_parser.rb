@@ -53,7 +53,7 @@ module LMNPCompta
             def extract_amount; raise NotImplementedError; end
             def extract_label; raise NotImplementedError; end
             def charge_account; "471000"; end
-            def credit_account; "51200051"; end
+            def credit_account; "512000"; end
 
             protected
 
