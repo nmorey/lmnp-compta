@@ -50,6 +50,12 @@ module LMNPCompta
             Montant.from_cents((@cents * scalar).round)
         end
 
+        def /(other) # /
+            scalar = other.is_a?(Montant) ? other.to_f : other
+            raise ZeroDivisionError if scalar == 0
+            Montant.from_cents((@cents / scalar).round)
+        end
+
         # --- Méthodes utilitaires ---
 
         # Retourne la valeur absolue (en objet Montant)
@@ -93,7 +99,7 @@ module LMNPCompta
         end
 
         def to_s
-            # Toujours 2 décimales, séparateur point
+            # Toujours 2 décimales, séparateur virgule
             format('%.2f', to_f).gsub('.', ',')
         end
 
