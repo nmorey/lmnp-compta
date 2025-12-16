@@ -55,7 +55,8 @@ module LMNPCompta
                     date: "#{annee}-12-31",
                     journal: "OD",
                     libelle: "Dotations Amortissements #{annee}",
-                    ref: "DOTA#{annee}"
+                    ref: "DOTA#{annee}",
+                    file: File.basename(immo_file)
                 )
 
                 entry.add_debit("681100", total)
