@@ -64,6 +64,14 @@ Ou en ligne de commande :
 lmnp ajouter -d 2025-01-27 -j AC -l "Facture X" -r "REF123" -c 606000 -s D -m 100 -c 512000 -s C -m 100
 ```
 
+## Consultation / Rapports
+
+### Afficher le statut des flux bancaires
+```bash
+lmnp status
+```
+Affiche un récapitulatif des entrées et sorties d'argent sur le compte bancaire (compte 512000) pour l'année fiscale en cours. Le résultat est affiché au format CSV (tab-séparé) pour faciliter l'analyse dans un tableur.
+
 ### 3. Fin d'année
 
 **Calculer les amortissements :**
