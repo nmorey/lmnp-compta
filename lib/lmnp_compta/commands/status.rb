@@ -65,7 +65,7 @@ module LMNPCompta
                 # Ligne de résumé finale
                 # Format demandé: Current Date, Total, Sum(credits), Sum(Debits)
                 # "Total" suppose le solde net (Débit - Crédit) pour le compte 512000 (Solde Banque)
-                net_total = total_debit - total_credit
+                net_total = total_credit - total_debit
 
                 csv << [] # Ligne vide pour séparation
                 csv << [

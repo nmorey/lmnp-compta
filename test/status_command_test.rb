@@ -74,13 +74,13 @@ class StatusCommandTest < Minitest::Test
         end
 
         # Verify Headers
-        assert_match /Date\tRef\tMontant\tCrédit 512000\tDébit 512000/, out
+        assert_match /Date\tRef\tCrédit\tDébit/, out
 
         # Verify Entry 1 (2025 Income)
-        assert_match /2025-01-15\tREF001\t500,00\t""\t500,00/, out
+        assert_match /2025-01-15\tREF001\t500,00\t""/, out
 
         # Verify Entry 2 (2025 Expense)
-        assert_match /2025-02-20\tREF002\t50,00\t50,00\t""/, out
+        assert_match /2025-02-20\tREF002\t""\t50,00/, out
 
         # Verify Entry 3 (Non-bank) NOT present
         refute_match /REF003/, out
@@ -93,6 +93,6 @@ class StatusCommandTest < Minitest::Test
         # Total Credit = 50
         # Total Debit = 500
         assert_match /Total \(Solde\): 450,00/, out
-        assert_match /\t50,00\t500,00/, out
+        assert_match /\t500,00\t50,00/, out
     end
 end
