@@ -29,7 +29,7 @@ class JournalTest < Minitest::Test
         entry_bad.add_debit("600", 10); entry_bad.add_credit("512", 10)
 
         err = assert_raises(RuntimeError) { journal.add_entry(entry_bad) }
-        assert_match /Date mismatch/, err.message
+        assert_match /Erreur de date/, err.message
     end
 
     def test_no_year_enforcement

@@ -50,80 +50,69 @@ module LMNPCompta
             Montant.from_cents((@cents * scalar).round)
         end
 
-        def /(other)
-      scalar = other.is_a?(Montant) ? other.to_f : other
-      raise ZeroDivisionError if scalar == 0
-      Montant.from_cents((@cents / scalar).round)
-                                                 end
+        # --- Méthodes utilitaires ---
 
-                                                 # --- Méthodes utilitaires ---
+        # Retourne la valeur absolue (en objet Montant)
+        def abs
+            Montant.from_cents(@cents.abs)
+        end
 
-                                                 # Retourne la valeur absolue (en objet Montant)
-                                                 def abs
-                                                     Montant.from_cents(@cents.abs)
-                                                 end
+        # Permet l'alignement du texte (ex: "   10.50")
+        def rjust(len, padstr=' ')
+            to_s.rjust(len, padstr)
+        end
 
-                                                 # Permet l'alignement du texte (ex: "   10.50")
-                                                 def rjust(len, padstr=' ')
-                                                     to_s.rjust(len, padstr)
-                                                 end
+        def ljust(len, padstr=' ')
+            to_s.ljust(len, padstr)
+        end
 
-                                                 def ljust(len, padstr=' ')
-                                                     to_s.ljust(len, padstr)
-                                                 end
+        # Test si zéro
+        def zero?
+            @cents.zero?
+        end
 
-                                                 # Test si zéro
-                                                 def zero?
-                                                     @cents.zero?
-                                                 end
+        # --- Comparaisons ---
 
-                                                 # --- Comparaisons ---
+        def <=>(other)
+            return nil unless other.respond_to?(:to_f) || other.is_a?(Montant)
+            other_cents = other.is_a?(Montant) ? other.cents : Montant.new(other).cents
+            @cents <=> other_cents
+        end
 
-                                                 def <=>(other)
-                                                     return nil unless other.respond_to?(:to_f) || other.is_a?(Montant)
-                                                     other_cents = other.is_a?(Montant) ? other.cents : Montant.new(other).cents
-                                                     @cents <=> other_cents
-                                                 end
+        # --- Coercition ---
 
-                                                 # --- Coercition ---
+        # Permet à Ruby de faire : 0 + Montant
+        def coerce(other)
+            [Montant.new(other), self]
+        end
 
-                                                 # Permet à Ruby de faire : 0 + Montant
-                                                 def coerce(other)
-                                                     [Montant.new(other), self]
-                                                 end
+        # --- Converters & Affichage ---
 
-                                                 # --- Converters & Affichage ---
+        def to_f
+            @cents.to_f / 100
+        end
 
-                                                 def to_f
-                                                     @cents.to_f / 100
-                                                 end
+        def to_s
+            # Toujours 2 décimales, séparateur point
+            format('%.2f', to_f).gsub('.', ',')
+        end
 
-                                                 def to_s
-                                                     # Toujours 2 décimales, séparateur point
-                                                     format('%.2f', to_f)
-                                                 end
+        def inspect
+            "#<LMNPCompta::Montant: #{to_s} €>"
+        end
 
-                                                 # Pour l'affichage formaté français (optionnel, si besoin un jour)
-                                                 def to_s_fr
-                                                     format('%.2f', to_f).gsub('.', ',')
-                                                 end
+        # --- YAML ---
 
-                                                 def inspect
-                                                     "#<LMNPCompta::Montant: #{to_s} €>"
-                                                 end
+        def encode_with(coder)
+            coder.scalar = to_s
+        end
 
-                                                 # --- YAML ---
+        # --- Interne ---
 
-                                                 def encode_with(coder)
-                                                     coder.scalar = to_s
-                                                 end
-
-                                                 # --- Interne ---
-
-                                                 def self.from_cents(cents)
-                                                     obj = allocate
-                                                     obj.instance_variable_set(:@cents, cents.to_i)
-                                                     obj
-                                                 end
-                                                 end
-                                                 end
+        def self.from_cents(cents)
+            obj = allocate
+            obj.instance_variable_set(:@cents, cents.to_i)
+            obj
+        end
+    end
+end

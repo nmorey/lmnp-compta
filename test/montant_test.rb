@@ -26,7 +26,6 @@ class MontantTest < Minitest::Test
         assert_equal "15,50", (m1 + m2).to_s
         assert_equal "4,50", (m1 - m2).to_s
         assert_equal "20,00", (m1 * 2).to_s
-        assert_equal "5,00", (m1 / 2).to_s
     end
 
     def test_comparison
