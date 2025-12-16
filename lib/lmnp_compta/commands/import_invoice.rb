@@ -60,7 +60,7 @@ module LMNPCompta
 
                 content = extract_text(file_path)
                 parser = InvoiceParser::Factory.build(options[:type], content)
-                
+
                 unless parser
                     handle_unrecognized_file(file_path, entries_list)
                     return
@@ -120,18 +120,45 @@ module LMNPCompta
             def load_yaml_entry(yaml_path, original_file_path, entries_list)
                  data = YAML.load_file(yaml_path)
                  datas = data.is_a?(Array) ? data : [data]
-                 
+
                  datas.each do |d|
-                    d['file'] ||= File.basename(original_file_path)
-                    entry = Entry.new(d)
-                    add_or_merge_entry(entries_list, entry)
+                    begin
+                        validate_yaml_entry!(d)
+                        d['file'] ||= File.basename(original_file_path)
+                        entry = Entry.new(d)
+                        add_or_merge_entry(entries_list, entry)
+                    rescue StandardError => e
+                        entry = LMNPCompta::Entry.new(
+                            file: File.basename(original_file_path),
+                            libelle: "❌ Erreur YAML: #{File.basename(yaml_path)}",
+                            error: "# ❌ Erreur YAML: #{e.message}"
+                        )
+                        add_or_merge_entry(entries_list, entry)
+                    end
                  end
+            end
+
+            def validate_yaml_entry!(d)
+                missing = []
+                missing << "date" unless d['date']
+                missing << "journal" unless d['journal']
+                missing << "libelle" unless d['libelle']
+                missing << "lignes" unless d['lignes'] && !d['lignes'].empty?
+
+                raise "Champs manquants: #{missing.join(', ')}" if missing.any?
+
+                d['lignes'].each_with_index do |l, idx|
+                    raise "Ligne #{idx+1}: 'compte' manquant" unless l['compte']
+                    unless l['debit'] || l['credit']
+                         raise "Ligne #{idx+1}: 'debit' ou 'credit' requis"
+                    end
+                end
             end
 
             def create_yaml_template(file_path)
                 tpl_path = "#{file_path}.yaml.tpl"
                 return if File.exist?(tpl_path)
-                
+
                 tpl = {
                     'date' => Date.today.strftime("%d/%m/%Y"),
                     'journal' => 'AC',
@@ -139,7 +166,7 @@ module LMNPCompta
                     'ref' => "REF-001",
                     'lignes' => [
                          {'compte' => '6XXXXX', 'debit' => 0},
-                         {'compte' => '401000', 'credit' => 0} 
+                         {'compte' => '401000', 'credit' => 0}
                     ]
                 }
                 File.write(tpl_path, tpl.to_yaml)
