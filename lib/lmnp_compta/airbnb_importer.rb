@@ -103,7 +103,8 @@ module LMNPCompta
                 date: date_virement.to_s,
                 journal: "VT",
                 libelle: libelle,
-                ref: code
+                ref: code,
+                file: File.basename(@file_path)
             )
 
             entry.add_credit("706000", revenu_brut, "Revenu Brut")

@@ -47,6 +47,9 @@ lmnp creer-immo --nom "Appartement Mer" --valeur 150000 --date 2024-01-01
 lmnp importer-facture mon_fichier.pdf
 ```
 Cela analyse le PDF et affiche une commande `lmnp ajouter ...` suggérée.
+Si le format du PDF n'est pas reconnu :
+1. L'outil vérifie si un fichier `.yaml` correspondant existe (ex: `mon_fichier.pdf.yaml`).
+2. Sinon, il crée un modèle `mon_fichier.pdf.yaml.tpl`. Vous pouvez le remplir, le renommer en `.yaml` et relancer la commande.
 
 **Importer Airbnb (CSV) :**
 ```bash
@@ -61,7 +64,7 @@ lmnp ajouter
 
 Ou en ligne de commande :
 ```bash
-lmnp ajouter -d 2025-01-27 -j AC -l "Facture X" -r "REF123" -c 606000 -s D -m 100 -c 512000 -s C -m 100
+lmnp ajouter -d 2025-01-27 -j AC -l "Facture X" -r "REF123" -f "facture.pdf" -c 606000 -s D -m 100 -c 512000 -s C -m 100
 ```
 
 ## Consultation / Rapports

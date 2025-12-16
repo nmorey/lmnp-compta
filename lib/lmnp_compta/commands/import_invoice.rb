@@ -3,6 +3,7 @@ require 'lmnp_compta/invoice_parser'
 require 'lmnp_compta/entry'
 require 'optparse'
 require 'open3'
+require 'yaml'
 
 module LMNPCompta
     module Commands
@@ -59,7 +60,11 @@ module LMNPCompta
 
                 content = extract_text(file_path)
                 parser = InvoiceParser::Factory.build(options[:type], content)
-                raise "Type non reconnu" unless parser
+                
+                unless parser
+                    handle_unrecognized_file(file_path, entries_list)
+                    return
+                end
 
                 begin
                     parsed_data = parser.parse
@@ -95,6 +100,49 @@ module LMNPCompta
                     e.ftype =  parser.class.parser_name.upcase
                     raise e
                 end
+            end
+
+            def handle_unrecognized_file(file_path, entries_list)
+                yaml_path = "#{file_path}.yaml"
+                if File.exist?(yaml_path)
+                     load_yaml_entry(yaml_path, file_path, entries_list)
+                else
+                     create_yaml_template(file_path)
+                     entry = LMNPCompta::Entry.new(
+                        file: File.basename(file_path),
+                        libelle: "⚠️  Non reconnu. Template créé : #{File.basename(yaml_path)}.tpl",
+                        error: "# ⚠️  Type non reconnu. Remplissez #{File.basename(yaml_path)}.tpl et renommez-le en .yaml pour relancer."
+                    )
+                    add_or_merge_entry(entries_list, entry)
+                end
+            end
+
+            def load_yaml_entry(yaml_path, original_file_path, entries_list)
+                 data = YAML.load_file(yaml_path)
+                 datas = data.is_a?(Array) ? data : [data]
+                 
+                 datas.each do |d|
+                    d['file'] ||= File.basename(original_file_path)
+                    entry = Entry.new(d)
+                    add_or_merge_entry(entries_list, entry)
+                 end
+            end
+
+            def create_yaml_template(file_path)
+                tpl_path = "#{file_path}.yaml.tpl"
+                return if File.exist?(tpl_path)
+                
+                tpl = {
+                    'date' => Date.today.strftime("%d/%m/%Y"),
+                    'journal' => 'AC',
+                    'libelle' => "Facture #{File.basename(file_path)}",
+                    'ref' => "REF-001",
+                    'lignes' => [
+                         {'compte' => '6XXXXX', 'debit' => 0},
+                         {'compte' => '401000', 'credit' => 0} 
+                    ]
+                }
+                File.write(tpl_path, tpl.to_yaml)
             end
 
             def extract_text(file_path)
@@ -167,6 +215,7 @@ module LMNPCompta
                     "-j #{entry.journal}",
                     "-l \"#{entry.libelle}\"",
                     "-r \"#{entry.ref}\"",
+                    "-f \"#{entry.source_file}\"",
                     cmd_lines.join(" ")
                 ].join(" ")
             end

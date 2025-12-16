@@ -17,11 +17,11 @@ module LMNPCompta
             @journal = attrs[:journal] || attrs['journal']
             @libelle = attrs[:libelle] || attrs['libelle']
             @ref = attrs[:ref] || attrs['ref']
+            @source_file = attrs[:file] || attrs['file']
 
             @lines = []
 
             # Helpers d'import (Données transitoires)
-            @source_file = attrs[:file] || attrs['file']
             @parser_type = attrs[:type] || attrs['type']
             @error = attrs[:error] || attrs['error']
             @warnings = attrs[:extra] || attrs['extra'] || []
@@ -94,6 +94,7 @@ module LMNPCompta
             h['libelle'] = @libelle
             h['journal'] = @journal
             h['ref'] = @ref
+            h['file'] = @source_file if @source_file
 
             h['lignes'] = @lines.map { |l|
                 line_h = {}

@@ -49,6 +49,7 @@ module LMNPCompta
                     opts.on("-j", "--journal CODE", "Journal (BQ, HA...)") { |v| options[:journal] = v }
                     opts.on("-l", "--libelle TEXTE", "Libellé global") { |v| options[:libelle] = v }
                     opts.on("-r", "--ref REF", "Référence pièce") { |v| options[:ref] = v }
+                    opts.on("-f", "--file FICHIER", "Fichier source") { |v| options[:file] = v }
 
                     opts.on("-c", "--compte COMPTE", "Ajoute une ligne: Compte") do |v|
                         options[:lines] << { raw_compte: v }
@@ -131,7 +132,8 @@ module LMNPCompta
                     date: date_val,
                     journal: journal_val,
                     libelle: libelle_val,
-                    ref: ref_val
+                    ref: ref_val,
+                    file: options[:file]
                 )
 
                 options[:lines].each_with_index do |l, idx|
@@ -180,11 +182,15 @@ module LMNPCompta
 
                 libelle_in = prompt("Libellé", default: options[:libelle]) { |i| !!VALIDATORS[:libelle].call(i) }
 
+                file_in = prompt("Fichier source", default: options[:file] || "N/A")
+                file_in = nil if file_in == "N/A" || file_in.strip.empty?
+
                 entry = Entry.new(
                     date: date_in,
                     journal: journal_in,
                     libelle: libelle_in,
-                    ref: "N/A"
+                    ref: "N/A",
+                    file: file_in
                 )
 
                 loop do
