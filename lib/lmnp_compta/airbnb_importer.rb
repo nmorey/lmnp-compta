@@ -59,7 +59,7 @@ module LMNPCompta
                 first_row = items.first[:csv_data]
                 res_end_date_str = first_row['Date de départ'] || first_row[6]
                 res_end_date = parse_date(res_end_date_str)
-
+                counter=1
                 items.each_with_index do |item, index|
                     date_virement = item[:date_comptable]
                     row = item[:csv_data]
@@ -85,8 +85,10 @@ module LMNPCompta
                         next
                     end
 
-                    entry = create_entry(code, date_virement, row, start_str, end_str)
+                    entry = create_entry(code + "-#{counter.to_s.rjust(2, '0')}",
+                                         date_virement, row, start_str, end_str)
                     @new_entries << entry
+                    counter+=1
                 end
             end
         end

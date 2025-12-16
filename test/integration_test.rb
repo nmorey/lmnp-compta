@@ -58,14 +58,14 @@ class IntegrationTest < Minitest::Test
         assert File.exist?('data/journal_2025.yaml'), "Journal file should be created"
         journal = YAML.load_file('data/journal_2025.yaml')
         assert_equal 2, journal.length, "Should have imported 2 entries"
-        assert_equal "Airbnb - RESA001 (Période 05/01 - 04/01)", journal.first['libelle']
+        assert_equal "Airbnb - RESA001-01 (Période 05/01 - 04/01)", journal.first['libelle']
         # Check amount parsing (RESA001: 515.00 Brut, 15.00 Com, 500.00 Net)
         # Entry 1:
         # Credit 706000: 515.00
         # Debit 622600: 15.00
         # Debit 512000: 500.00
 
-        entry1 = journal.find { |e| e['ref'] == 'RESA001' }
+        entry1 = journal.find { |e| e['ref'] == 'RESA001-01' }
         l_rev = entry1['lignes'].find { |l| l['compte'] == '706000' }
         l_com = entry1['lignes'].find { |l| l['compte'] == '622600' }
         l_ban = entry1['lignes'].find { |l| l['compte'] == '512000' }
