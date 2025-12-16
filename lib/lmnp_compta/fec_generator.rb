@@ -2,12 +2,16 @@ require 'csv'
 require 'date'
 
 module LMNPCompta
+    # Générateur de fichier FEC (Fichier des Écritures Comptables)
     class FECGenerator
         HEADERS = %w[
       JournalCode JournalLib EcritureNum EcritureDate CompteNum CompteLib CompAuxNum CompAuxLib
       PieceRef PieceDate EcritureLib Debit Credit EcritureLet DateLet ValidDate Montantdevise Idevise
     ]
 
+        # Génère le contenu CSV du FEC
+        # @param entries [Array<LMNPCompta::Entry>] Liste des écritures
+        # @return [String] Contenu CSV
         def self.generate(entries)
             CSV.generate(col_sep: "\t") do |csv|
                 csv << HEADERS

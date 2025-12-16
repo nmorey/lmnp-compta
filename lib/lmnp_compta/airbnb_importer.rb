@@ -3,15 +3,20 @@ require 'date'
 require_relative 'entry'
 
 module LMNPCompta
+    # Importateur pour les fichiers CSV d'export Airbnb
     class AirbnbImporter
         attr_reader :new_entries
 
+        # @param file_path [String] Chemin vers le fichier CSV
+        # @param journal [LMNPCompta::Journal] Instance du journal pour vérifier les doublons
         def initialize(file_path, journal)
             @file_path = file_path
             @journal = journal
             @new_entries = []
         end
 
+        # Exécute l'importation
+        # @return [Array<LMNPCompta::Entry>] La liste des nouvelles écritures générées
         def import
             reservations_map = parse_csv
             generate_entries(reservations_map)
@@ -70,9 +75,9 @@ module LMNPCompta
                     start_str = start_period ? start_period.strftime("%d/%m") : "??"
                     end_str   = end_period ? end_period.strftime("%d/%m") : "??"
 
-                    # Year consistency check
+                    # Vérification de l'année
                     if @journal.year && date_virement.year != @journal.year
-                        puts "⚠️  Ignored Airbnb entry from #{date_virement} (Year #{date_virement.year} != #{@journal.year})"
+                        puts "⚠️  Ignorée : Entrée Airbnb du #{date_virement} (Année #{date_virement.year} != #{@journal.year})"
                         next
                     end
 
@@ -113,16 +118,16 @@ module LMNPCompta
         end
 
         def is_duplicate?(code, date_virement)
-            # Check existing entries in journal
+            # Vérifie dans le journal existant
             @journal.entries.any? { |e| e.ref == code && e.date == date_virement.to_s } ||
-                # Check newly created entries
+                # Vérifie dans les nouvelles entrées (pour éviter les doublons au sein d'un même import)
                 @new_entries.any? { |e| e.ref == code && e.date == date_virement.to_s }
         end
 
         def parse_french_amount(str)
             return Montant.new(0) if str.nil? || str.empty?
             cleaned = str.gsub('EUR', '').gsub(/[[:space:]]/, '')
-            cleaned = cleaned.gsub(',', '.') # Replace French decimal comma with dot
+            cleaned = cleaned.gsub(',', '.') # Remplacement virgule décimale française
             Montant.new(cleaned)
         end
 

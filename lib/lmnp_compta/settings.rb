@@ -2,9 +2,12 @@ require 'yaml'
 require 'date'
 
 module LMNPCompta
+    # Gestion de la configuration globale
     class Settings
         attr_reader :siren, :annee, :journal_file, :stock_file, :immo_file, :extra_invoice_dir
 
+        # Charge la configuration
+        # @param config_file [String] Chemin vers le fichier YAML de configuration
         def initialize(config_file = 'lmnp.yaml')
             config = {}
             if File.exist?(config_file)
@@ -19,10 +22,12 @@ module LMNPCompta
             @extra_invoice_dir = config['extra_invoice_dir']
         end
 
+        # Charge et stocke le singleton de configuration
         def self.load(config_file = 'lmnp.yaml')
             @instance = new(config_file)
         end
 
+        # Accès au singleton
         def self.instance
             @instance ||= new
         end

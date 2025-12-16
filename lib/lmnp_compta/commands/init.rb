@@ -28,7 +28,7 @@ module LMNPCompta
                     exit 1
                 end
 
-                # Auto-compute defaults if not provided
+                # Valeurs par défaut auto-calculées
                 config = {
                     'siren' => options[:siren],
                     'annee' => options[:annee],
@@ -45,7 +45,7 @@ module LMNPCompta
                 File.write('lmnp.yaml', config.to_yaml)
                 puts "✅ Configuration sauvegardée dans 'lmnp.yaml'"
 
-                # Create data directory if it doesn't exist, as the default paths use it
+                # Création du dossier de données
                 Dir.mkdir('data') unless Dir.exist?('data')
                 puts "📂 Dossier 'data/' vérifié."
             end

@@ -28,19 +28,14 @@ module LMNPCompta
                 @args.each do |file_path|
                     process_file(file_path, options, entries_list)
                 rescue => e
-                    entry = LMNPCompta::Entry.new(
-                        file: File.basename(file_path),
-                        libelle: "❌ Erreur en traitant: #{file_path}",
-                        error: "# ❌ Erreur: #{e.message}",
-                    )
-                    add_or_merge_entry(entries_list, entry)
+                    puts "❌ Erreur de traitement pour #{file_path}: #{e.message}"
                     errors += 1
                 end
 
                 entries_list.sort_by! { |x| "#{x.source_file}-#{x.date}" }
                 entries_list.each { |entry| puts format_entry(entry) }
 
-                puts "# #{entries_list.length} transactions générées avec #{errors} erreurs"
+                puts "# {entries_list.length} transactions générées avec #{errors} erreurs"
                 exit(errors > 0 ? 1 : 0)
             end
 
@@ -59,13 +54,7 @@ module LMNPCompta
 
                     parsed_data.each do |data|
                         if data[:date].year != target_year
-                            entry = LMNPCompta::Entry.new(
-                                file: File.basename(file_path),
-                                libelle: "❌ Erreur en traitant: #{file_path} #{data[:date]}",
-                                date: data[:date].strftime("%d/%m/%Y"),
-                                error: "# ⚠️  Ignored invoice from #{data[:date]} (Year #{data[:date].year} != #{target_year})"
-                            )
-                            add_or_merge_entry(entries_list, entry)
+                            puts "⚠️  Facture ignorée #{data[:date]} (Année #{data[:date].year} != #{target_year})"
                             next
                         end
 

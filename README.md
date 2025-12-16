@@ -19,8 +19,8 @@ Nécessite Ruby.
 Nécessite `pdftotext` (package `poppler-utils` sur Debian/Ubuntu) pour l'analyse des factures.
 
 1.  Cloner le dépôt.
-2.  Rendre le binaire exécutable : `chmod +x bin/lmnp`
-3.  Ajouter le dossier `bin` à votre PATH ou créer un alias.
+2.  Construire et installer la gem (ou utiliser `bundle`).
+3.  Rendre le binaire exécutable : `chmod +x bin/lmnp`
 
 ## Workflow
 
@@ -29,52 +29,64 @@ Nécessite `pdftotext` (package `poppler-utils` sur Debian/Ubuntu) pour l'analys
 Pour commencer une nouvelle année ou un nouveau projet :
 
 ```bash
-./bin/lmnp init --siren 123456789 --annee 2025
+lmnp init --siren 123456789 --annee 2025
 ```
 Cela crée un fichier `lmnp.yaml` et le dossier `data/` nécessaire.
+
+Ensuite, créez votre fichier d'immobilisations :
+
+```bash
+lmnp creer-immo --nom "Appartement Mer" --valeur 150000 --date 2024-01-01
+```
+(Options de ventilation disponibles : `--terrain`, `--gros-oeuvre`, etc.)
 
 ### 2. Saisie courante
 
 **Importer des factures (PDF) :**
 ```bash
-./bin/lmnp importer-facture mon_fichier.pdf
+lmnp importer-facture mon_fichier.pdf
 ```
-Cela analyse le PDF et affiche une commande `lmnp ajouter ...` suggérée. Vous pouvez la copier-coller ou l'ajuster.
+Cela analyse le PDF et affiche une commande `lmnp ajouter ...` suggérée.
 
 **Importer Airbnb (CSV) :**
 ```bash
-./bin/lmnp importer-airbnb -f listings.csv
+lmnp importer-airbnb -f listings.csv
 ```
 
 **Saisie manuelle :**
 ```bash
-./bin/lmnp ajouter
+lmnp ajouter
 ```
 (Mode interactif)
+
+Ou en ligne de commande :
+```bash
+lmnp ajouter -d 2025-01-27 -j AC -l "Facture X" -r "REF123" -c 606000 -s D -m 100 -c 512000 -s C -m 100
+```
 
 ### 3. Fin d'année
 
 **Calculer les amortissements :**
 ```bash
-./bin/lmnp amortir
+lmnp amortir
 ```
 Utilise le fichier `data/immobilisations.yaml` pour générer l'écriture de dotation aux amortissements.
 
 **Clôture de trésorerie :**
 ```bash
-./bin/lmnp cloturer
+lmnp cloturer
 ```
-Génère l'écriture de régularisation du compte bancaire (Apport personnel ou Prélèvement de l'exploitant) pour solder la banque à 0 (si compte dédié non pro).
+Génère l'écriture de régularisation du compte bancaire (Apport personnel ou Prélèvement de l'exploitant).
 
 **Génération de la liasse :**
 ```bash
-./bin/lmnp liasse
+lmnp liasse
 ```
 Affiche les montants à reporter sur votre déclaration 2033 et met à jour les stocks de déficits/ARD dans `data/stock_fiscal.yaml`.
 
 **Export FEC :**
 ```bash
-./bin/lmnp export-fec
+lmnp export-fec
 ```
 Génère le fichier texte pour l'administration fiscale.
 
@@ -88,6 +100,7 @@ annee: 2025
 journal_file: "data/journal_2025.yaml"
 stock_file: "data/stock_fiscal.yaml"
 immo_file: "data/immobilisations.yaml"
+extra_invoice_dir: "my_parsers/" # Optionnel
 ```
 
 ## Structure des données

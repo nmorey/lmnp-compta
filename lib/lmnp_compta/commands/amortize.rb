@@ -50,6 +50,7 @@ module LMNPCompta
                         end
                     end
                 end
+
                 entry = LMNPCompta::Entry.new(
                     date: "#{annee}-12-31",
                     journal: "OD",

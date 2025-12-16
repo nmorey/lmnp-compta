@@ -1,12 +1,14 @@
 require 'bigdecimal'
 
 module LMNPCompta
+    # Gestion précise des montants monétaires pour éviter les erreurs de virgule flottante
     class Montant
         include Comparable
 
         attr_reader :cents
 
         # Constructeur universel
+        # @param value [Integer, Float, BigDecimal, String, Montant, NilClass] La valeur à convertir
         def initialize(value = 0)
             @cents = case value
                      when Montant
@@ -54,7 +56,7 @@ module LMNPCompta
       Montant.from_cents((@cents / scalar).round)
                                                  end
 
-                                                 # --- Méthodes requises pour votre script ---
+                                                 # --- Méthodes utilitaires ---
 
                                                  # Retourne la valeur absolue (en objet Montant)
                                                  def abs
@@ -62,7 +64,6 @@ module LMNPCompta
                                                  end
 
                                                  # Permet l'alignement du texte (ex: "   10.50")
-                                                 # Délègue simplement à la string formatée
                                                  def rjust(len, padstr=' ')
                                                      to_s.rjust(len, padstr)
                                                  end
@@ -84,7 +85,7 @@ module LMNPCompta
                                                      @cents <=> other_cents
                                                  end
 
-                                                 # --- Coercition (Pour faire marcher [].sum sans erreur) ---
+                                                 # --- Coercition ---
 
                                                  # Permet à Ruby de faire : 0 + Montant
                                                  def coerce(other)
@@ -98,7 +99,12 @@ module LMNPCompta
                                                  end
 
                                                  def to_s
-                                                     # Toujours 2 décimales, séparateur virgule
+                                                     # Toujours 2 décimales, séparateur point
+                                                     format('%.2f', to_f)
+                                                 end
+
+                                                 # Pour l'affichage formaté français (optionnel, si besoin un jour)
+                                                 def to_s_fr
                                                      format('%.2f', to_f).gsub('.', ',')
                                                  end
 

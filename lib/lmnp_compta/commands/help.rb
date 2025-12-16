@@ -3,15 +3,15 @@ require 'lmnp_compta/command'
 module LMNPCompta
     module Commands
         class Help < Command
-            register 'help', 'List available commands or show help for a specific command'
+            register 'help', 'Lister les commandes disponibles ou afficher l\'aide d\'une commande spécifique'
 
             def execute
-                puts "Usage: lmnp <command> [options]"
-                puts "\nAvailable commands:"
+                puts "Usage: lmnp <commande> [options]"
+                puts "\nCommandes disponibles :"
                 LMNPCompta::Command.registry.sort.each do |name, info|
                     puts "  #{name.ljust(20)} #{info[:description]}"
                 end
-                puts "\nRun 'lmnp <command> --help' for specific command usage."
+                puts "\nLancez 'lmnp <commande> --help' pour voir les options d\'une commande spécifique."
             end
         end
     end
