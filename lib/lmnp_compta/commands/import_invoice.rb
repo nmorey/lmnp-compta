@@ -31,7 +31,7 @@ module LMNPCompta
                     entry = LMNPCompta::Entry.new(
                         file: File.basename(file_path),
                         libelle: "❌ Erreur en traitant: #{file_path}",
-                        error: "# ❌ Erreur: #{e.message}",
+                        error: "# ❌ Erreur: #{e.message.gsub(/\n/, "\n# ")}",
                     )
                     add_or_merge_entry(entries_list, entry)
                     errors += 1
