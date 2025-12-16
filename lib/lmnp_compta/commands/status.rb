@@ -33,7 +33,7 @@ module LMNPCompta
             # Préparer la sortie CSV (séparateur tab)
             output = CSV.generate(col_sep: "\t") do |csv|
                 # En-têtes
-                csv << ["Date", "Ref", "Montant", "Crédit 512000", "Débit 512000"]
+                csv << ["Date", "Ref", "Crédit", "Débit"]
 
                 relevant_entries.sort_by { |e| e.date.to_s }.each do |entry|
                     # Trouver la/les ligne(s) 512000
@@ -43,11 +43,11 @@ module LMNPCompta
                     lines_512 = entry.lines.select { |l| l[:compte].to_s == '512000' }
 
                     lines_512.each do |line|
-                        credit = line[:credit]
-                        debit = line[:debit]
-
-                        # Montant absolu de la ligne (soit débit, soit crédit)
-                        amount = debit > Montant.new(0) ? debit : credit
+                        # On inverse ici. Dans le journal credit = debit du compte indiqué pour
+                        # ajouter le montant dans la transaction
+                        # Ici on veut une vue "compte". Donc un credit de journal est un debit de compte
+                        credit = line[:debit]
+                        debit = line[:credit]
 
                         # Mise à jour des totaux globaux
                         total_credit += credit
@@ -56,7 +56,6 @@ module LMNPCompta
                         csv << [
                             entry.date.to_s,
                             entry.ref || "",
-                            amount.to_s,
                             (credit > Montant.new(0) ? credit.to_s : ""),
                             (debit > Montant.new(0) ? debit.to_s : "")
                         ]
