@@ -17,6 +17,7 @@ module LMNPCompta
         def load!
             data = YAML.load_file(@file_path) || []
             @entries = data.map { |d| Entry.new(d) }
+            check_duplicate_refs
         end
 
         def save!
@@ -38,6 +39,14 @@ module LMNPCompta
             unless entry.balanced?
                 raise "Cannot add unbalanced entry: #{entry.libelle} (Balance: #{entry.balance})"
             end
+
+            # Validation de l'unicité de la référence
+            if entry.ref && entry.ref != "N/A" && !entry.ref.empty?
+                if @entries.any? { |e| e.ref == entry.ref }
+                    raise "Erreur : La référence '#{entry.ref}' existe déjà dans le journal."
+                end
+            end
+
             @entries << entry
         end
 
@@ -52,6 +61,17 @@ module LMNPCompta
 
         def delete(id)
             @entries.reject! { |e| e.id == id }
+        end
+
+        private
+
+        # Vérifie les doublons de référence dans le journal chargé
+        def check_duplicate_refs
+            refs = @entries.map(&:ref).compact.reject { |r| r == 'N/A' || r.to_s.strip.empty? }
+            return if refs.uniq.length == refs.length
+
+            duplicates = refs.tally.select { |_, v| v > 1 }.keys
+            puts "⚠️  Attention : Références en double détectées dans le journal : #{duplicates.join(', ')}"
         end
     end
 end
