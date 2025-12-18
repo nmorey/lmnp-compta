@@ -37,7 +37,10 @@ _lmnp_completion()
             ;;
         importer-facture)
             opts="--type --help"
-            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) $(compgen -f -- ${cur}) )
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            local IFS=$'\n'
+            compopt -o filenames 2>/dev/null
+            COMPREPLY+=( $(compgen -f -- "${cur}") )
             return 0
             ;;
         amortir|cloturer|liasse|export-fec)
