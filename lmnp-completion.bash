@@ -37,7 +37,7 @@ _lmnp_completion()
             ;;
         importer-facture)
             opts="--type --help"
-            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) $(compgen -f -- ${cur}) )
             return 0
             ;;
         amortir|cloturer|liasse|export-fec)
