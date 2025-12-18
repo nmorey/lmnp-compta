@@ -41,7 +41,7 @@ module LMNPCompta
             # @param attrs [Hash] Attributs du composant
             def initialize(attrs = {})
                 @nom = attrs['nom'] || attrs[:nom]
-                @valeur = (attrs['valeur'] || attrs[:valeur] || 0.0).to_f
+                @valeur = Montant.new((attrs['valeur'] || attrs[:valeur] || 0.0))
                 @duree = (attrs['duree'] || attrs[:duree] || 0).to_i
             end
 
@@ -50,7 +50,7 @@ module LMNPCompta
             def to_h
                 {
                     'nom' => @nom,
-                    'valeur' => @valeur,
+                    'valeur' => @valeur.to_s,
                     'duree' => @duree
                 }
             end
