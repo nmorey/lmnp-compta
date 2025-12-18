@@ -56,7 +56,7 @@ class ImportInvoiceFallbackTest < Minitest::Test
             'libelle' => 'Manual Entry',
             'lignes' => [
                 {'compte' => '606000', 'debit' => 100},
-                {'compte' => '401000', 'credit' => 100}
+                {'compte' => '512000', 'credit' => 100}
             ]
         }
         File.write(yaml_path, entry_data.to_yaml)
@@ -80,7 +80,7 @@ class ImportInvoiceFallbackTest < Minitest::Test
             'journal' => 'AC',
             'libelle' => 'Custom File Entry',
             'file' => 'other_source.pdf',
-            'lignes' => [{'compte' => '606000', 'debit' => 10}, {'compte' => '401', 'credit' => 10}]
+            'lignes' => [{'compte' => '606000', 'debit' => 10}, {'compte' => '512000', 'credit' => 10}]
         }
         File.write(yaml_path, entry_data.to_yaml)
 
