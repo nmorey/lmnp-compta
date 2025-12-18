@@ -136,6 +136,8 @@ module LMNPCompta
                     file: options[:file]
                 )
 
+                puts "   Libellé: #{entry.libelle}"
+
                 options[:lines].each_with_index do |l, idx|
                     raise "Ligne #{idx+1}: Il manque des infos (Compte, Montant ET Sens obligatoires)." unless l[:raw_compte] && l[:raw_montant] && l[:raw_sens]
 

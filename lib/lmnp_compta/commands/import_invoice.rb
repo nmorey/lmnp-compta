@@ -153,6 +153,10 @@ module LMNPCompta
                          raise "Ligne #{idx+1}: 'debit' ou 'credit' requis"
                     end
                 end
+
+                unless d['lignes'].any? { |l| l['compte'].to_s == '512000' && l['credit'] }
+                    raise "Le compte 512000 doit être présent au CRÉDIT (Paiement facture)."
+                end
             end
 
             def create_yaml_template(file_path)
