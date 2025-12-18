@@ -1,4 +1,5 @@
 require_relative '../montant'
+require_relative 'reporting'
 
 module LMNPCompta
     module Fiscal
@@ -25,6 +26,8 @@ module LMNPCompta
                 @entries.each do |e|
                     # Filtrage strict : inclure uniquement les écritures de l'année fiscale
                     next if Date.parse(e.date.to_s).year != @year
+                    # Ignorer les AN pour éviter les doublons dans les calculs de flux
+                    next if e.journal == 'AN'
 
                     e.lines.each do |l|
                         debit = l[:debit]
@@ -41,6 +44,18 @@ module LMNPCompta
                 @balances.select { |k, _| k.to_s.start_with?(prefix) }.values.sum(Montant.new(0))
             end
 
+            # Génère le rapport fiscal (structure de données pour affichage)
+            # @return [LMNPCompta::Fiscal::Reporting::Document]
+            def generate_report
+                raise NotImplementedError
+            end
+
+            # Retourne les données de stock à sauvegarder pour l'année suivante
+            # @return [Hash]
+            def stock_update_data
+                raise NotImplementedError
+            end
+
             # Méthodes abstraites (Doivent être implémentées par les sous-classes annuelles)
             def analyze; raise NotImplementedError; end
             def immo_brut; raise NotImplementedError; end
@@ -54,6 +69,12 @@ module LMNPCompta
             def charges_exploit; raise NotImplementedError; end
             def charges_fi; raise NotImplementedError; end
             def dotations; raise NotImplementedError; end
+
+            # Méthodes pour le rapport détaillé (Liasse 2033)
+            def chiffre_affaires; raise NotImplementedError; end
+            def achats_matieres; raise NotImplementedError; end
+            def autres_charges_externes; raise NotImplementedError; end
+            def impots_taxes; raise NotImplementedError; end
 
             def immo_net
                 immo_brut - amort_cumules
