@@ -17,9 +17,9 @@ module LMNPCompta
             def immo_brut
                 total = Montant.new(0)
                 @assets.each do |asset_data|
-                    comps = asset_data.is_a?(Hash) ? asset_data['composants'] : asset_data.composants
+                    comps = asset_data.composants
                     comps.each do |c|
-                        val = c.is_a?(Hash) ? c['valeur'] : c.valeur
+                        val = c.valeur
                         total += val
                     end
                 end
@@ -32,13 +32,12 @@ module LMNPCompta
                 total_amort = Montant.new(0)
 
                 @assets.each do |asset_data|
-                    is_hash = asset_data.is_a?(Hash)
-                    start_date = is_hash ? asset_data['date_mise_en_location'] : asset_data.date_mise_en_location
-                    comps = is_hash ? asset_data['composants'] : asset_data.composants
+                    start_date = asset_data.date_mise_en_location
+                    comps = asset_data.composants
 
                     comps.each do |c|
-                        valeur = is_hash ? c['valeur'] : c.valeur
-                        duree = is_hash ? c['duree'] : c.duree
+                        valeur = c.valeur
+                        duree = c.duree
 
                         # Somme des dotations jusqu'à l'année N-1 incluse
                         start_year = Date.parse(start_date.to_s).year
@@ -66,14 +65,13 @@ module LMNPCompta
 
                 @assets.each do |asset_data|
                     # Extraction des données
-                    is_hash = asset_data.is_a?(Hash)
-                    start_date = is_hash ? asset_data['date_mise_en_location'] : asset_data.date_mise_en_location
-                    comps = is_hash ? asset_data['composants'] : asset_data.composants
+                    start_date = asset_data.date_mise_en_location
+                    comps = asset_data.composants
 
                     comps.each do |c|
-                        nom = (is_hash ? c['nom'] : c.nom).to_s
-                        valeur = is_hash ? c['valeur'] : c.valeur
-                        duree = is_hash ? c['duree'] : c.duree
+                        nom = (c.nom).to_s
+                        valeur = c.valeur
+                        duree = c.duree
 
                         # Classification (cohérente avec command/amortize.rb + plan_comptable.rb)
                         asset_acc, amort_acc = classify_component(nom)
