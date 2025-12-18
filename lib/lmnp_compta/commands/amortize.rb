@@ -21,8 +21,7 @@ module LMNPCompta
                 annee = settings.annee
                 journal = Journal.new(journal_file, year: annee)
 
-                assets_data = YAML.load_file(immo_file) || []
-                assets = assets_data.map { |a| Asset.new(a) }
+                assets = Asset.load(immo_file)
 
                 lines = []
                 total = Montant.new(0)
