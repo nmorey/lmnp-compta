@@ -148,7 +148,7 @@ class IntegrationTest < Minitest::Test
         LMNPCompta::Commands::Report.new([]).execute
 
         assert File.exist?('data/stock_fiscal.yaml'), "Stock file should be created/updated"
-        stock = YAML.load_file('data/stock_fiscal.yaml')
+        stock = LMNPCompta::Stock.load('data/stock_fiscal.yaml')
         # Verify stock ARD/Deficit logic
         # Recettes: 515 + 981 = 1496.00
         # Charges: 15 + 30.50 = 45.50
@@ -158,7 +158,7 @@ class IntegrationTest < Minitest::Test
         # Amort deduct: 1450.50
         # ARD Cree: 5283.33 - 1148.49 = 4134.84
 
-        assert_in_delta 4134,84, stock['stock_ard'], 0.01
+        assert_in_delta 4134,84, stock.ard, 0.01
 
         # 5. Export FEC
         puts "\n--- Test: Export FEC ---"

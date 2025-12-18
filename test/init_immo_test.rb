@@ -31,11 +31,11 @@ class InitImmoTest < Minitest::Test
             LMNPCompta::Commands::InitImmo.new(args).execute
         end
 
-        data = YAML.load_file('immobilisations.yaml').first
-        assert_equal 5, data['composants'].length
+        data = LMNPCompta::Asset.load('immobilisations.yaml').first
+        assert_equal 5, data.composants.length
 
-        terrain = data['composants'].find { |c| c['nom'] == "Terrain" }
-        assert_equal 30000.0, terrain['valeur'] # 15%
+        terrain = data.composants.find { |c| c.nom == "Terrain" }
+        assert_equal LMNPCompta::Montant.new(30000), terrain.valeur # 15%
     end
 
     def test_append_mode
@@ -78,17 +78,17 @@ class InitImmoTest < Minitest::Test
             LMNPCompta::Commands::InitImmo.new(args).execute
         end
 
-        data = YAML.load_file('immobilisations.yaml').first
+        data = LMNPCompta::Asset.load('immobilisations.yaml').first
 
-        terrain = data['composants'].find { |c| c['nom'] == "Terrain" }
-        assert_equal 20000.0, terrain['valeur'] # 20%
+        terrain = data.composants.find { |c| c.nom == "Terrain" }
+        assert_equal LMNPCompta::Montant.new(20000), terrain.valeur # 20%
 
-        go = data['composants'].find { |c| c['nom'] == "Gros Oeuvre" }
-        assert_equal 35000.0, go['valeur'] # 35%
+        go = data.composants.find { |c| c.nom == "Gros Oeuvre" }
+        assert_equal LMNPCompta::Montant.new(35000), go.valeur # 35%
 
         # Check untouched component
-        facade = data['composants'].find { |c| c['nom'] == "Façade" }
-        assert_equal 15000.0, facade['valeur'] # Default 15%
+        facade = data.composants.find { |c| c.nom == "Façade" }
+        assert_equal LMNPCompta::Montant.new(15000), facade.valeur # Default 15%
     end
 
     def test_validation_100_percent
