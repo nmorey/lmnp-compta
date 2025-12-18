@@ -3,6 +3,12 @@ module LMNPCompta
     class Asset
         attr_accessor :nom, :date_achat, :date_mise_en_location, :valeur_achat, :composants
 
+
+        def self.load(file)
+                array = (File.exist?(file) ? YAML.load_file(file) : [])
+                array.map {|x| Asset.new(x)}
+        end
+
         # Initialise un nouveau bien
         # @param attrs [Hash] Attributs du bien
         def initialize(attrs = {})
