@@ -49,14 +49,14 @@ class InitImmoTest < Minitest::Test
 
         # Check file
         assert File.exist?('immobilisations.yaml')
-        data = YAML.load_file('immobilisations.yaml')
+        data = LMNPCompta::Asset.load('immobilisations.yaml')
 
         assert_equal 2, data.length
-        assert_equal "Flat A", data[0]['nom']
-        assert_equal 100000.0, data[0]['valeur_achat']
+        assert_equal "Flat A", data[0].nom
+        assert_equal LMNPCompta::Montant.new(100000), data[0].valeur_achat
 
-        assert_equal "Flat B", data[1]['nom']
-        assert_equal 200000.0, data[1]['valeur_achat']
+        assert_equal "Flat B", data[1].nom
+        assert_equal LMNPCompta::Montant.new(200000), data[1].valeur_achat
     end
 
     def test_cli_custom_percentages
