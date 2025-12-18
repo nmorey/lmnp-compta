@@ -26,7 +26,7 @@ module LMNPCompta
 
                 journal = Journal.new(journal_file, year: annee)
                 entries = journal.entries
-                assets = File.exist?(immo_file) ? YAML.load_file(immo_file) : []
+                assets = Asset.load(immo_file)
                 stock = File.exist?(stock_file) ? YAML.load_file(stock_file) : { 'stock_ard' => 0.0, 'stock_deficit' => 0.0 }
 
                 analyzer = FiscalAnalyzer.new(entries, assets, stock, annee)
