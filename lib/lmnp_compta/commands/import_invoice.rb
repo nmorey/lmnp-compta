@@ -165,8 +165,8 @@ module LMNPCompta
                     'libelle' => "Facture #{File.basename(file_path)}",
                     'ref' => "REF-001",
                     'lignes' => [
-                         {'compte' => '6XXXXX', 'debit' => 0},
-                         {'compte' => '401000', 'credit' => 0}
+                         {'compte' => '6XXXXX', 'debit' => '0'},
+                         {'compte' => '512000', 'credit' => '0'}
                     ]
                 }
                 File.write(tpl_path, tpl.to_yaml)
