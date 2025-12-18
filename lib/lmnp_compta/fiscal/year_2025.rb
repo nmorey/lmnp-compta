@@ -108,12 +108,11 @@ module LMNPCompta
             def amort_cumules
                 dotation_annee = Montant.new(0)
                 @assets.each do |asset_data|
-                    is_hash = asset_data.is_a?(Hash)
-                    start_date = is_hash ? asset_data['date_mise_en_location'] : asset_data.date_mise_en_location
-                    comps = is_hash ? asset_data['composants'] : asset_data.composants
+                    start_date = asset_data.date_mise_en_location
+                    comps = asset_data.composants
                     comps.each do |c|
-                        valeur = is_hash ? c['valeur'] : c.valeur
-                        duree = is_hash ? c['duree'] : c.duree
+                        valeur = c.valeur
+                        duree = c.duree
                         dotation_annee += Amortization.calcul_dotation(valeur, duree, start_date, @year)
                     end
                 end
@@ -408,16 +407,15 @@ module LMNPCompta
                 end
 
                 @assets.each do |asset_data|
-                    is_hash = asset_data.is_a?(Hash)
-                    start_date = is_hash ? asset_data['date_mise_en_location'] : asset_data.date_mise_en_location
-                    comps = is_hash ? asset_data['composants'] : asset_data.composants
+                    start_date = asset_data.date_mise_en_location
+                    comps = asset_data.composants
 
                     acquisition_year = Date.parse(start_date.to_s).year
 
                     comps.each do |c|
-                        nom = (is_hash ? c['nom'] : c.nom).to_s.downcase
-                        valeur = is_hash ? c['valeur'] : c.valeur
-                        duree = is_hash ? c['duree'] : c.duree
+                        nom = (c.nom).to_s.downcase
+                        valeur = c.valeur
+                        duree = c.duree
 
                         cat = :inst_gen
                         if nom.include?('terrain')
