@@ -91,7 +91,7 @@ module LMNPCompta
             return if refs.uniq.length == refs.length
 
             duplicates = refs.tally.select { |_, v| v > 1 }.keys
-            puts "⚠️  Attention : Références en double détectées dans le journal : #{duplicates.join(', ')}"
+            raise "Erreur : Références en double détectées dans le journal : #{duplicates.join(', ')}"
         end
     end
 end
