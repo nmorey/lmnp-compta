@@ -1,6 +1,7 @@
 require 'lmnp_compta/command'
 require 'lmnp_compta/journal'
 require 'lmnp_compta/fiscal_analyzer'
+require 'lmnp_compta/stock'
 require 'yaml'
 require 'fileutils'
 
@@ -27,7 +28,7 @@ module LMNPCompta
                 journal = Journal.new(journal_file, year: annee)
                 entries = journal.entries
                 assets = Asset.load(immo_file)
-                stock = File.exist?(stock_file) ? YAML.load_file(stock_file) : { 'stock_ard' => 0.0, 'stock_deficit' => 0.0 }
+                stock = Stock.load(stock_file)
 
                 analyzer = FiscalAnalyzer.new(entries, assets, stock, annee)
 
@@ -36,8 +37,7 @@ module LMNPCompta
                 puts report_doc.to_s
 
                 # Sauvegarde des stocks pour l'année suivante
-                FileUtils.mkdir_p(File.dirname(stock_file))
-                File.write(stock_file, analyzer.stock_update_data.to_yaml)
+                analyzer.stock_update_data.save!(stock_file)
                 puts "💾 Fichier #{stock_file} mis à jour pour l'an prochain."
             end
         end

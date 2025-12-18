@@ -136,7 +136,7 @@ module LMNPCompta
 
                 # 3. Utilisation des stocks
                 ard_utilise = Montant.new(0)
-                stock_ard_dispo = Montant.new(@stock['stock_ard'].to_s)
+                stock_ard_dispo = @stock.ard
 
                 if resultat_fiscal_intermediaire > Montant.new(0) && stock_ard_dispo > Montant.new(0)
                     ard_utilise = [resultat_fiscal_intermediaire, stock_ard_dispo].min
@@ -144,7 +144,7 @@ module LMNPCompta
                 end
 
                 deficit_utilise = Montant.new(0)
-                stock_deficit_dispo = Montant.new(@stock['stock_deficit'].to_s)
+                stock_deficit_dispo = @stock.deficit
 
                 # Résultat Fiscal AVANT Imputation des Déficits (Box 352/354)
                 # Note : ARD utilisé est déduit AVANT le déficit.
@@ -182,10 +182,10 @@ module LMNPCompta
 
             def stock_update_data
                 analyze unless @analysis_result
-                {
-                    'stock_ard' => @nouveau_stock_ard.to_f,
-                    'stock_deficit' => @nouveau_stock_deficit.to_f
-                }
+                Stock.new({
+                    'ard' => @nouveau_stock_ard.to_f,
+                    'deficit' => @nouveau_stock_deficit.to_f
+                })
             end
 
             def generate_report
