@@ -32,7 +32,7 @@ module LMNPCompta
 
                 # --- Génération des A-Nouveaux ---
                 puts "Calcul des A-Nouveaux (Ouverture)..."
-                assets = File.exist?(immo_file) ? YAML.load_file(immo_file) : []
+                assets = Asset.load(immo_file)
                 opening = Fiscal::OpeningBalance.new(assets, annee)
 
                 an_entry = Entry.new(
