@@ -48,7 +48,8 @@ module LMNPCompta
         "BQ" => "Banque (Mouvements financiers)",
         "AC" => "Achats (Factures fournisseurs)",
         "VT" => "Ventes (Quittances de loyer)",
-        "OD" => "Opérations Diverses (Amortissements, régularisations)"
+        "OD" => "Opérations Diverses (Amortissements, régularisations)",
+        "AN" => "A Nouveaux (Opérations d'ouverture)"
     }
 
     def self.get_compte_lib(compte_num)
