@@ -147,8 +147,8 @@ class IntegrationTest < Minitest::Test
         # Create dummy stock file if not exists (handled by code but good to verify)
         LMNPCompta::Commands::Report.new([]).execute
 
-        assert File.exist?('data/2025/stock_fiscal.yaml'), "Stock file should be created/updated"
-        stock = LMNPCompta::Stock.load('data/2025/stock_fiscal.yaml')
+        assert File.exist?('data/2026/stock_fiscal.yaml'), "Stock file should be created/updated"
+        stock = LMNPCompta::Stock.load('data/2026/stock_fiscal.yaml')
         # Verify stock ARD/Deficit logic
         # Recettes: 515 + 981 = 1496.00
         # Charges: 15 + 30.50 = 45.50

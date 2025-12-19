@@ -19,6 +19,8 @@ module LMNPCompta
                 journal_file = settings.journal_file
                 immo_file = settings.immo_file
                 stock_file = settings.stock_file
+                new_stock_file = settings.stock_file(annee: settings.annee + 1)
+
                 annee = settings.annee
 
                 unless File.exist?(journal_file)
@@ -37,7 +39,7 @@ module LMNPCompta
                 puts report_doc.to_s
 
                 # Sauvegarde des stocks pour l'année suivante
-                analyzer.stock_update_data.save!(stock_file)
+                analyzer.stock_update_data.save!(new_stock_file)
                 puts "💾 Fichier #{stock_file} mis à jour pour l'an prochain."
             end
         end
