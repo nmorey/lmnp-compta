@@ -21,7 +21,7 @@ module LMNPCompta
                 journal_file = settings.journal_file
                 immo_file = settings.immo_file
 
-                output_file = "#{siren}FEC#{annee}1231.txt"
+                output_file = "#{settings.data_dir}/#{annee}/#{siren}FEC#{annee}1231.txt"
 
                 puts "Lecture du fichier #{journal_file}..."
                 unless File.exist?(journal_file)

@@ -163,7 +163,7 @@ class IntegrationTest < Minitest::Test
         # 5. Export FEC
         puts "\n--- Test: Export FEC ---"
         LMNPCompta::Commands::ExportFEC.new([]).execute
-        fec_filename = "123456789FEC20251231.txt"
+        fec_filename = "data/2025/123456789FEC20251231.txt"
         assert File.exist?(fec_filename), "FEC file should be created"
 
         content = File.read(fec_filename)
