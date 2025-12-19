@@ -14,7 +14,7 @@ class InitImmoTest < Minitest::Test
         Dir.chdir(TEST_DIR)
 
         # Default mock settings
-        File.write('lmnp.yaml', "immo_file: immobilisations.yaml\n")
+        File.write('lmnp.yaml', "data_dir: .\nimmo_file: immobilisations.yaml\n")
         LMNPCompta::Settings.load('lmnp.yaml')
     end
 
@@ -107,7 +107,7 @@ class InitImmoTest < Minitest::Test
     end
 
     def test_directory_creation
-        File.write('lmnp.yaml', "immo_file: subdir/immo.yaml\n")
+        File.write('lmnp.yaml', "data_dir: subdir\nimmo_file: immo.yaml\n")
         LMNPCompta::Settings.load('lmnp.yaml')
 
         args = ["--valeur", "100", "--date", "2025-01-01", "--nom", "DirTest"]

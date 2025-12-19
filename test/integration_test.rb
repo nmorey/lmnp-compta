@@ -55,8 +55,8 @@ class IntegrationTest < Minitest::Test
         args = ["-f", "airbnb.csv"]
         LMNPCompta::Commands::ImportAirbnb.new(args).execute
 
-        assert File.exist?('data/journal_2025.yaml'), "Journal file should be created"
-        journal = YAML.load_file('data/journal_2025.yaml')
+        assert File.exist?('data/2025/journal.yaml'), "Journal file should be created"
+        journal = YAML.load_file('data/2025/journal.yaml')
         assert_equal 2, journal.length, "Should have imported 2 entries"
         assert_equal "Airbnb - RESA001-01 (Période 05/01 - 04/01)", journal.first['libelle']
         # Check amount parsing (RESA001: 515.00 Brut, 15.00 Com, 500.00 Net)
@@ -86,7 +86,7 @@ class IntegrationTest < Minitest::Test
         ]
         LMNPCompta::Commands::AddEntry.new(args_add_entry).execute
 
-        journal = YAML.load_file('data/journal_2025.yaml')
+        journal = YAML.load_file('data/2025/journal.yaml')
         entry_copro = journal.find { |e| e['libelle'] == "Charges Copro (Appel 1/2025)" }
         assert entry_copro, "Copro entry should exist"
         assert_equal "2025-01-27", entry_copro['date']
@@ -110,7 +110,7 @@ class IntegrationTest < Minitest::Test
         puts "\n--- Test: Amortize ---"
         LMNPCompta::Commands::Amortize.new([]).execute
 
-        journal = YAML.load_file('data/journal_2025.yaml')
+        journal = YAML.load_file('data/2025/journal.yaml')
         entry_amort = journal.find { |e| e['ref'] == 'DOTA2025' }
         assert entry_amort, "Amortization entry should exist"
 
@@ -135,7 +135,7 @@ class IntegrationTest < Minitest::Test
 
         LMNPCompta::Commands::CloseYear.new([]).execute
 
-        journal = YAML.load_file('data/journal_2025.yaml')
+        journal = YAML.load_file('data/2025/journal.yaml')
         entry_close = journal.find { |e| e['ref'] == 'CLOTURE2025' }
         assert entry_close, "Closure entry should exist"
 
@@ -147,8 +147,8 @@ class IntegrationTest < Minitest::Test
         # Create dummy stock file if not exists (handled by code but good to verify)
         LMNPCompta::Commands::Report.new([]).execute
 
-        assert File.exist?('data/stock_fiscal.yaml'), "Stock file should be created/updated"
-        stock = LMNPCompta::Stock.load('data/stock_fiscal.yaml')
+        assert File.exist?('data/2025/stock_fiscal.yaml'), "Stock file should be created/updated"
+        stock = LMNPCompta::Stock.load('data/2025/stock_fiscal.yaml')
         # Verify stock ARD/Deficit logic
         # Recettes: 515 + 981 = 1496.00
         # Charges: 15 + 30.50 = 45.50

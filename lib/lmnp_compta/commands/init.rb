@@ -1,6 +1,7 @@
 require 'lmnp_compta/command'
 require 'yaml'
 require 'optparse'
+require 'fileutils'
 
 module LMNPCompta
     module Commands
@@ -15,9 +16,10 @@ module LMNPCompta
                     opts.on("--siren SIREN", "Votre numéro SIREN (Obligatoire)") { |v| options[:siren] = v }
                     opts.on("--annee ANNEE", Integer, "Année fiscale (Obligatoire)") { |v| options[:annee] = v }
 
-                    opts.on("--journal FILE", "Chemin du fichier journal") { |v| options[:journal_file] = v }
-                    opts.on("--stock FILE", "Chemin du fichier stock") { |v| options[:stock_file] = v }
-                    opts.on("--immo FILE", "Chemin du fichier immobilisations") { |v| options[:immo_file] = v }
+                    opts.on("--data-dir DIR", "Chemin du dossier de données (default: data)") { |v| options[:data_dir] = v }
+                    opts.on("--journal FILE", "Nom du fichier journal (default: journal.yaml)") { |v| options[:journal_file] = v }
+                    opts.on("--stock FILE", "Nom du fichier stock (default: stock_fiscal.yaml)") { |v| options[:stock_file] = v }
+                    opts.on("--immo FILE", "Nom du fichier immobilisations (default: immobilisations.yaml)") { |v| options[:immo_file] = v }
                     opts.on("-f", "--force", "Écraser le fichier existant") { options[:force] = true }
                 end
                 parser.parse!(@args)
@@ -29,12 +31,14 @@ module LMNPCompta
                 end
 
                 # Valeurs par défaut auto-calculées
+                data_dir = options[:data_dir] || "data"
                 config = {
                     'siren' => options[:siren],
                     'annee' => options[:annee],
-                    'journal_file' => options[:journal_file] || "data/journal_#{options[:annee]}.yaml",
-                    'stock_file' => options[:stock_file] || "data/stock_fiscal.yaml",
-                    'immo_file' => options[:immo_file] || "data/immobilisations.yaml"
+                    'data_dir' => data_dir,
+                    'journal_file' => options[:journal_file] || "journal.yaml",
+                    'stock_file' => options[:stock_file] || "stock_fiscal.yaml",
+                    'immo_file' => options[:immo_file] || "immobilisations.yaml"
                 }
 
                 if File.exist?('lmnp.yaml') && !options[:force]
@@ -46,8 +50,8 @@ module LMNPCompta
                 puts "✅ Configuration sauvegardée dans 'lmnp.yaml'"
 
                 # Création du dossier de données
-                Dir.mkdir('data') unless Dir.exist?('data')
-                puts "📂 Dossier 'data/' vérifié."
+                FileUtils.mkdir_p(File.join(data_dir, options[:annee].to_s))
+                puts "📂 Dossier '#{data_dir}/#{options[:annee]}/' vérifié."
             end
         end
     end

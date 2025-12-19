@@ -108,17 +108,18 @@ Le fichier `lmnp.yaml` contient la configuration :
 ```yaml
 siren: "952310852"
 annee: 2025
-journal_file: "data/journal_2025.yaml"
-stock_file: "data/stock_fiscal.yaml"
-immo_file: "data/immobilisations.yaml"
+data_dir: "data"
+journal_file: "journal.yaml"
+stock_file: "stock_fiscal.yaml"
+immo_file: "immobilisations.yaml"
 extra_invoice_dir: "my_parsers/" # Optionnel
 ```
 
 ## Structure des données
 
-*   **Journal** (`data/journal_YYYY.yaml`) : Toutes les écritures comptables.
+*   **Journal** (`data/YYYY/journal.yaml`) : Toutes les écritures comptables.
 *   **Immobilisations** (`data/immobilisations.yaml`) : Liste des biens et composants amortissables.
-*   **Stock** (`data/stock_fiscal.yaml`) : Suivi des déficits reportables et ARD.
+*   **Stock** (`data/YYYY/stock_fiscal.yaml`) : Suivi des déficits reportables et ARD.
 
 ## Autocomplétion Bash
 

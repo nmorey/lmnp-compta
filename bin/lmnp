@@ -16,7 +16,7 @@ LMNPCompta.load_external_parsers
 # Check if config file exists, otherwise warn
 unless File.exist?('lmnp.yaml')
     puts "⚠️  Warning: 'lmnp.yaml' not found. Using default values."
-    puts "   You should create a 'lmnp.yaml' file with: siren, annee, journal_file, stock_file, immo_file."
+    puts "   You should create a 'lmnp.yaml' file with: siren, annee, data_dir, journal_file, stock_file, immo_file."
 end
 
 # Auto-load all commands
