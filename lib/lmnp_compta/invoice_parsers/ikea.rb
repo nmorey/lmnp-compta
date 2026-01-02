@@ -7,7 +7,6 @@ module LMNPCompta
       end
 
       def extract_date
-        # "Date de facture: 30/12/2025"
         if content.match(/Date de facture\s*:\s*(\d{2}\/\d{2}\/\d{4})/i)
           return Date.strptime($1, "%d/%m/%Y")
         end
@@ -15,7 +14,6 @@ module LMNPCompta
       end
 
       def extract_amount
-        # "Montant de la facture: 59,40 €"
         if content.match(/Montant de la facture\s*:\s*([\d,]+)\s*€/i)
           return clean_amount($1)
         end
@@ -23,16 +21,18 @@ module LMNPCompta
         scan_first_amount
       end
 
-      def extract_ref
-        # "Numéro de facture: FRINV26000001449702"
+      def extract_internal_ref
         if content.match(/Numéro de facture\s*:\s*([A-Z0-9]+)/i)
           return $1
         end
-        "IKEA-#{extract_date.strftime('%Y%m%d')}"
+        raise ParsingError, "Référence facture Ikea introuvable"
+      end
+      def extract_ref
+        "IKEA-#{extract_date.strftime('%Y%m%d')}-#{extract_internal_ref}"
       end
 
       def extract_label
-        "Achat Ikea #{extract_ref}"
+        "Achat Ikea #{extract_internal_ref}"
       end
 
       def charge_account

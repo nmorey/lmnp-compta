@@ -30,7 +30,7 @@ class IkeaParserTest < Minitest::Test
 
         data = parser.parse.first
         assert_equal Date.new(2025, 12, 30), data[:date]
-        assert_equal "FRINV26000001449702", data[:ref]
+        assert_equal "IKEA-20251230-FRINV26000001449702", data[:ref]
         assert_equal "59.40", data[:montant].to_s
         assert_equal "Achat Ikea FRINV26000001449702", data[:libelle]
         assert_equal "606300", data[:compte_charge]
