@@ -7,7 +7,13 @@ Outil en ligne de commande (CLI) pour gérer une comptabilité LMNP (Loueur Meub
 
 *   Saisie d'écritures comptables (manuel ou interactif).
 *   Import automatique des transactions Airbnb (CSV).
-*   Analyse de factures PDF (OCR/Text extraction) pour suggérer des écritures (EDF, Sosh, Copro, Amazon, Entrepôt du Bricolage, etc.).
+*   Analyse de factures PDF (OCR/Text extraction) pour suggérer des écritures
+  * EDF
+  * Sosh
+  * Copro
+  * Amazon
+  * Entrepôt du Bricolage
+  * Ikea
 *   Gestion des amortissements (calcul et génération des écritures de dotation).
 *   Calcul et suivi des déficits et ARD (Amortissements Réputés Différés).
 *   Génération des liasses fiscales (Aide au remplissage 2033 A/B/C/D).
