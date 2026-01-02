@@ -76,6 +76,14 @@ module LMNPCompta
             balance.zero?
         end
 
+        def total_debit
+            @lines.sum { |l| l[:debit] }
+        end
+
+        def total_credit
+            @lines.sum { |l| l[:credit] }
+        end
+
         # Vérifie si l'écriture est valide (pas d'erreur, lignes présentes, équilibrée)
         # @return [Boolean] true si valide
         def valid?

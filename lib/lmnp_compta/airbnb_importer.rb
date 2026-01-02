@@ -81,16 +81,39 @@ module LMNPCompta
                         next
                     end
 
-                    if is_duplicate?(code, date_virement)
-                        next
-                    end
+                    full_ref = "#{code}-#{counter.to_s.rjust(2, '0')}"
+                    entry = create_entry(full_ref, date_virement, row, start_str, end_str)
 
-                    entry = create_entry(code + "-#{counter.to_s.rjust(2, '0')}",
-                                         date_virement, row, start_str, end_str)
-                    @new_entries << entry
+                    if (existing = find_duplicate(full_ref))
+                        if entries_match?(existing, entry)
+                            puts "⚠️  Transaction déjà présente : #{full_ref} (Ignorée)"
+                        else
+                            raise "Erreur conflit : La transaction #{full_ref} existe déjà mais diffère (Date: #{existing.date} vs #{entry.date}, Montant: #{existing.lines.first[:credit]} vs #{entry.lines.first[:credit]})"
+                        end
+                    else
+                        @new_entries << entry
+                    end
                     counter+=1
                 end
             end
+        end
+
+        def find_duplicate(ref)
+            @journal.entries.find { |e| e.ref == ref } ||
+            @new_entries.find { |e| e.ref == ref }
+        end
+
+        def entries_match?(existing, new_entry)
+            # Compare Date
+            return false unless existing.date.to_s == new_entry.date.to_s
+
+            # Compare Amounts (Total Credit of first line usually holds the gross revenue)
+            # Or better, compare equality of amounts in lines.
+            # Simplified: Check if total debit and total credit match
+            return false unless existing.total_debit == new_entry.total_debit
+            return false unless existing.total_credit == new_entry.total_credit
+
+            true
         end
 
         def create_entry(code, date_virement, row, start_str, end_str)
@@ -118,13 +141,6 @@ module LMNPCompta
             end
 
             entry
-        end
-
-        def is_duplicate?(code, date_virement)
-            # Vérifie dans le journal existant
-            @journal.entries.any? { |e| e.ref == code && e.date == date_virement.to_s } ||
-                # Vérifie dans les nouvelles entrées (pour éviter les doublons au sein d'un même import)
-                @new_entries.any? { |e| e.ref == code && e.date == date_virement.to_s }
         end
 
         def parse_french_amount(str)
