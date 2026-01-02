@@ -7,7 +7,7 @@ module LMNPCompta
       end
 
       def extract_date
-        if content.match(/Date de la facture\/Date de la livraison\s*(\d{2}\.\d{2}\.\d{4})/i)
+        if content.match(/Date de la commande\s*(\d{2}\.\d{2}\.\d{4})/i)
           return Date.strptime($1, "%d.%m.%Y")
         end
         scan_first_valid_date

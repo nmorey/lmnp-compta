@@ -12,7 +12,7 @@ class NewParsersTest < Minitest::Test
             Facture
             Payé
             Vendu par Amazon EU S.à r.l., UK Branch
-            Date de la facture/Date de la livraison 23.12.2025
+            Date de la commande 23.12.2025
             Numéro de la facture FR52NMLVAEUD
             Total à payer 32,96 €
             TVA déclarée par Amazon EU S.a.r.L.
