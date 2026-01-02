@@ -55,6 +55,10 @@ Si le format du PDF n'est pas reconnu :
 ```bash
 lmnp importer-airbnb -f listings.csv
 ```
+Utilisez l'option `--dry-run` pour simuler l'import sans sauvegarder les écritures (utile pour vérifier les doublons) :
+```bash
+lmnp importer-airbnb -f listings.csv --dry-run
+```
 
 **Saisie manuelle :**
 ```bash

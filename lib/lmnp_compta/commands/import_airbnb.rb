@@ -13,6 +13,7 @@ module LMNPCompta
                 OptionParser.new do |opts|
                     opts.banner = "Usage: lmnp importer-airbnb [options]"
                     opts.on("-f", "--file FICHER", "Chemin vers le fichier CSV Airbnb") { |f| options[:file] = f }
+                    opts.on("--dry-run", "Simuler l'import sans sauvegarder") { options[:dry_run] = true }
                 end.parse!(@args)
 
                 if options[:file].nil? || !File.exist?(options[:file])
@@ -29,6 +30,24 @@ module LMNPCompta
 
                 importer = AirbnbImporter.new(options[:file], journal)
                 new_entries = importer.import
+
+                if options[:dry_run]
+                    puts "\n🔎 DRY RUN : Simulation de l'importation."
+                    if new_entries.any?
+                        puts "Les #{new_entries.length} écritures suivantes seraient ajoutées :"
+                        new_entries.each do |e|
+                            puts "   [#{e.date}] #{e.libelle} (Ref: #{e.ref}) - Net: #{e.balance} € (Solde)"
+                            e.lines.each do |l|
+                                amount = l[:debit] > Montant.new(0) ? "D: #{l[:debit]} €" : "C: #{l[:credit]} €"
+                                puts "      -> #{l[:compte]} : #{amount} (#{l[:libelle_ligne] || '?'})"
+                            end
+                        end
+                    else
+                        puts "Aucune nouvelle écriture détectée."
+                    end
+                    puts "\n🚫 Aucune modification n'a été enregistrée (Mode Dry Run)."
+                    return
+                end
 
                 puts "\n✅ Importation terminée. #{new_entries.length} écritures générées."
 
