@@ -29,6 +29,23 @@ class NewParsersTest < Minitest::Test
         assert_equal "606300", data[:compte_charge]
     end
 
+    def test_amazon_parser_with_text_month
+        text = <<~TXT
+            amazon.fr
+            Facture
+            Date de la commande 23 décembre 2025
+            Numéro de la facture FR52NMLVAEUD
+            Total à payer 32,96 €
+        TXT
+
+        parser = LMNPCompta::InvoiceParser::Factory.build(nil, text)
+        assert_instance_of LMNPCompta::InvoiceParser::Amazon, parser
+
+        data = parser.parse.first
+        assert_equal Date.new(2025, 12, 23), data[:date]
+        assert_equal "32.96", data[:montant].to_s
+    end
+
     def test_entrepot_bricolage_parser
         text = <<~TXT
             L'ENTREPÔT DU BRICOLAGE

@@ -7,9 +7,15 @@ module LMNPCompta
       end
 
       def extract_date
-        if content.match(/Date de la commande\s*(\d{2}\.\d{2}\.\d{4})/i)
-          return Date.strptime($1, "%d.%m.%Y")
+        # Support "23.12.2025" or "23 décembre 2025"
+        if content.match(/(?:Date de la commande|Date de la facture\/Date de la livraison)\s*(\d{1,2}[\. ]\d{2}[\. ]\d{4})/i)
+          return Date.strptime($1.gsub(' ', '.'), "%d.%m.%Y")
         end
+
+        if content.match(/(?:Date de la commande|Date de la facture\/Date de la livraison)\s*(\d{1,2}\s+[a-zéû]+\s+\d{4})/i)
+          return parse_french_date_text($1)
+        end
+
         scan_first_valid_date
       end
 
