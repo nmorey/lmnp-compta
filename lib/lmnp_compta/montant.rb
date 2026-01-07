@@ -120,5 +120,64 @@ module LMNPCompta
             obj.instance_variable_set(:@cents, cents.to_i)
             obj
         end
+
+        def round
+            RoundedMontant.new((to_f).round)
+        end
+    end
+
+    class RoundedMontant
+        include Comparable
+        attr_reader :value
+
+        def initialize(value)
+            @value = value.to_i
+        end
+
+        def +(other)
+            check_type(other)
+            RoundedMontant.new(@value + other.value)
+        end
+
+        def -(other)
+            check_type(other)
+            RoundedMontant.new(@value - other.value)
+        end
+
+        def -@
+            RoundedMontant.new(-@value)
+        end
+
+        def <=>(other)
+            return nil unless other.is_a?(RoundedMontant)
+            @value <=> other.value
+        end
+
+        def zero?
+            @value.zero?
+        end
+
+        def abs
+            RoundedMontant.new(@value.abs)
+        end
+
+        def to_s
+            @value.to_s
+        end
+
+        def rjust(len, padstr=' ')
+            to_s.rjust(len, padstr)
+        end
+
+        private
+
+        def check_type(other)
+            if other.is_a?(Montant)
+                raise ArgumentError, "Cannot mix RoundedMontant and Montant. Round the Montant first."
+            end
+            unless other.is_a?(RoundedMontant)
+                raise ArgumentError, "Expected RoundedMontant, got #{other.class}"
+            end
+        end
     end
 end

@@ -196,20 +196,24 @@ module LMNPCompta
                 form_a = Reporting::Form.new("FORMULAIRE 2033-A (Bilan Actif / Passif)")
 
                 actif = Reporting::Section.new("ACTIF")
-                val_immo_brut = immo_brut
-                val_amort_cumules = amort_cumules
+                val_immo_brut = immo_brut.round
+                val_amort_cumules = amort_cumules.round
                 actif.add_box("028", "Immobilisations Corporelles (Brut)", val_immo_brut)
                 actif.add_box("030", "Amortissements corporelles (à déduire)", val_amort_cumules)
 
                 val_immo_net = val_immo_brut - val_amort_cumules
                 actif.add_box("032", "Immobilisations Corporelles (Net)", val_immo_net)
 
-                actif.add_box("084", "Trésorerie & Disponibilités (Banque)", tresorerie)
-                actif.add_box("068", "Créances clients et comptes rattachés", @creances_clients) if @creances_clients > Montant.new(0)
-                actif.add_box("072", "Autres créances (TVA, État...)", @autres_creances) if @autres_creances > Montant.new(0)
+                tresorerie_r = tresorerie.round
+                creances_clients_r = @creances_clients.round
+                autres_creances_r = @autres_creances.round
 
-                total_actif_brut = val_immo_brut + tresorerie + @creances_clients + @autres_creances
-                total_actif_net = val_immo_net + tresorerie + @creances_clients + @autres_creances
+                actif.add_box("084", "Trésorerie & Disponibilités (Banque)", tresorerie_r)
+                actif.add_box("068", "Créances clients et comptes rattachés", creances_clients_r) if @creances_clients > Montant.new(0)
+                actif.add_box("072", "Autres créances (TVA, État...)", autres_creances_r) if @autres_creances > Montant.new(0)
+
+                total_actif_brut = val_immo_brut + tresorerie_r + creances_clients_r + autres_creances_r
+                total_actif_net = val_immo_net + tresorerie_r + creances_clients_r + autres_creances_r
 
                 actif.add_text("--- TOTAUX ACTIF ---")
                 actif.add_box("110", "Total Général ACTIF (Brut)", total_actif_brut)
@@ -220,24 +224,31 @@ module LMNPCompta
 
                 # Capital
                 mouv_expl = sum_prefix('108')
-                passif.add_text("  > Capital Initial (Au 01/01) .... : #{@opening.capital_start.rjust(10)} €")
-                passif.add_text("  > Apports / Retraits (108) ...... : -#{mouv_expl.rjust(10)} €")
-                passif.add_box("120", "Capital & Report à nouveau", capital)
+                passif.add_text("  > Capital Initial (Au 01/01) .... : #{@opening.capital_start.round.rjust(10)} €")
+                passif.add_text("  > Apports / Retraits (108) ...... : -#{mouv_expl.round.rjust(10)} €")
+
+                capital_r = capital.round
+                passif.add_box("120", "Capital & Report à nouveau", capital_r)
 
                 # Résultat
-                rc = resultat_comptable
+                rc = resultat_comptable.round
                 passif.add_box("136", "Résultat de l'exercice (Bénéfice ou Perte)", rc)
 
-                total_capitaux = capital + rc
+                total_capitaux = capital_r + rc
                 passif.add_box("142", "Total Capitaux Propres", total_capitaux)
 
                 # Dettes
-                passif.add_box("156", "Emprunts et dettes assimilées", emprunts)
-                passif.add_box("166", "Fournisseurs et comptes rattachés", @dettes_fournisseurs) if @dettes_fournisseurs > Montant.new(0)
-                passif.add_box("169", "Dettes fiscales et sociales", @dettes_fiscales_sociales) if @dettes_fiscales_sociales > Montant.new(0)
-                passif.add_box("172", "Autres dettes", @autres_dettes) if @autres_dettes > Montant.new(0)
+                emprunts_r = emprunts.round
+                dettes_fournisseurs_r = @dettes_fournisseurs.round
+                dettes_fiscales_sociales_r = @dettes_fiscales_sociales.round
+                autres_dettes_r = @autres_dettes.round
 
-                total_dettes = emprunts + @dettes_fournisseurs + @dettes_fiscales_sociales + @autres_dettes
+                passif.add_box("156", "Emprunts et dettes assimilées", emprunts_r)
+                passif.add_box("166", "Fournisseurs et comptes rattachés", dettes_fournisseurs_r) if @dettes_fournisseurs > Montant.new(0)
+                passif.add_box("169", "Dettes fiscales et sociales", dettes_fiscales_sociales_r) if @dettes_fiscales_sociales > Montant.new(0)
+                passif.add_box("172", "Autres dettes", autres_dettes_r) if @autres_dettes > Montant.new(0)
+
+                total_dettes = emprunts_r + dettes_fournisseurs_r + dettes_fiscales_sociales_r + autres_dettes_r
                 total_passif = total_capitaux + total_dettes
 
                 passif.add_text("--- TOTAUX PASSIF ---")
@@ -249,14 +260,14 @@ module LMNPCompta
                 form_b = Reporting::Form.new("FORMULAIRE 2033-B (Compte de résultat)")
                 res = Reporting::Section.new("A. RÉSULTAT COMPTABLE")
 
-                ca = chiffre_affaires
+                ca = chiffre_affaires.round
                 res.add_box("218", "Chiffre d'affaires (Loyers)", ca)
                 res.add_box("232", "Total produits d'exploitation hors TVA", ca)
 
-                achats = achats_matieres
-                ext = autres_charges_externes
-                imp = impots_taxes
-                dot = dotations
+                achats = achats_matieres.round
+                ext = autres_charges_externes.round
+                imp = impots_taxes.round
+                dot = dotations.round
 
                 res.add_box("238", "Achats de matières/approvisionnements", achats)
                 res.add_box("242", "Autres charges externes", ext)
@@ -269,9 +280,10 @@ module LMNPCompta
                 res_exploit = ca - total_charges_exploit
                 res.add_box("270", "Résultat d'exploitation", res_exploit)
 
-                res.add_box("294", "Charges financières (Intérêts)", charges_fi)
+                charges_fi_r = charges_fi.round
+                res.add_box("294", "Charges financières (Intérêts)", charges_fi_r)
 
-                if rc >= Montant.new(0)
+                if rc >= RoundedMontant.new(0)
                     res.add_box("310", "RÉSULTAT COMPTABLE (Bénéfice)", rc)
                     # Report à la section B
                     fiscal = Reporting::Section.new("B. RÉSULTAT FISCAL")
@@ -287,28 +299,28 @@ module LMNPCompta
                 # Suite Section Fiscale
 
                 # Réintégrations
-                reint = result[:ard_cree]
-                fiscal.add_box("318", "Réintégrations (Amort. excédentaires / ARD créés)", reint) if reint > Montant.new(0)
+                reint = result[:ard_cree].round
+                fiscal.add_box("318", "Réintégrations (Amort. excédentaires / ARD créés)", reint) if reint > RoundedMontant.new(0)
 
                 # Déductions
-                deduc = result[:ard_utilise]
-                fiscal.add_box("350", "Déductions (Divers / ARD utilisés)", deduc) if deduc > Montant.new(0)
+                deduc = result[:ard_utilise].round
+                fiscal.add_box("350", "Déductions (Divers / ARD utilisés)", deduc) if deduc > RoundedMontant.new(0)
 
                 # Résultat avant déficit
-                res_avant_def = result[:resultat_avant_deficit]
-                if res_avant_def >= Montant.new(0)
+                res_avant_def = result[:resultat_avant_deficit].round
+                if res_avant_def >= RoundedMontant.new(0)
                     fiscal.add_box("352", "Résultat fiscal avant imputation déficits (Bénéfice)", res_avant_def)
                 else
                     fiscal.add_box("354", "Résultat fiscal avant imputation déficits (Déficit)", res_avant_def.abs)
                 end
 
                 # Déficit imputé
-                def_imp = result[:deficit_utilise]
-                fiscal.add_box("360", "Déficits antérieurs imputés", def_imp) if def_imp > Montant.new(0)
+                def_imp = result[:deficit_utilise].round
+                fiscal.add_box("360", "Déficits antérieurs imputés", def_imp) if def_imp > RoundedMontant.new(0)
 
                 # Final
-                final_val = result[:resultat_fiscal]
-                if final_val >= Montant.new(0)
+                final_val = result[:resultat_fiscal].round
+                if final_val >= RoundedMontant.new(0)
                     fiscal.add_box("370", "BÉNÉFICE FISCAL FINAL", final_val)
                 else
                     fiscal.add_box("372", "DÉFICIT FISCAL FINAL", final_val.abs)
@@ -326,18 +338,18 @@ module LMNPCompta
                 form_d = Reporting::Form.new("FORMULAIRE 2033-D (Suivi des Déficits)")
 
                 s_def = Reporting::Section.new("II. Suivi des Déficits")
-                s_def.add_box("982", "Déficits reportables au début de l'exercice", result[:stock_deficit_debut])
-                s_def.add_box("983", "Déficits imputés sur le résultat (Box 360)", result[:deficit_utilise])
+                s_def.add_box("982", "Déficits reportables au début de l'exercice", result[:stock_deficit_debut].round)
+                s_def.add_box("983", "Déficits imputés sur le résultat (Box 360)", result[:deficit_utilise].round)
                 if result[:deficit_cree] > Montant.new(0)
-                     s_def.add_box("860", "Déficits de l'exercice (Si Box 354)", result[:deficit_cree])
+                     s_def.add_box("860", "Déficits de l'exercice (Si Box 354)", result[:deficit_cree].round)
                 end
-                s_def.add_box("984", "Déficits reportables en fin d'exercice", result[:stock_deficit_fin])
+                s_def.add_box("984", "Déficits reportables en fin d'exercice", result[:stock_deficit_fin].round)
                 form_d.add_section(s_def)
 
                 # Divers (Box 399)
                 s_div = Reporting::Section.new("III. DIVERS")
                 if mouv_expl > Montant.new(0)
-                    s_div.add_box("399", "Montant des prélèvements personnels", mouv_expl)
+                    s_div.add_box("399", "Montant des prélèvements personnels", mouv_expl.round)
                 end
                 form_d.add_section(s_div)
 
@@ -346,10 +358,10 @@ module LMNPCompta
                 # --- ANNEXE ARD ---
                 form_ard = Reporting::Form.new("ANNEXE - SUIVI DES ARD (Hors Liasse)")
                 s_ard = Reporting::Section.new("Stocks d'Amortissements Réputés Différés")
-                s_ard.add_info("Stock ARD début exercice", result[:stock_ard_debut])
-                s_ard.add_info("+ ARD créé (Box 318)", result[:ard_cree])
-                s_ard.add_info("- ARD utilisé (Box 350)", result[:ard_utilise])
-                s_ard.add_info("= STOCK ARD FIN D'EXERCICE", result[:stock_ard_fin], "<-- À conserver pour l'an prochain")
+                s_ard.add_info("Stock ARD début exercice", result[:stock_ard_debut].round)
+                s_ard.add_info("+ ARD créé (Box 318)", result[:ard_cree].round)
+                s_ard.add_info("- ARD utilisé (Box 350)", result[:ard_utilise].round)
+                s_ard.add_info("= STOCK ARD FIN D'EXERCICE", result[:stock_ard_fin].round, "<-- À conserver pour l'an prochain")
                 form_ard.add_section(s_ard)
                 doc.add_form(form_ard)
 
@@ -445,21 +457,25 @@ module LMNPCompta
                 end
 
                 # Totalization variables
-                total_brut_debut = Montant.new(0)
-                total_brut_fin = Montant.new(0)
+                total_brut_debut = RoundedMontant.new(0)
+                total_brut_fin = RoundedMontant.new(0)
 
                 cadre_i = Reporting::Section.new("I - IMMOBILISATIONS (Valeur Brute)")
                 data_c.each do |k, v|
                     next if v[:brute_start] == Montant.new(0) && v[:brute_aug] == Montant.new(0)
-                    brute_fin = v[:brute_start] + v[:brute_aug]
 
-                    total_brut_debut += v[:brute_start]
-                    total_brut_fin += brute_fin
+                    # Rounding
+                    brute_start_r = v[:brute_start].round
+                    brute_aug_r = v[:brute_aug].round
+                    brute_fin_r = brute_start_r + brute_aug_r
+
+                    total_brut_debut += brute_start_r
+                    total_brut_fin += brute_fin_r
 
                     cadre_i.add_text("--- #{v[:label]} ---")
-                    cadre_i.add_box(v[:codes][0], "Valeur brute début", v[:brute_start])
-                    cadre_i.add_box(v[:codes][1], "Augmentations", v[:brute_aug]) if v[:brute_aug] > Montant.new(0)
-                    cadre_i.add_box(v[:codes][2], "Valeur brute fin", brute_fin)
+                    cadre_i.add_box(v[:codes][0], "Valeur brute début", brute_start_r)
+                    cadre_i.add_box(v[:codes][1], "Augmentations", brute_aug_r) if brute_aug_r > RoundedMontant.new(0)
+                    cadre_i.add_box(v[:codes][2], "Valeur brute fin", brute_fin_r)
                 end
 
                 cadre_i.add_text("--- TOTAUX ---")
@@ -469,18 +485,23 @@ module LMNPCompta
                 form_c.add_section(cadre_i)
 
                 cadre_ii = Reporting::Section.new("II - AMORTISSEMENTS")
-                total_amort_start = Montant.new(0)
-                total_dotation = Montant.new(0)
+                total_amort_start = RoundedMontant.new(0)
+                total_dotation = RoundedMontant.new(0)
 
                 data_c.each do |k, v|
                     next if v[:amort_start] == Montant.new(0) && v[:dotation] == Montant.new(0)
-                    amort_fin = v[:amort_start] + v[:dotation]
-                    total_amort_start += v[:amort_start]
-                    total_dotation += v[:dotation]
+
+                    amort_start_r = v[:amort_start].round
+                    dotation_r = v[:dotation].round
+                    amort_fin_r = amort_start_r + dotation_r
+
+                    total_amort_start += amort_start_r
+                    total_dotation += dotation_r
+
                     cadre_ii.add_text("--- #{v[:label]} ---")
-                    cadre_ii.add_box(v[:codes][3], "Amortissements début", v[:amort_start])
-                    cadre_ii.add_box(v[:codes][4], "Dotations", v[:dotation])
-                    cadre_ii.add_box(v[:codes][5], "Amortissements fin", amort_fin)
+                    cadre_ii.add_box(v[:codes][3], "Amortissements début", amort_start_r)
+                    cadre_ii.add_box(v[:codes][4], "Dotations", dotation_r)
+                    cadre_ii.add_box(v[:codes][5], "Amortissements fin", amort_fin_r)
                 end
 
                 cadre_ii.add_text("--- TOTAL ---")

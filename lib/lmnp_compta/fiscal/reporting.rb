@@ -1,3 +1,5 @@
+require_relative '../montant'
+
 module LMNPCompta
   module Fiscal
     module Reporting
@@ -11,6 +13,9 @@ module LMNPCompta
         attr_reader :code, :label, :value
 
         def initialize(code, label, value)
+          unless value.is_a?(LMNPCompta::RoundedMontant)
+            raise ArgumentError, "Box value must be a RoundedMontant, got #{value.class}"
+          end
           @code = code
           @label = label
           @value = value
@@ -25,6 +30,9 @@ module LMNPCompta
 
       class InfoLine < Component
         def initialize(label, value, comment = nil)
+          unless value.is_a?(LMNPCompta::RoundedMontant)
+            raise ArgumentError, "InfoLine value must be a RoundedMontant, got #{value.class}"
+          end
           @label = label
           @value = value
           @comment = comment
