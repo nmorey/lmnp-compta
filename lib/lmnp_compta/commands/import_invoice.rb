@@ -4,6 +4,7 @@ require 'lmnp_compta/entry'
 require 'optparse'
 require 'open3'
 require 'yaml'
+require 'lmnp_compta/asset'
 
 module LMNPCompta
     module Commands
@@ -15,6 +16,8 @@ module LMNPCompta
                 parser = OptionParser.new do |opts|
                     opts.banner = "Usage: lmnp importer-facture [options] <fichier_pdf>..."
                     opts.on("-t", "--type TYPE", "Forcer le type") { |t| options[:type] = t.downcase.to_sym }
+                    opts.on("--amortize-duration N", Integer, "Durée d'amortissement automatique (années)") { |n| options[:amortize_duration] = n }
+                    opts.on("--no-amortize", "Ne pas proposer l'amortissement") { options[:no_amortize] = true }
                 end
                 parser.parse!(@args)
 
@@ -62,7 +65,7 @@ module LMNPCompta
                 parser = InvoiceParser::Factory.build(options[:type], content)
 
                 unless parser
-                    handle_unrecognized_file(file_path, entries_list)
+                    handle_unrecognized_file(file_path, entries_list, options)
                     return
                 end
 
@@ -91,6 +94,11 @@ module LMNPCompta
                             ref: data[:ref]
                         )
 
+                        # Auto-Amortization Logic for Invoice > 600€
+                        if !options[:no_amortize] && data[:montant] >= Montant.new(600)
+                             apply_amortization_logic(data, file_path, options)
+                        end
+
                         entry.add_debit(data[:compte_charge], data[:montant])
                         entry.add_credit(data[:compte_banque], data[:montant])
 
@@ -102,10 +110,10 @@ module LMNPCompta
                 end
             end
 
-            def handle_unrecognized_file(file_path, entries_list)
+            def handle_unrecognized_file(file_path, entries_list, options)
                 yaml_path = "#{file_path}.yaml"
                 if File.exist?(yaml_path)
-                     load_yaml_entry(yaml_path, file_path, entries_list)
+                     load_yaml_entry(yaml_path, file_path, entries_list, options)
                 else
                      create_yaml_template(file_path)
                      entry = LMNPCompta::Entry.new(
@@ -117,7 +125,7 @@ module LMNPCompta
                 end
             end
 
-            def load_yaml_entry(yaml_path, original_file_path, entries_list)
+            def load_yaml_entry(yaml_path, original_file_path, entries_list, options)
                  data = YAML.load_file(yaml_path)
                  datas = data.is_a?(Array) ? data : [data]
 
@@ -125,6 +133,34 @@ module LMNPCompta
                     begin
                         validate_yaml_entry!(d)
                         d['file'] ||= File.basename(original_file_path)
+
+                        # Handle YAML explicit amortization
+                        if d['amortize']
+                             # Construct a data-like hash to reuse logic, or handle directly
+                             # We need 'montant' from lines... identifying the charge line can be tricky if multiple.
+                             # Assuming standard structure:
+                             charge_line = d['lignes'].find { |l| l['debit'] }
+                             if charge_line
+                                 amt = Montant.new(charge_line['debit'])
+                                 fake_data = {
+                                     libelle: d['nom_actif'] || d['libelle'],
+                                     montant: amt,
+                                     date: d['date'] # String or Date
+                                 }
+
+                                 # Override options with YAML fields
+                                 local_opts = options.dup
+                                 local_opts[:amortize_duration] = d['duree_amortissement'] if d['duree_amortissement']
+                                 local_opts[:force_amortize] = true # Signal to proceed without prompt if needed
+
+                                 # We need to update existing asset file
+                                 create_asset_entry(fake_data, original_file_path, local_opts)
+
+                                 # Force account to 218400
+                                 charge_line['compte'] = '218400'
+                             end
+                        end
+
                         entry = Entry.new(d)
                         add_or_merge_entry(entries_list, entry)
                     rescue StandardError => e
@@ -157,6 +193,75 @@ module LMNPCompta
                 unless d['lignes'].any? { |l| l['compte'].to_s == '512000' && l['credit'] }
                     raise "Le compte 512000 doit être présent au CRÉDIT (Paiement facture)."
                 end
+            end
+
+            def apply_amortization_logic(data, file_path, options)
+                return if options[:no_amortize]
+
+                duration = options[:amortize_duration]
+
+                unless duration || options[:force_amortize]
+                     puts "\n---------------------------------------------------"
+                     puts "Facture importante détectée : #{File.basename(file_path)}"
+                     puts "Montant : #{data[:montant]} €"
+                     print "Voulez-vous amortir cette dépense (création d'immobilisation) ? [O/n] "
+                     resp = $stdin.gets.chomp.downcase
+                     return if resp == 'n'
+                end
+
+                create_asset_entry(data, file_path, options)
+
+                # Update account to Asset account
+                data[:compte_charge] = '218400'
+            end
+
+            def create_asset_entry(data, file_path, options)
+                 immo_file = Settings.instance.immo_file
+                 FileUtils.mkdir_p(File.dirname(immo_file))
+
+                 existing_assets = File.exist?(immo_file) ? YAML.load_file(immo_file) : []
+                 existing_assets ||= []
+
+                 # Gather details
+                 asset_name = data[:libelle]
+                 duration = options[:amortize_duration]
+
+                 unless duration
+                      print "Durée d'amortissement (années) [5] : "
+                      inp = $stdin.gets.chomp
+                      duration = inp.empty? ? 5 : inp.to_i
+                 end
+
+                 unless options[:amortize_duration] || options[:force_amortize]
+                      print "Nom de l'immobilisation [#{asset_name}] : "
+                      inp = $stdin.gets.chomp
+                      asset_name = inp unless inp.empty?
+                 end
+
+                 # Check if already exists to avoid dupes on re-run (simple check)
+                 # If exact name exists, maybe skip or warn?
+                 # For now, just append.
+
+                 # 218400 default => Component "Mobilier"
+                 component = Asset::Component.new(
+                     nom: "Mobilier",
+                     valeur: data[:montant],
+                     duree: duration
+                 )
+
+                 date_str = data[:date].is_a?(Date) ? data[:date].to_s : Date.parse(data[:date]).to_s
+
+                 new_asset = Asset.new(
+                     nom: asset_name,
+                     date_achat: date_str,
+                     date_mise_en_location: date_str, # Assume immediate use
+                     valeur_achat: data[:montant].to_f,
+                     composants: [component]
+                 )
+
+                 existing_assets << new_asset.to_h
+                 File.write(immo_file, existing_assets.to_yaml)
+                 puts "✅ Immobilisation créée : '#{asset_name}' (#{data[:montant]} € / #{duration} ans)"
             end
 
             def create_yaml_template(file_path)

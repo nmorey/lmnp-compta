@@ -53,7 +53,26 @@ lmnp creer-immo --nom "Appartement Mer" --valeur 150000 --date 2024-01-01
 lmnp importer-facture mon_fichier.pdf
 ```
 Cela analyse le PDF et affiche une commande `lmnp ajouter ...` suggérée.
-Si le format du PDF n'est pas reconnu :
+
+**Amortissement automatique :**
+Si une facture dépasse 600€, l'outil vous proposera automatiquement de l'amortir :
+- Création d'une entrée dans `immobilisations.yaml`.
+- Écriture comptable sur le compte d'actif (218400).
+- Vous pouvez définir la durée (défaut 5 ans).
+
+Options CLI :
+- `--amortize-duration N` : Force l'amortissement sur N années.
+- `--no-amortize` : Désactive la proposition d'amortissement.
+
+**Support YAML étendu :**
+Si le format du PDF n'est pas reconnu ou pour forcer des paramètres, vous pouvez utiliser un fichier sidecar `.yaml` (ex: `facture.pdf.yaml`) :
+```yaml
+...
+amortize: true
+duree_amortissement: 3
+nom_actif: "Ordinateur Portable"
+...
+```
 1. L'outil vérifie si un fichier `.yaml` correspondant existe (ex: `mon_fichier.pdf.yaml`).
 2. Sinon, il crée un modèle `mon_fichier.pdf.yaml.tpl`. Vous pouvez le remplir, le renommer en `.yaml` et relancer la commande.
 

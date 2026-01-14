@@ -41,7 +41,7 @@ module LMNPCompta
                         if mt > Montant.new(0)
                             total += mt
                             c_amort = case comp.nom
-                                      when /Meuble|Mobilier/ then "281840"
+                                      when /Meuble|Mobilier|Electromena|Equipement|Machine/ then "281840"
                                       when /Gros Oeuvre|Façade/ then "281300"
                                       else "281200"
                                       end

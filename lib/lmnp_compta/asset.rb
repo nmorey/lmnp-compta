@@ -5,7 +5,8 @@ module LMNPCompta
 
 
         def self.load(file)
-                array = (File.exist?(file) ? YAML.load_file(file) : [])
+                data = (File.exist?(file) ? YAML.load_file(file) : [])
+                array = data || []
                 array.map {|x| Asset.new(x)}
         end
 
