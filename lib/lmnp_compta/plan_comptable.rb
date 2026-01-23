@@ -2,6 +2,9 @@ module LMNPCompta
     # --- CLASSE 2 : IMMOBILISATIONS (Actif) ---
     # ... et autres comptes
     PLAN_COMPTABLE = {
+        # --- CLASSE 1 : CAPITAUX ---
+        "108000" => "Compte de l'exploitant",
+
         # --- CLASSE 2 : IMMOBILISATIONS (Actif) ---
         "211000" => "Terrains",
         "212000" => "Agencements et aménagements de terrains",
@@ -33,6 +36,7 @@ module LMNPCompta
         "615000" => "Entretien et réparations",
         "616000" => "Primes d'assurances (PNO, GLI)",
         "622600" => "Honoraires (Comptable, CGA, Agence)",
+        "625100" => "Voyages et déplacements",
         "626000" => "Frais postaux et télécoms",
         "627000" => "Services bancaires",
         "635000" => "Impôts et taxes (Taxe Foncière, CFE)",

@@ -2,10 +2,77 @@ require_relative 'base'
 
 require_relative '../amortization'
 require_relative 'opening_balance'
+require 'bigdecimal'
 
 module LMNPCompta
     module Fiscal
         class Year2025 < Base
+            # Barème kilométrique 2024 (pour les revenus 2023 et probable 2024/2025 jusqu'à mise à jour)
+            MILEAGE_SCALE = {
+              3 => {
+                limits: [5000, 20000],
+                factors: [
+                  { mult: 0.529, add: 0 },             # d <= 5000
+                  { mult: 0.316, add: 1065 },          # 5000 < d <= 20000
+                  { mult: 0.370, add: 0 }              # d > 20000
+                ]
+              },
+              4 => {
+                limits: [5000, 20000],
+                factors: [
+                  { mult: 0.606, add: 0 },
+                  { mult: 0.340, add: 1330 },
+                  { mult: 0.407, add: 0 }
+                ]
+              },
+              5 => {
+                limits: [5000, 20000],
+                factors: [
+                  { mult: 0.636, add: 0 },
+                  { mult: 0.357, add: 1395 },
+                  { mult: 0.427, add: 0 }
+                ]
+              },
+              6 => {
+                limits: [5000, 20000],
+                factors: [
+                  { mult: 0.665, add: 0 },
+                  { mult: 0.374, add: 1457 },
+                  { mult: 0.447, add: 0 }
+                ]
+              },
+              7 => { # 7 CV et plus
+                limits: [5000, 20000],
+                factors: [
+                  { mult: 0.697, add: 0 },
+                  { mult: 0.394, add: 1515 },
+                  { mult: 0.470, add: 0 }
+                ]
+              }
+            }
+
+            def self.calculate_mileage_allowance(cv, distance_km)
+                cv = 7 if cv > 7
+                cv = 3 if cv < 3
+
+                scale = MILEAGE_SCALE[cv]
+                raise "Barème introuvable pour #{cv} CV" unless scale
+
+                d = BigDecimal(distance_km.to_s)
+                factors = nil
+
+                if d <= scale[:limits][0]
+                    factors = scale[:factors][0]
+                elsif d <= scale[:limits][1]
+                    factors = scale[:factors][1]
+                else
+                    factors = scale[:factors][2]
+                end
+
+                amount = (d * BigDecimal(factors[:mult].to_s)) + BigDecimal(factors[:add].to_s)
+                Montant.new(amount.round(2))
+            end
+
             def initialize(entries, assets, stock, year)
                 super
                 @opening = OpeningBalance.new(assets, year)

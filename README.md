@@ -18,6 +18,7 @@ Outil en ligne de commande (CLI) pour gérer une comptabilité LMNP (Loueur Meub
 *   Calcul et suivi des déficits et ARD (Amortissements Réputés Différés).
 *   Génération des liasses fiscales (Aide au remplissage 2033 A/B/C/D).
 *   Export FEC (Fichier des Écritures Comptables) conforme pour l'administration fiscale.
+*   Gestion des indemnités kilométriques (véhicules, trajets, calcul fiscal).
 
 ## Installation
 
@@ -104,6 +105,21 @@ lmnp status
 ```
 Affiche un récapitulatif des entrées et sorties d'argent sur le compte bancaire (compte 512000) pour l'année fiscale en cours. Le résultat est affiché au format CSV (tab-séparé) pour faciliter l'analyse dans un tableur.
 
+### Gestion des Indemnités Kilométriques
+
+**Gérer les véhicules :**
+```bash
+lmnp vehicules ajouter "Ma Voiture" 5
+lmnp vehicules lister
+```
+
+**Saisir des trajets :**
+```bash
+lmnp trajets ajouter 2025-01-20 "Ma Voiture" 45 "Visite locataire"
+lmnp trajets lister
+```
+Les indemnités sont calculées automatiquement lors de la clôture annuelle selon le barème fiscal en vigueur.
+
 ### 3. Fin d'année
 
 **Calculer les amortissements :**
@@ -157,3 +173,20 @@ Sourcez le script de complétion pour bénéficier de l'autocomplétion des comm
 ```bash
 source lmnp-completion.bash
 ```
+
+## Développement
+
+Règles à suivre pour contribuer au projet :
+
+1.  **Langues** :
+    *   Interface Utilisateur (CLI, Aide, Sorties) : **Français**.
+    *   Code interne (Variables, Commentaires, Commits) : **Anglais**.
+2.  **Tests** :
+    *   Toujours lancer `rake` pour exécuter la suite de tests (et non `ruby test/specific_test.rb`).
+    *   Tout ajout de fonctionnalité doit être couvert par un test.
+3.  **Documentation** :
+    *   Mettre à jour le `README.md` avec les nouvelles fonctionnalités.
+    *   Mettre à jour l'autocomplétion (`lmnp-completion.bash`) en cas d'ajout/modification de commandes.
+4.  **Style de code** :
+    *   Pas d'indentation sur les lignes vides (pas d'espaces/tabulations en fin de ligne).
+    *   Respecter les conventions existantes.
