@@ -4,7 +4,7 @@ require 'lmnp_compta/commands/journal/analyser_facture'
 require 'lmnp_compta/settings'
 
 class ImportInvoiceFallbackTest < Minitest::Test
-    TEST_DIR = 'tmp_test_import_invoice'
+    TEST_DIR = File.join(__dir__, 'tmp', 'import_invoice')
 
     def setup
         @original_stdout = $stdout

@@ -5,7 +5,7 @@ require 'lmnp_compta/commands/configurer'
 require 'lmnp_compta/settings'
 
 class InitImmoTest < Minitest::Test
-    TEST_DIR = 'tmp_test_immo'
+    TEST_DIR = File.join(__dir__, 'tmp', 'immo')
 
     def setup
         FileUtils.rm_rf(TEST_DIR)

@@ -3,5 +3,5 @@
 lmnp.yaml
 data/
 test/fixtures/*.yaml
-/tmp_test/
+test/tmp/
 

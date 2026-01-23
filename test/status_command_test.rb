@@ -6,12 +6,13 @@ require_relative '../lib/lmnp_compta/journal'
 require_relative '../lib/lmnp_compta/settings'
 
 class StatusCommandTest < Minitest::Test
-    TEST_DIR = 'tmp_test_status'
+    TEST_DIR = File.join(__dir__, 'tmp', 'status')
     CONFIG_FILE = File.join(TEST_DIR, 'lmnp.yaml')
     JOURNAL_FILE = File.join(TEST_DIR, '2025', 'journal.yaml')
 
     def setup
-        FileUtils.mkdir_p(File.dirname(JOURNAL_FILE))
+        # Create a real file structure because Status reads files
+        FileUtils.mkdir_p(File.join(TEST_DIR, '2025'))
 
         # Create config file
         File.write(CONFIG_FILE, <<~YAML)

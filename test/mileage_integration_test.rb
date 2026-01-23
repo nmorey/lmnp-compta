@@ -16,7 +16,7 @@ Dir.glob(File.join(__dir__, '../lib/lmnp_compta/commands/*.rb')).each do |file|
 end
 
 class MileageIntegrationTest < Minitest::Test
-    TEST_DIR = File.expand_path('tmp_test_mileage', __dir__)
+    TEST_DIR = File.join(__dir__, 'tmp', 'mileage')
 
     def setup
         FileUtils.rm_rf(TEST_DIR)

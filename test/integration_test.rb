@@ -16,7 +16,7 @@ Dir.glob(File.join(__dir__, '../lib/lmnp_compta/commands/*.rb')).each do |file|
 end
 
 class IntegrationTest < Minitest::Test
-    TEST_DIR = File.expand_path('tmp_test', __dir__)
+    TEST_DIR = File.join(__dir__, 'tmp', 'integration')
     FIXTURES_DIR = File.expand_path('fixtures', __dir__)
 
     def setup

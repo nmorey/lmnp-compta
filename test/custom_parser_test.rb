@@ -5,7 +5,7 @@ require 'lmnp_compta/invoice_parser'
 require 'lmnp_compta/settings'
 
 class CustomParserTest < Minitest::Test
-    TEST_DIR = 'tmp_test_parser'
+    TEST_DIR = File.join(__dir__, 'tmp', 'parser')
     CUSTOM_PARSER_DIR = 'custom_parsers'
 
     def setup

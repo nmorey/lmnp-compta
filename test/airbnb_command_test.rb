@@ -15,7 +15,8 @@ require 'lmnp_compta/commands/journal'
 require 'lmnp_compta/commands/configurer'
 
 class AirbnbCommandTest < Minitest::Test
-    TEST_DIR = File.expand_path('tmp_test_airbnb_cmd', __dir__)
+    TEST_DIR = File.join(__dir__, 'tmp', 'airbnb_cmd')
+    FIXTURES_DIR = File.expand_path('fixtures', __dir__)
 
     def setup
         FileUtils.rm_rf(TEST_DIR)
