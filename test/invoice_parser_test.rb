@@ -29,7 +29,7 @@ class InvoiceParserTest < Minitest::Test
     TXT
 
         parser = LMNPCompta::InvoiceParser::Factory.build(nil, text)
-        assert_instance_of LMNPCompta::InvoiceParser::Edf, parser
+        assert_instance_of LMNPCompta::InvoiceParser::EdfEcheancier, parser
 
         entries = parser.parse
         assert_equal 2, entries.length
