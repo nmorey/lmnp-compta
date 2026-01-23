@@ -45,10 +45,9 @@ module LMNPCompta
                add_or_merge_entry(entries_list, entry)
                errors += 1
            end
-
-           entries_list.sort_by! { |x| "#{x.source_file}-#{x.date}" }
+           entries_list.sort_by! { |x| "#{x.source_file}-#{x.date.to_s().split('/').reverse.join("/")}" }
            entries_list.each { |e| puts format_invoice_entry(e) }
-           puts "# {entries_list.length} transactions, {errors} erreurs."
+           puts "# #{entries_list.length} transactions, #{errors} erreurs."
         end
 
         # Made public or accessible for testing purposes if needed via send
