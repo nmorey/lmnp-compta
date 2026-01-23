@@ -1,6 +1,6 @@
 require 'minitest/autorun'
 require 'fileutils'
-require 'lmnp_compta/commands/import_invoice'
+require 'lmnp_compta/commands/journal/analyser_facture'
 require 'lmnp_compta/settings'
 
 class ImportInvoiceFallbackTest < Minitest::Test
@@ -11,7 +11,7 @@ class ImportInvoiceFallbackTest < Minitest::Test
         FileUtils.mkdir_p(TEST_DIR)
         LMNPCompta::Settings.instance.instance_variable_set(:@annee, 2025)
         # Mock extract_text to return empty string (so no parser matches)
-        @cmd = LMNPCompta::Commands::ImportInvoice.new([])
+        @cmd = LMNPCompta::Commands::Journal::AnalyserFacture.new([])
 
         # We need to stub extract_text. Minitest stubbing is usually on the object.
         # Since extract_text is private instance method, we can define it on the instance or use define_method.

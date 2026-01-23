@@ -1,7 +1,7 @@
 require 'minitest/autorun'
 require 'stringio'
 require 'fileutils'
-require_relative '../lib/lmnp_compta/commands/status'
+require_relative '../lib/lmnp_compta/commands/journal'
 require_relative '../lib/lmnp_compta/journal'
 require_relative '../lib/lmnp_compta/settings'
 
@@ -71,7 +71,7 @@ class StatusCommandTest < Minitest::Test
     def test_status_output
         # Capture stdout
         out, err = capture_io do
-            LMNPCompta::StatusCommand.new([]).execute
+            LMNPCompta::JournalCommand.new(["status"]).execute
         end
 
         # Verify Headers

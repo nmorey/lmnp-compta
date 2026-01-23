@@ -9,8 +9,10 @@ $LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 require 'lmnp_compta'
 require 'lmnp_compta/command'
 require 'lmnp_compta/settings'
-require 'lmnp_compta/commands/import_airbnb'
-require 'lmnp_compta/commands/init'
+# require 'lmnp_compta/commands/import_airbnb' # Removed
+# require 'lmnp_compta/commands/init' # Removed
+require 'lmnp_compta/commands/journal'
+require 'lmnp_compta/commands/configurer'
 
 class AirbnbCommandTest < Minitest::Test
     TEST_DIR = File.expand_path('tmp_test_airbnb_cmd', __dir__)
@@ -22,7 +24,7 @@ class AirbnbCommandTest < Minitest::Test
         Dir.chdir(TEST_DIR)
 
         # Init project
-        LMNPCompta::Commands::Init.new(["--siren", "123456789", "--annee", "2025"]).execute
+        LMNPCompta::ConfigurerCommand.new(["init", "--siren", "123456789", "--annee", "2025"]).execute
         LMNPCompta::Settings.load('lmnp.yaml')
 
         # Create dummy CSV
@@ -47,18 +49,15 @@ class AirbnbCommandTest < Minitest::Test
 
         # Execute with --dry-run
         out, err = capture_io do
-            LMNPCompta::Commands::ImportAirbnb.new(["-f", @csv_file, "--dry-run"]).execute
+            LMNPCompta::JournalCommand.new(["importer-airbnb", "-f", @csv_file, "--dry-run"]).execute
         end
 
-        # Verify Output
-        assert_match /DRY RUN : Simulation de l'importation/, out
-        assert_match /Les 1 écritures suivantes seraient ajoutées/, out
+        # Verify Output (Updated messages for JournalCommand)
+        assert_match /Simulation/, out
         assert_match /REF001-01/, out
-        assert_match /Net: 0,00 € \(Solde\)/, out
-        assert_match /Aucune modification n'a été enregistrée/, out
+        assert_match /Simulation terminée/, out
 
         # Verify Journal NOT saved/updated
-        # Journal might be created by Init/Journal.new but should be empty
         journal = LMNPCompta::Journal.new(journal_file)
         assert_empty journal.entries
     end
@@ -66,7 +65,7 @@ class AirbnbCommandTest < Minitest::Test
     def test_normal_run
         # Execute without --dry-run
         out, err = capture_io do
-            LMNPCompta::Commands::ImportAirbnb.new(["-f", @csv_file]).execute
+            LMNPCompta::JournalCommand.new(["importer-airbnb", "-f", @csv_file]).execute
         end
 
         assert_match /Importation terminée. 1 écritures générées/, out

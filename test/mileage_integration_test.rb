@@ -25,8 +25,8 @@ class MileageIntegrationTest < Minitest::Test
         Dir.chdir(TEST_DIR)
 
         # Init Project
-        args_init = ["--siren", "123456789", "--annee", "2025"]
-        LMNPCompta::Commands::Init.new(args_init).execute
+        args_init = ["init", "--siren", "123456789", "--annee", "2025"]
+        LMNPCompta::ConfigurerCommand.new(args_init).execute
         LMNPCompta::Settings.load('lmnp.yaml')
     end
 
@@ -35,32 +35,33 @@ class MileageIntegrationTest < Minitest::Test
         FileUtils.rm_rf(TEST_DIR)
     end
 
-        def test_mileage_workflow
-            # 1. Add Vehicle (4 CV)
-            puts "\n--- Test: Add Vehicle ---"
-            LMNPCompta::VehiculesCommand.new(['ajouter', 'MyPrius', '4']).execute
+    def test_mileage_workflow
+        # 1. Add Vehicle (4 CV)
+        puts "\n--- Test: Add Vehicle ---"
+        LMNPCompta::ConfigurerCommand.new(['vehicules', 'ajouter', 'MyPrius', '4']).execute
 
-            vehicles_file = File.join('data', 'vehicles.yaml')
-            assert File.exist?(vehicles_file)
-            vehicles = YAML.load_file(vehicles_file)
-            assert_equal 1, vehicles.length
-            assert_equal 'MyPrius', vehicles[0]['name']
-            assert_equal 4, vehicles[0]['fiscal_power']
+        vehicles_file = File.join('data', 'vehicles.yaml')
+        assert File.exist?(vehicles_file)
+        vehicles = YAML.load_file(vehicles_file)
+        assert_equal 1, vehicles.length
+        assert_equal 'MyPrius', vehicles[0]['name']
+        assert_equal 4, vehicles[0]['fiscal_power']
 
-            # 2. Add Trips (Total 6000 km)
-            puts "\n--- Test: Add Trips ---"
-            # Trip 1: 3000 km
-            LMNPCompta::TrajetsCommand.new(['ajouter', '2025-02-15', 'MyPrius', '3000', 'Visit 1']).execute
-            # Trip 2: 3000 km
-            LMNPCompta::TrajetsCommand.new(['ajouter', '2025-06-20', 'MyPrius', '3000', 'Visit 2']).execute
-            trips_file = File.join('data', '2025', 'trips.yaml')
+        # 2. Add Trips (Total 6000 km)
+        puts "\n--- Test: Add Trips ---"
+        # Trip 1: 3000 km
+        LMNPCompta::JournalCommand.new(['trajets', 'ajouter', '2025-02-15', 'MyPrius', '3000', 'Visit 1']).execute
+        # Trip 2: 3000 km
+        LMNPCompta::JournalCommand.new(['trajets', 'ajouter', '2025-06-20', 'MyPrius', '3000', 'Visit 2']).execute
+
+        trips_file = File.join('data', '2025', 'trips.yaml')
         assert File.exist?(trips_file)
         trips = YAML.load_file(trips_file)
         assert_equal 2, trips.length
 
         # 3. Close Year
         puts "\n--- Test: Close Year (Generate Mileage Entry) ---"
-        LMNPCompta::Commands::CloseYear.new([]).execute
+        LMNPCompta::BilanCommand.new(['cloturer']).execute
 
         # 4. Verify Journal Entry
         journal_file = File.join('data', '2025', 'journal.yaml')

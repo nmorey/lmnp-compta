@@ -5,56 +5,80 @@ _lmnp_completion()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    # Liste des commandes principales
-    commands="init ajouter importer-airbnb importer-facture amortir cloturer liasse export-fec creer-immo status vehicules trajets help"
-
+    # Commandes de niveau 1
     if [[ ${COMP_CWORD} -eq 1 ]]; then
-        COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+        opts="configurer journal bilan help"
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         return 0
     fi
 
-    # Complétion spécifique par commande
-    case "${prev}" in
-        vehicules|trajets)
-            opts="ajouter lister"
-            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-            return 0
-            ;;
-        init)
-            opts="--siren --annee --journal --stock --immo --force --help"
-            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-            return 0
-            ;;
-        creer-immo)
-            opts="--valeur --date --nom --terrain --gros-oeuvre --facade --installations --agencements --force --help"
-            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-            return 0
-            ;;
-        ajouter)
-            opts="--date --journal --libelle --ref --compte --montant --sens --help"
-            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-            return 0
-            ;;
-        importer-airbnb)
-            opts="--file --help"
-            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-            return 0
-            ;;
-        importer-facture)
-            opts="--type --help"
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            local IFS=$'\n'
-            compopt -o filenames 2>/dev/null
-            COMPREPLY+=( $(compgen -f -- "${cur}") )
-            return 0
-            ;;
-        amortir|cloturer|liasse|export-fec|status)
-            opts="--help"
-            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-            return 0
-            ;;
-        *)
-            ;;
+    # Niveau 2 (Sous-commandes)
+    local cmd="${COMP_WORDS[1]}"
+    
+    case "${cmd}" in
+        configurer)
+            if [[ ${COMP_CWORD} -eq 2 ]]; then
+                opts="init immo vehicules"
+                COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                return 0
+            fi
+            # Niveau 3 pour configurer
+            local subcmd="${COMP_WORDS[2]}"
+            case "${subcmd}" in
+                vehicules)
+                    opts="ajouter lister"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;; 
+                init)
+                    opts="--siren --annee --help"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;; 
+                immo)
+                    opts="--nom --valeur --date --help"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;; 
+            esac
+            ;; 
+        journal)
+            if [[ ${COMP_CWORD} -eq 2 ]]; then
+                opts="saisir importer-airbnb analyser-facture trajets status"
+                COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                return 0
+            fi
+            # Niveau 3 pour journal
+            local subcmd="${COMP_WORDS[2]}"
+            case "${subcmd}" in
+                trajets)
+                    opts="ajouter lister"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;; 
+                saisir)
+                    opts="--date --journal --libelle --montant --compte --sens"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;; 
+                analyser-facture)
+                    opts="--type --help"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    # Fichiers PDF
+                    local IFS=$'\n'
+                    compopt -o filenames 2>/dev/null
+                    COMPREPLY+=( $(compgen -f -- "${cur}") )
+                    return 0
+                    ;; 
+            esac
+            ;; 
+        bilan)
+            if [[ ${COMP_CWORD} -eq 2 ]]; then
+                opts="cloturer liasse fec"
+                COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                return 0
+            fi
+            ;; 
     esac
 }
 

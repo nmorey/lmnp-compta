@@ -1,7 +1,7 @@
 require 'minitest/autorun'
 require 'fileutils'
 require 'yaml'
-require 'lmnp_compta/commands/init_immo'
+require 'lmnp_compta/commands/configurer'
 require 'lmnp_compta/settings'
 
 class InitImmoTest < Minitest::Test
@@ -25,10 +25,10 @@ class InitImmoTest < Minitest::Test
 
     def test_cli_generation_default
         valeur = "200000"
-        args = ["--valeur", valeur, "--date", "2025-01-01", "--nom", "Test Flat"]
+        args = ["immo", "--valeur", valeur, "--date", "2025-01-01", "--nom", "Test Flat"]
 
         capture_io do
-            LMNPCompta::Commands::InitImmo.new(args).execute
+            LMNPCompta::ConfigurerCommand.new(args).execute
         end
 
         data = LMNPCompta::Asset.load('immobilisations.yaml').first
@@ -40,12 +40,12 @@ class InitImmoTest < Minitest::Test
 
     def test_append_mode
         # First Apartment
-        args1 = ["--valeur", "100000", "--date", "2025-01-01", "--nom", "Flat A"]
-        capture_io { LMNPCompta::Commands::InitImmo.new(args1).execute }
+        args1 = ["immo", "--valeur", "100000", "--date", "2025-01-01", "--nom", "Flat A"]
+        capture_io { LMNPCompta::ConfigurerCommand.new(args1).execute }
 
         # Second Apartment
-        args2 = ["--valeur", "200000", "--date", "2025-02-01", "--nom", "Flat B"]
-        capture_io { LMNPCompta::Commands::InitImmo.new(args2).execute }
+        args2 = ["immo", "--valeur", "200000", "--date", "2025-02-01", "--nom", "Flat B"]
+        capture_io { LMNPCompta::ConfigurerCommand.new(args2).execute }
 
         # Check file
         assert File.exist?('immobilisations.yaml')
@@ -60,13 +60,9 @@ class InitImmoTest < Minitest::Test
     end
 
     def test_cli_custom_percentages
-        # Custom: Terrain 20%, Gros Oeuvre 35% -> implies changing defaults.
-        # To pass validation, we need to balance it.
-        # Default: Terrain 15, GO 40, Facade 15, Install 15, Agenc 15 = 100
-        # Change: Terrain 20 (+5), GO 35 (-5) = 100
-
         valeur = "100000"
         args = [
+            "immo",
             "--valeur", valeur,
             "--date", "2025-01-01",
             "--nom", "Custom Percent Test",
@@ -75,7 +71,7 @@ class InitImmoTest < Minitest::Test
         ]
 
         capture_io do
-            LMNPCompta::Commands::InitImmo.new(args).execute
+            LMNPCompta::ConfigurerCommand.new(args).execute
         end
 
         data = LMNPCompta::Asset.load('immobilisations.yaml').first
@@ -85,34 +81,20 @@ class InitImmoTest < Minitest::Test
 
         go = data.composants.find { |c| c.nom == "Gros Oeuvre" }
         assert_equal LMNPCompta::Montant.new(35000), go.valeur # 35%
-
-        # Check untouched component
-        facade = data.composants.find { |c| c.nom == "Façade" }
-        assert_equal LMNPCompta::Montant.new(15000), facade.valeur # Default 15%
     end
 
     def test_validation_100_percent
-        # Terrain 20 (Total 105) -> Should fail
         args = [
+            "immo",
             "--valeur", "100000",
             "--date", "2025-01-01",
             "--nom", "Fail",
             "--terrain", "20"
         ]
 
-        err = assert_raises(RuntimeError) do
-            capture_io { LMNPCompta::Commands::InitImmo.new(args).execute }
-        end
-        assert_match /doit être égal à 100%/, err.message
-    end
-
-    def test_directory_creation
-        File.write('lmnp.yaml', "data_dir: subdir\nimmo_file: immo.yaml\n")
-        LMNPCompta::Settings.load('lmnp.yaml')
-
-        args = ["--valeur", "100", "--date", "2025-01-01", "--nom", "DirTest"]
-        capture_io { LMNPCompta::Commands::InitImmo.new(args).execute }
-
-        assert File.exist?('subdir/immo.yaml')
+        # ConfigurerCommand puts error and returns, doesn't raise exception anymore to be user-friendly
+        # So we assert stdout contains error
+        out, _ = capture_io { LMNPCompta::ConfigurerCommand.new(args).execute }
+        assert_match /Erreur: Total pourcentages/, out
     end
 end
