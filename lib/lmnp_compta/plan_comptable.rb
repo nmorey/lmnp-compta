@@ -48,6 +48,8 @@ module LMNPCompta
         "706000" => "Prestations de services (Loyers)"
     }
 
+    COMPTE = PLAN_COMPTABLE.invert
+
     # Codes journaux autorisés
     JOURNAUX = {
         "BQ" => "Banque (Mouvements financiers)",
