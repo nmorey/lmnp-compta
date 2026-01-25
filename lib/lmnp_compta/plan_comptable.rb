@@ -23,6 +23,7 @@ module LMNPCompta
         "411000" => "Clients (Locataires)",
         "445000" => "État - TVA",
         "447000" => "Autres impôts, taxes",
+        "471000" => "Compte d'attente",
 
         # --- CLASSE 5 : TRÉSORERIE ---
         "512000" => "Banque",
