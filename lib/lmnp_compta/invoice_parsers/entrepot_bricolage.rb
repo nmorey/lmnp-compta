@@ -40,7 +40,7 @@ module LMNPCompta
       end
 
       def charge_account
-        "606300"
+        LMNPCompta::COMPTE["Petit équipement et maintenance < 500€"]
       end
     end
   end

@@ -6,7 +6,7 @@ module LMNPCompta
                 content.match?(/Direct Assurance/i)
             end
 
-            def charge_account; "616000"; end
+            def charge_account; LMNPCompta::COMPTE["Primes d'assurances (PNO, GLI)"]; end
 
             def extract_ref
                 if content.match(/Contrat n°\s*(\d+)/i)

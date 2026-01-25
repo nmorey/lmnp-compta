@@ -6,7 +6,7 @@ module LMNPCompta
                 content.match?(/Taxes foncières/i) || content.match?(/Taxe d'habitation/i)
             end
 
-            def charge_account; "635000"; end
+            def charge_account; LMNPCompta::COMPTE["Impôts et taxes (Taxe Foncière, CFE)"]; end
 
             def is_foncier?()
                 content.match?(/Taxes foncières/i)

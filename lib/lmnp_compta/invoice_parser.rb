@@ -1,5 +1,6 @@
 require 'date'
 require_relative 'parsing_utils'
+require_relative 'plan_comptable'
 
 module LMNPCompta
     module InvoiceParser
@@ -53,8 +54,9 @@ module LMNPCompta
             def extract_date; raise NotImplementedError; end
             def extract_amount; raise NotImplementedError; end
             def extract_label; raise NotImplementedError; end
-            def charge_account; "471000"; end
-            def credit_account; "512000"; end
+            def extract_label; raise NotImplementedError; end
+            def charge_account; LMNPCompta::COMPTE["Compte d'attente"]; end
+            def credit_account; LMNPCompta::COMPTE["Banque"]; end
 
             protected
 

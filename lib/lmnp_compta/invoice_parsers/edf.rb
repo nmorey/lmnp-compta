@@ -6,7 +6,7 @@ module LMNPCompta
                 (content.match?(/EDF/i) && content.match?(/Facture du/i))
             end
 
-            def charge_account; "606100"; end
+            def charge_account; LMNPCompta::COMPTE["Eau, Électricité, Gaz, Chauffage"]; end
 
             def extract_date
                 if content.match(/(?:Détail de la facture du)\s*(\d{1,2}\/\d{2}\/\d{4})/i)

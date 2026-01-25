@@ -6,7 +6,7 @@ module LMNPCompta
                 content.match?(/APPEL DE FONDS/i)
             end
 
-            def charge_account; "614000"; end
+            def charge_account; LMNPCompta::COMPTE["Charges locatives de copropriété"]; end
 
             def extract_ref
                 if content.match(/Appel, Du\s+(\d{2}\/\d{2}\/\d{4})/i)

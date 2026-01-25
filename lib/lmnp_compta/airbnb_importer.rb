@@ -2,6 +2,7 @@ require 'csv'
 require 'date'
 require_relative 'entry'
 require_relative 'parsing_utils'
+require_relative 'plan_comptable'
 
 module LMNPCompta
     # Importateur pour les fichiers CSV d'export Airbnb
@@ -131,14 +132,14 @@ module LMNPCompta
                 file: File.basename(@file_path)
             )
 
-            entry.add_credit("706000", revenu_brut, "Revenu Brut")
+            entry.add_credit(LMNPCompta::COMPTE["Prestations de services (Loyers)"], revenu_brut, "Revenu Brut")
 
             if frais_service > Montant.new(0)
-                entry.add_debit("622600", frais_service, "Commissions Airbnb")
+                entry.add_debit(LMNPCompta::COMPTE["Honoraires (Comptable, CGA, Agence)"], frais_service, "Commissions Airbnb")
             end
 
             if net_banque > Montant.new(0)
-                entry.add_debit("512000", net_banque, "Virement Net")
+                entry.add_debit(LMNPCompta::COMPTE["Banque"], net_banque, "Virement Net")
             end
 
             entry

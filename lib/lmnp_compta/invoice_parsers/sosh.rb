@@ -6,7 +6,7 @@ module LMNPCompta
                 content.match?(/Sosh/i) || content.match?(/Orange/i)
             end
 
-            def charge_account; "626000"; end
+            def charge_account; LMNPCompta::COMPTE["Frais postaux et télécoms"]; end
 
             def extract_internal_ref
                 if content.match(/n°?\s*de facture\s*:\s*(.*?)(?=\s*date de facture|\n|$)/i)

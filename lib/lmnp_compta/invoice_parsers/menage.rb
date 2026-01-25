@@ -6,7 +6,7 @@ module LMNPCompta
                 content.match?(/LE GRAND BLANC/i)
             end
 
-            def charge_account; "615000"; end
+            def charge_account; LMNPCompta::COMPTE["Entretien et réparations"]; end
 
             def extract_internal_ref
                 if content.match(/Numéro\s*:\s*([^\n\r]+)/i)

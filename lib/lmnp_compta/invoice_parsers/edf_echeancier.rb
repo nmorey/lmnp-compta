@@ -6,7 +6,7 @@ module LMNPCompta
                 (content.match?(/EDF/i) && content.match?(/calendrier de paiement/i))
             end
 
-            def charge_account; "606100"; end
+            def charge_account; LMNPCompta::COMPTE["Eau, Électricité, Gaz, Chauffage"]; end
 
             def parse
                 entries = []
