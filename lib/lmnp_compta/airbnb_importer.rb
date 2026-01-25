@@ -1,6 +1,7 @@
 require 'csv'
 require 'date'
 require_relative 'entry'
+require_relative 'parsing_utils'
 
 module LMNPCompta
     # Importateur pour les fichiers CSV d'export Airbnb
@@ -118,8 +119,8 @@ module LMNPCompta
 
         def create_entry(code, date_virement, row, start_str, end_str)
             libelle = "Airbnb - #{code} (Période #{start_str} - #{end_str})"
-            revenu_brut = parse_french_amount(row['Revenus bruts'])
-            frais_service = parse_french_amount(row['Frais de service'])
+            revenu_brut = ParsingUtils.parse_french_amount(row['Revenus bruts'])
+            frais_service = ParsingUtils.parse_french_amount(row['Frais de service'])
             net_banque = revenu_brut - frais_service
 
             entry = Entry.new(
@@ -143,18 +144,10 @@ module LMNPCompta
             entry
         end
 
-        def parse_french_amount(str)
-            return Montant.new(0) if str.nil? || str.empty?
-            cleaned = str.gsub('EUR', '').gsub(/[[:space:]]/, '')
-            cleaned = cleaned.gsub(',', '.') # Remplacement virgule décimale française
-            Montant.new(cleaned)
-        end
+
 
         def parse_date(str)
-            return nil if str.nil? || str.empty?
-            Date.strptime(str, "%m/%d/%Y")
-        rescue
-            nil
+            ParsingUtils.parse_us_date(str)
         end
     end
 end

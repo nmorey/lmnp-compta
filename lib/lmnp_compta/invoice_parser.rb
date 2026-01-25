@@ -1,4 +1,5 @@
 require 'date'
+require_relative 'parsing_utils'
 
 module LMNPCompta
     module InvoiceParser
@@ -58,18 +59,16 @@ module LMNPCompta
             protected
 
             def clean_amount(raw)
-                raise ParsingError, "Montant nul ou vide détecté" if raw.nil? || raw.strip.empty?
-                val = raw.gsub(/\s/, '').gsub(',', '.')
-                raise ParsingError, "Format de montant invalide : #{raw}" unless val.match?(/^\d+(\.\d+)?$/)
-                val
+               ParsingUtils.clean_amount(raw)
+            rescue ArgumentError => e
+               raise ParsingError, e.message
             end
 
             def parse_slash_date(str)
+                d = ParsingUtils.parse_french_date(str)
                 raise ParsingError, "Date vide" if str.nil?
-                fmt = str.length > 8 ? "%d/%m/%Y" : "%d/%m/%y"
-                Date.strptime(str, fmt)
-            rescue Date::Error, TypeError
-                raise ParsingError, "Impossible de lire la date : '#{str}'"
+                raise ParsingError, "Impossible de lire la date : '#{str}'" unless d
+                d
             end
 
             def parse_french_date_text(str)
