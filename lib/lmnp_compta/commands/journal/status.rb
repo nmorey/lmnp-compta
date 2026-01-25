@@ -22,7 +22,9 @@ module LMNPCompta
           total_credit = Montant.new(0)
           total_debit = Montant.new(0)
 
-          puts ["Date", "Ref", "Crédit", "Débit"].join("\t")
+          puts format("%-12s %-20s %12s %12s", "Date", "Ref", "Crédit", "Débit")
+          puts "-" * 60
+
           relevant.sort_by { |e| e.date.to_s }.each do |e|
               e.lines.select { |l| l[:compte].to_s == '512000' }.each do |l|
                   credit_releve = l[:debit]
@@ -30,11 +32,18 @@ module LMNPCompta
 
                   total_credit += credit_releve
                   total_debit += debit_releve
-                  puts [e.date, e.ref, (credit_releve > Montant.new(0) ? credit_releve : '""'), (debit_releve > Montant.new(0) ? debit_releve : '""')].join("\t")
+
+                  c_str = credit_releve > Montant.new(0) ? "+#{credit_releve}" : ""
+                  d_str = debit_releve > Montant.new(0) ? "-#{debit_releve}" : ""
+
+                  puts format("%-12s %-20s %12s %12s", e.date, e.ref[0..19], c_str, d_str)
               end
           end
-          puts ""
-          puts [Date.today, "Total (Solde): #{total_credit - total_debit}", "", total_credit, total_debit].join("\t")
+          puts "-" * 60
+          solde = total_credit - total_debit
+          solde_str = solde > Montant.new(0) ? "💰 +#{solde}" : "🔻 #{solde}"
+          puts format("%-33s %12s %12s", "Total", total_credit, total_debit)
+          puts "Solde: #{solde_str}"
         end
       end
     end
