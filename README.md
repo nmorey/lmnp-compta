@@ -87,12 +87,16 @@ Cette commande unique effectue :
 **Liasse fiscale :**
 ```bash
 lmnp bilan liasse
+# Pour une année spécifique (ex: 2024 au lieu de l'année configurée)
+lmnp bilan liasse --year 2024
 ```
 Affiche les montants pour la déclaration 2033 (A/B/C/D) et met à jour le stock de déficits.
 
 **Export FEC :**
 ```bash
 lmnp bilan fec
+# Optionnel : --year YYYY
+lmnp bilan fec --year 2024
 ```
 
 ## Structure des données

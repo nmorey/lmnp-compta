@@ -78,6 +78,16 @@ _lmnp_completion()
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                 return 0
             fi
+
+            # Niveau 3 pour bilan
+            local subcmd="${COMP_WORDS[2]}"
+            case "${subcmd}" in
+                liasse|fec)
+                    opts="--year"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;;
+            esac
             ;; 
     esac
 }

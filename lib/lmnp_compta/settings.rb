@@ -4,7 +4,8 @@ require 'date'
 module LMNPCompta
     # Gestion de la configuration globale
     class Settings
-        attr_reader :siren, :annee, :data_dir, :extra_invoice_dir
+        attr_reader :siren, :data_dir, :extra_invoice_dir
+        attr_accessor :annee
 
         # Charge la configuration
         # @param config_file [String] Chemin vers le fichier YAML de configuration

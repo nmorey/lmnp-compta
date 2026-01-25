@@ -11,8 +11,21 @@ module LMNPCompta
         register 'fec', 'Exporter le Fichier des Écritures Comptables'
 
                 def execute
+          # Parse arguments
+          options = {}
+          parser = OptionParser.new do |opts|
+            opts.banner = "Usage: lmnp bilan fec [options]"
+            opts.on("--year YEAR", Integer, "Année fiscale") do |v|
+              options[:year] = v
+            end
+          end
+          parser.parse!(@args)
 
-                  journal = LMNPCompta::Journal.new(Settings.instance.journal_file)
+          if options[:year]
+            Settings.instance.annee = options[:year]
+          end
+
+          journal = LMNPCompta::Journal.new(Settings.instance.journal_file)
 
                   content = FECGenerator.generate(journal.entries)
 

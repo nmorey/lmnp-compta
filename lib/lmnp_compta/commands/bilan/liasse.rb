@@ -14,10 +14,23 @@ module LMNPCompta
         register 'liasse', 'Afficher les données pour la liasse fiscale (2033)'
 
         def execute
-                    settings = Settings.instance
-                    annee = settings.annee
+          # Parse arguments
+          options = {}
+          parser = OptionParser.new do |opts|
+            opts.banner = "Usage: lmnp bilan liasse [options]"
+            opts.on("--year YEAR", Integer, "Année fiscale") do |v|
+              options[:year] = v
+            end
+          end
+          parser.parse!(@args)
 
-                    journal = LMNPCompta::Journal.new(settings.journal_file, year: annee)
+          settings = Settings.instance
+          if options[:year]
+            settings.annee = options[:year]
+          end
+          annee = settings.annee
+
+          journal = LMNPCompta::Journal.new(settings.journal_file, year: annee)
 
                     assets_data = File.exist?(settings.immo_file) ? YAML.load_file(settings.immo_file) : []
 
