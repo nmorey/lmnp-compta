@@ -85,7 +85,7 @@ module LMNPCompta
         end
 
         def total_earned
-            @lines.sum { |l| l[:compte] == "512000" ? l[:debit] : 0}
+            @lines.sum { |l| l[:compte] == LMNPCompta::COMPTE["Banque"] ? l[:debit] : 0}
         end
 
         # Vérifie si l'écriture est valide (pas d'erreur, lignes présentes, équilibrée)
