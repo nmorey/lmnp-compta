@@ -116,36 +116,6 @@ class ImportInvoiceAmortizationTest < Minitest::Test
 
         # We need to stub InvoiceParser::Factory.build to return a parser that gives us specific data
 
-        parser_mock = Minitest::Mock.new
-
-        parser_mock.expect :parse, [{
-
-            date: Date.new(2025, 1, 15),
-
-            libelle: "Test Invoice",
-
-            ref: "REF-123",
-
-            compte_charge: "606400",
-
-            compte_banque: "512000",
-
-            montant: LMNPCompta::Montant.new(amount)
-
-        }]
-
-        # parser_name is called in process_file
-
-        parser_mock.expect :class, parser_mock
-
-        parser_mock.expect :parser_name, "TEST_PARSER"
-
-        # class.parser_name is tricky with Minitest::Mock,
-
-        # simpler to just stub the Factory to return a simple object or struct
-
-
-
         # Let's use a real object class for the parser to avoid complex mocking logic
 
         stub_parser_class = Class.new do
@@ -190,7 +160,11 @@ class ImportInvoiceAmortizationTest < Minitest::Test
 
         parser = mock_invoice_parser(amount)
 
-        LMNPCompta::InvoiceParser::Factory.stub :build, parser do
+        LMNPCompta::InvoiceParser::Factory.singleton_class.class_eval do
+            alias_method :original_build, :build
+            define_method(:build) { |*args| parser }
+        end
+        begin
 
              # verify extract_text doesn't crash, we can stub it in the instance strictly if needed
 
@@ -204,6 +178,12 @@ class ImportInvoiceAmortizationTest < Minitest::Test
 
              block.call
 
+        ensure
+            LMNPCompta::InvoiceParser::Factory.singleton_class.class_eval do
+                remove_method :build
+                alias_method :build, :original_build
+                remove_method :original_build
+            end
         end
 
     end
@@ -360,7 +340,11 @@ class ImportInvoiceAmortizationTest < Minitest::Test
 
 
 
-        LMNPCompta::InvoiceParser::Factory.stub :build, nil do
+        LMNPCompta::InvoiceParser::Factory.singleton_class.class_eval do
+            alias_method :original_build, :build
+            define_method(:build) { |*args| nil }
+        end
+        begin
 
              output, _ = capture_io do
 
@@ -386,6 +370,12 @@ class ImportInvoiceAmortizationTest < Minitest::Test
 
             assert_match /-c 218400 -s D -m 900/, output
 
+        ensure
+            LMNPCompta::InvoiceParser::Factory.singleton_class.class_eval do
+                remove_method :build
+                alias_method :build, :original_build
+                remove_method :original_build
+            end
         end
 
     end
