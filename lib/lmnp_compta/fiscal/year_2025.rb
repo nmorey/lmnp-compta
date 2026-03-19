@@ -9,46 +9,46 @@ module LMNPCompta
         class Year2025 < Base
             # Barème kilométrique 2024 (pour les revenus 2023 et probable 2024/2025 jusqu'à mise à jour)
             MILEAGE_SCALE = {
-              3 => {
-                limits: [5000, 20000],
-                factors: [
-                  { mult: 0.529, add: 0 },             # d <= 5000
-                  { mult: 0.316, add: 1065 },          # 5000 < d <= 20000
-                  { mult: 0.370, add: 0 }              # d > 20000
-                ]
-              },
-              4 => {
-                limits: [5000, 20000],
-                factors: [
-                  { mult: 0.606, add: 0 },
-                  { mult: 0.340, add: 1330 },
-                  { mult: 0.407, add: 0 }
-                ]
-              },
-              5 => {
-                limits: [5000, 20000],
-                factors: [
-                  { mult: 0.636, add: 0 },
-                  { mult: 0.357, add: 1395 },
-                  { mult: 0.427, add: 0 }
-                ]
-              },
-              6 => {
-                limits: [5000, 20000],
-                factors: [
-                  { mult: 0.665, add: 0 },
-                  { mult: 0.374, add: 1457 },
-                  { mult: 0.447, add: 0 }
-                ]
-              },
-              7 => { # 7 CV et plus
-                limits: [5000, 20000],
-                factors: [
-                  { mult: 0.697, add: 0 },
-                  { mult: 0.394, add: 1515 },
-                  { mult: 0.470, add: 0 }
-                ]
-              }
+                3 => {
+                    limits: [5000, 20000],
+                    factors: [
+                        { mult: 0.529, add: 0 },             # d <= 5000
+                        { mult: 0.316, add: 1065 },          # 5000 < d <= 20000
+                        { mult: 0.370, add: 0 }              # d > 20000
+                    ]
+                },
+                4 => {
+                    limits: [5000, 20000],
+                    factors: [
+                        { mult: 0.606, add: 0 },
+                        { mult: 0.340, add: 1330 },
+                        { mult: 0.407, add: 0 }
+                    ]
+                },
+                5 => {
+                    limits: [5000, 20000],
+                    factors: [
+                        { mult: 0.636, add: 0 },
+                        { mult: 0.357, add: 1395 },
+                        { mult: 0.427, add: 0 }
+                    ]
+                },
+                6 => {
+                    limits: [5000, 20000],
+                    factors: [
+                        { mult: 0.665, add: 0 },
+                        { mult: 0.374, add: 1457 },
+                        { mult: 0.447, add: 0 }
+                    ]
+                },
+                7 => { # 7 CV et plus
+                    limits: [5000, 20000],
+                    factors: [
+                        { mult: 0.697, add: 0 },
+                        { mult: 0.394, add: 1515 },
+                        { mult: 0.470, add: 0 }
+                    ]
+                }
             }
 
             def self.calculate_mileage_allowance(cv, distance_km)
@@ -250,12 +250,16 @@ module LMNPCompta
             def stock_update_data
                 analyze unless @analysis_result
                 Stock.new({
-                    'ard' => @nouveau_stock_ard.to_f,
-                    'deficit' => @nouveau_stock_deficit.to_f
-                })
+                              'ard' => @nouveau_stock_ard.to_f,
+                              'deficit' => @nouveau_stock_deficit.to_f
+                          })
             end
 
             def generate_report
+                if sum_prefix('64') > Montant.new(0) || sum_prefix('65') > Montant.new(0)
+                    raise "ERREUR FATALE: La liasse 2033-B ne gère pas les comptes 64x (Personnel) et 65x (Autres charges de gestion courante). Veuillez corriger les écritures ou adapter le logiciel."
+                end
+
                 result = analyze
                 doc = Reporting::Document.new("AIDE À LA DÉCLARATION LMNP (Année #{@year})")
 
@@ -284,7 +288,8 @@ module LMNPCompta
 
                 actif.add_text("--- TOTAUX ACTIF ---")
                 actif.add_box("110", "Total Général ACTIF (Brut)", total_actif_brut)
-                actif.add_box("112", "Total Général ACTIF (Net)", total_actif_net)
+                actif.add_box("112", "Total Général ACTIF (Amortissements)", val_amort_cumules)
+                actif.add_box("11X", "Total Général ACTIF (Net)", total_actif_net)
                 form_a.add_section(actif)
 
                 passif = Reporting::Section.new("PASSIF (Avant répartition du résultat)")
@@ -312,8 +317,8 @@ module LMNPCompta
 
                 passif.add_box("156", "Emprunts et dettes assimilées", emprunts_r)
                 passif.add_box("166", "Fournisseurs et comptes rattachés", dettes_fournisseurs_r) if @dettes_fournisseurs > Montant.new(0)
-                passif.add_box("169", "Dettes fiscales et sociales", dettes_fiscales_sociales_r) if @dettes_fiscales_sociales > Montant.new(0)
-                passif.add_box("172", "Autres dettes", autres_dettes_r) if @autres_dettes > Montant.new(0)
+                passif.add_box("172", "Dettes fiscales et sociales", dettes_fiscales_sociales_r) if @dettes_fiscales_sociales > Montant.new(0)
+                passif.add_box("175", "Autres dettes", autres_dettes_r) if @autres_dettes > Montant.new(0)
 
                 total_dettes = emprunts_r + dettes_fournisseurs_r + dettes_fiscales_sociales_r + autres_dettes_r
                 total_passif = total_capitaux + total_dettes
@@ -407,18 +412,36 @@ module LMNPCompta
                 s_def = Reporting::Section.new("II. Suivi des Déficits")
                 s_def.add_box("982", "Déficits reportables au début de l'exercice", result[:stock_deficit_debut].round)
                 s_def.add_box("983", "Déficits imputés sur le résultat (Box 360)", result[:deficit_utilise].round)
+
+                deficits_restants = result[:stock_deficit_debut] - result[:deficit_utilise]
+                s_def.add_box("984", "Déficits antérieurs non imputés", deficits_restants.round)
+
                 if result[:deficit_cree] > Montant.new(0)
-                     s_def.add_box("860", "Déficits de l'exercice (Si Box 354)", result[:deficit_cree].round)
+                    s_def.add_box("860", "Déficits de l'exercice (Si Box 354)", result[:deficit_cree].round)
                 end
-                s_def.add_box("984", "Déficits reportables en fin d'exercice", result[:stock_deficit_fin].round)
+
+                s_def.add_box("870", "Total des déficits restant à reporter", result[:stock_deficit_fin].round)
                 form_d.add_section(s_def)
 
                 # Divers (Box 399)
                 s_div = Reporting::Section.new("III. DIVERS")
-                if mouv_expl > Montant.new(0)
-                    s_div.add_box("399", "Montant des prélèvements personnels", mouv_expl.round)
+                prelev_perso = prelevements_personnels
+                if prelev_perso > Montant.new(0)
+                    s_div.add_box("399", "Montant des prélèvements personnels", prelev_perso.round)
                 end
                 form_d.add_section(s_div)
+
+                s_indep = Reporting::Section.new("IV. TRAVAILLEURS INDÉPENDANTS (Revenu Brut Social)")
+                s_indep.add_box("690", "Sommes à réintégrer", RoundedMontant.new(0))
+                s_indep.add_box("691", "Sommes à déduire", RoundedMontant.new(0))
+
+                res_avant_def = result[:resultat_avant_deficit].round
+                if res_avant_def >= RoundedMontant.new(0)
+                    s_indep.add_box("693", "Revenu brut social (positif)", res_avant_def)
+                else
+                    s_indep.add_box("692", "Revenu brut social (négatif)", res_avant_def.abs)
+                end
+                form_d.add_section(s_indep)
 
                 doc.add_form(form_d)
 
@@ -436,6 +459,20 @@ module LMNPCompta
             end
 
             private
+
+            def prelevements_personnels
+                total = Montant.new(0)
+                @entries.each do |e|
+                    next if Date.parse(e.date.to_s).year != @year
+                    next if e.journal == 'AN'
+                    e.lines.each do |l|
+                        if l[:compte].to_s.start_with?('108') && l[:debit] > Montant.new(0)
+                            total += l[:debit]
+                        end
+                    end
+                end
+                total
+            end
 
             def categorize_accounts
                 @creances_clients = Montant.new(0)
@@ -500,11 +537,11 @@ module LMNPCompta
                         if nom.include?('terrain')
                             cat = :terrains
                         elsif nom.include?('gros oeuvre') || nom.include?('façade') || nom.include?('mur') || nom.include?('toiture')
-                             cat = :constructions
+                            cat = :constructions
                         elsif nom.include?('technique') || nom.include?('industriel')
-                             cat = :inst_tech
+                            cat = :inst_tech
                         elsif nom.include?('meuble') || nom.include?('mobilier')
-                             cat = :autres
+                            cat = :autres
                         end
 
                         if acquisition_year == @year
