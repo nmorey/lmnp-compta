@@ -46,14 +46,39 @@ class StatusCommandTest < Minitest::Test
         e3.add_credit("281000", "100.00")
         journal.add_entry(e3)
 
-        # Entry 4: Wrong year - Should NOT appear
-        # Note: Journal enforces year if set, so we force inject or create separate journal?
-        # Journal.add_entry checks year.
-        # But StatusCommand filters by year from Settings.
-        # If I want to test year filtering, I need an entry with a different year in the file.
-        # But Journal implementation prevents adding wrong year if initialized with year.
-        # So I'll append directly to the YAML file to simulate a "dirty" or multi-year file if that were possible,
-        # OR just re-open journal without year constraint.
+        # Entry 5: Airbnb full earning
+        e5 = LMNPCompta::Entry.new(date: "2025-04-01", libelle: "Airbnb", ref: "AIRBNB")
+        e5.add_debit("512000", "400.00")
+        e5.add_debit("622000", "100.00")
+        e5.add_credit("706000", "500.00")
+        journal.add_entry(e5)
+
+        # Entry 6: Spending with discount
+        e6 = LMNPCompta::Entry.new(date: "2025-05-01", libelle: "Achat matos", ref: "MATOS")
+        e6.add_credit("512000", "90.00")
+        e6.add_debit("606100", "100.00")
+        e6.add_credit("768000", "10.00")
+        journal.add_entry(e6)
+
+        # Entry 7: 108000 valid
+        e7 = LMNPCompta::Entry.new(date: "2025-06-01", libelle: "Apport perso", ref: "PERSO")
+        e7.add_credit("108000", "300.00")
+        e7.add_debit("606100", "300.00")
+        journal.add_entry(e7)
+
+        # Entry 8: 108000 with Immo (should be ignored)
+        e8 = LMNPCompta::Entry.new(date: "2025-07-01", libelle: "Apport immo", ref: "PERSOIMMO")
+        e8.add_credit("108000", "1000.00")
+        e8.add_debit("218100", "1000.00")
+        journal.add_entry(e8)
+
+        # Entry 9: CLOTURE entry (should be ignored)
+        e9 = LMNPCompta::Entry.new(date: "2025-12-31", libelle: "Virement solde trésorerie (Clôture)", ref: "CLOTURE2025")
+        e9.add_debit("108000", "450.00")
+        e9.add_credit("512000", "450.00")
+        journal.add_entry(e9)
+
+        # Wrong year - Should NOT appear
         journal.save!
 
         # Add a 2024 entry bypassing constraint (re-open without year)
@@ -84,6 +109,15 @@ class StatusCommandTest < Minitest::Test
         # Verify Entry 2 (2025 Expense)
         assert_match /2025-02-20\s+REF002\s+-50,00/, out
 
+        # Verify Entry 5 (2025 Airbnb Bank only)
+        assert_match /2025-04-01\s+AIRBNB\s+\+400,00/, out
+
+        # Verify Entry 6 (2025 Expense Bank only)
+        assert_match /2025-05-01\s+MATOS\s+-90,00/, out
+
+        # Verify Entry 7 (108000) NOT present in normal mode
+        refute_match /PERSO\s/, out
+
         # Verify Entry 3 (Non-bank) NOT present
         refute_match /REF003/, out
 
@@ -91,8 +125,51 @@ class StatusCommandTest < Minitest::Test
         refute_match /REFOLD/, out
 
         # Verify Summary Line
-        # Total Solde = 500 - 50 = 450
-        assert_match /Solde: 💰 \+450,00/, out
-        assert_match /Total\s+500,00\s+50,00/, out
+        # Total Crédit = 500 (E1) + 400 (E5) = 900
+        # Total Débit = 50 (E2) + 90 (E6) = 140
+        # Total Solde = 900 - 140 = 760
+        assert_match /Solde: 💰 \+760,00/, out
+        assert_match /Total\s+900,00\s+140,00/, out
+    end
+
+    def test_status_full_output
+        # Capture stdout
+        out, err = capture_io do
+            LMNPCompta::JournalCommand.new(["status", "--full"]).execute
+        end
+
+        # Verify Headers
+        assert_match /Date\s+Ref\s+Crédit\s+Débit/, out
+
+        # Verify Entry 1 (2025 Income)
+        assert_match /2025-01-15\s+REF001\s+\+500,00/, out
+
+        # Verify Entry 2 (2025 Expense)
+        assert_match /2025-02-20\s+REF002\s+-50,00/, out
+
+        # Verify Entry 5 (2025 Airbnb full: 400 credit, 100 debit)
+        assert_match /2025-04-01\s+AIRBNB\s+\+500,00\s+-100,00/, out
+
+        # Verify Entry 6 (2025 Expense full: 10 credit, 90 debit)
+        assert_match /2025-05-01\s+MATOS\s+\+10,00\s+-100,00/, out
+
+        # Verify Entry 7 (108000 present: 0 credit, 300 debit)
+        assert_match /2025-06-01\s+PERSO\s+-300,00/, out
+
+        # Verify Entry 8 (108000 with immo) NOT present
+        refute_match /PERSOIMMO/, out
+
+        # Verify Entry 3 (Non-bank) NOT present
+        refute_match /REF003/, out
+
+        # Verify Entry 4 (Wrong year) NOT present
+        refute_match /REFOLD/, out
+
+        # Verify Summary Line
+        # Total Crédit = 500 (E1) + 400 (E5) + 10 (E6) = 910
+        # Total Débit = 50 (E2) + 100 (E5) + 90 (E6) + 300 (E7) = 540
+        # Total Solde = 910 - 540 = 370
+        assert_match /Solde: 💰 \+460,00/, out
+        assert_match /Total\s+1010,00\s+550,00/, out
     end
 end
