@@ -47,7 +47,7 @@ module LMNPCompta
             puts "DRY RUN : Simulation de l'importation"
             puts "Les #{new_entries.length} écritures suivantes seraient ajoutées :"
             new_entries.each do |e|
-               puts "- #{e.libelle} (#{e.ref}) | #{e.date} | Net: #{e.balance} €"
+               puts "- #{e.libelle} (#{e.ref}) | #{e.date} | Gain: #{e.total_earned} €"
             end
             puts "Simulation terminée. Aucune modification n'a été enregistrée."
           else
