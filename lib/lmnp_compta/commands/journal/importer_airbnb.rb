@@ -15,6 +15,10 @@ module LMNPCompta
           parser = OptionParser.new do |opts|
             opts.banner = "Usage: lmnp journal importer-airbnb -f listings.csv"
             opts.on("-f", "--file FILE", "Fichier CSV Airbnb") { |v| options[:file] = v }
+            opts.on("--blanchisserie ID_OU_NOM", "Automatiser les écritures de blanchisserie (peut être spécifié plusieurs fois)") do |v|
+              options[:blanchisserie] ||= []
+              options[:blanchisserie] << v
+            end
             opts.on("--dry-run", "Simulation uniquement") { options[:dry_run] = true }
           end
 
@@ -35,7 +39,7 @@ module LMNPCompta
           journal_path = Settings.instance.journal_file
           journal = LMNPCompta::Journal.new(journal_path, year: Settings.instance.annee)
 
-          importer = LMNPCompta::AirbnbImporter.new(options[:file], journal)
+          importer = LMNPCompta::AirbnbImporter.new(options[:file], journal, blanchisserie_configs: options[:blanchisserie])
           new_entries = importer.import
 
           if new_entries.empty?

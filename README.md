@@ -43,6 +43,11 @@ Gérer les véhicules :
 lmnp configurer vehicules ajouter "Ma Voiture" 5
 ```
 
+Gérer la blanchisserie :
+```bash
+lmnp configurer blanchisserie ajouter 1 --nom-bien "Appartement Mer" --conso-eau 0.05 --prix-eau 4.0 --conso-kwh 1.0 --prix-kwh 0.25 --prix-produit 0.5
+```
+
 ### 2. Journal & Saisie (`journal`)
 
 **Saisie manuelle :**
@@ -55,6 +60,8 @@ lmnp journal saisir -d 2025-01-27 -j AC -l "Facture X" -m 100 ...
 **Importer Airbnb (CSV) :**
 ```bash
 lmnp journal importer-airbnb -f listings.csv
+# Avec automatisation des écritures de blanchisserie :
+lmnp journal importer-airbnb -f listings.csv --blanchisserie 1
 ```
 
 **Analyser des factures (PDF) :**
@@ -66,6 +73,11 @@ Génère une commande `lmnp journal saisir ...` à copier-coller.
 **Gérer les trajets :**
 ```bash
 lmnp journal trajets ajouter 2025-01-20 "Ma Voiture" 45 "Visite locataire"
+```
+
+**Saisie de la blanchisserie :**
+```bash
+lmnp journal blanchisserie ajouter 1 2025-01-20
 ```
 
 **Voir le solde bancaire :**

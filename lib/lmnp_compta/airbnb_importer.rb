@@ -11,10 +11,28 @@ module LMNPCompta
 
         # @param file_path [String] Chemin vers le fichier CSV
         # @param journal [Journal] Instance du journal pour vérifier les doublons
-        def initialize(file_path, journal)
+        # @param blanchisserie_configs [Array<String>] Liste des ID ou Noms des configs blanchisserie
+        def initialize(file_path, journal, blanchisserie_configs: nil)
             @file_path = file_path
             @journal = journal
             @new_entries = []
+            @blanchisseries = []
+
+            if blanchisserie_configs
+                require_relative 'laundry'
+                blanchisserie_configs.each do |config_id|
+                    begin
+                        l = LMNPCompta::Laundry.find(config_id)
+                        if l
+                            @blanchisseries << l
+                        else
+                            puts "⚠️  Configuration blanchisserie introuvable pour : #{config_id}"
+                        end
+                    rescue => e
+                        puts "⚠️  Erreur lors du chargement de blanchisserie : #{e.message}"
+                    end
+                end
+            end
         end
 
         # Exécute l'importation
@@ -95,9 +113,45 @@ module LMNPCompta
                     else
                         @new_entries << entry
                     end
+                    if index == items.length - 1 && @blanchisseries.any?
+                        hebergement = row['Logement']
+                        laundry = @blanchisseries.find { |l| l.nom_bien == hebergement }
+                        if laundry
+                            add_laundry_entry(laundry, code, res_end_date)
+                        end
+                    end
+
                     counter+=1
                 end
             end
+        end
+
+        def add_laundry_entry(laundry, res_code, date)
+            ref = "LNDRY-#{res_code}"
+            
+            # Use @journal because the entry might be saved already during previous runs,
+            # but also check @new_entries in case it's added in this run (should be 1 max per res_code).
+            existing = find_duplicate(ref)
+            if existing
+                 puts "⚠️  Frais de blanchisserie déjà présents : #{ref} (Ignoré)"
+                 return
+            end
+            
+            puts "Ajout blanchisserie pour réservation #{res_code}"
+            cost = LMNPCompta::Montant.new(laundry.cost_per_wash)
+            
+            entry = LMNPCompta::Entry.new(
+                date: date.to_s,
+                journal: "OD",
+                libelle: "Blanchisserie - #{laundry.nom_bien}",
+                ref: ref,
+                file: File.basename(@file_path)
+            )
+            
+            entry.add_debit(LMNPCompta::COMPTE["Entretien et réparations"], cost, "Frais de blanchisserie")
+            entry.add_credit(LMNPCompta::COMPTE["Compte de l'exploitant"], cost, "Frais avancés")
+            
+            @new_entries << entry
         end
 
         def find_duplicate(ref)

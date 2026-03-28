@@ -18,7 +18,7 @@ _lmnp_completion()
     case "${cmd}" in
         configurer)
             if [[ ${COMP_CWORD} -eq 2 ]]; then
-                opts="init immo vehicules"
+                opts="init immo vehicules blanchisserie"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                 return 0
             fi
@@ -26,6 +26,11 @@ _lmnp_completion()
             local subcmd="${COMP_WORDS[2]}"
             case "${subcmd}" in
                 vehicules)
+                    opts="ajouter lister"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;; 
+                blanchisserie)
                     opts="ajouter lister"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
@@ -44,7 +49,7 @@ _lmnp_completion()
             ;; 
         journal)
             if [[ ${COMP_CWORD} -eq 2 ]]; then
-                opts="saisir importer-airbnb analyser-facture trajets status"
+                opts="saisir importer-airbnb analyser-facture trajets blanchisserie status"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                 return 0
             fi
@@ -52,6 +57,11 @@ _lmnp_completion()
             local subcmd="${COMP_WORDS[2]}"
             case "${subcmd}" in
                 trajets)
+                    opts="ajouter lister"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;; 
+                blanchisserie)
                     opts="ajouter lister"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0

@@ -33,7 +33,7 @@ class AirbnbCommandTest < Minitest::Test
         csv_content = <<~CSV
           Type,Date,Code de confirmation,Date de début,Date de départ,Nuits,Hébergement,Ménage,Frais de service,Revenus bruts,Devise
           Payout,01/05/2025,,,,,,,,,
-          Réservation,01/01/2025,REF001,01/01/2025,01/05/2025,4,100.00,,0.00,100.00,EUR
+          Réservation,01/01/2025,REF001,01/01/2025,01/05/2025,4,Appart Paris,,0.00,100.00,EUR
         CSV
         File.write(@csv_file, csv_content)
     end
@@ -76,5 +76,43 @@ class AirbnbCommandTest < Minitest::Test
         journal = LMNPCompta::Journal.new('data/2025/journal.yaml')
         assert_equal 1, journal.entries.length
         assert_equal "REF001-01", journal.entries.first.ref
+    end
+
+    def test_blanchisserie_import
+        # Add laundry configuration
+        LMNPCompta::ConfigurerCommand.new([
+          "blanchisserie", "ajouter", "1",
+          "--nom-bien", "Appart Paris",
+          "--conso-eau", "0.05",
+          "--prix-eau", "4.0",
+          "--conso-kwh", "1.0",
+          "--prix-kwh", "0.25",
+          "--prix-produit", "0.5"
+        ]).execute
+
+        # Import with blanchisserie (dry-run should show it)
+        out, err = capture_io do
+          LMNPCompta::JournalCommand.new(["importer-airbnb", "-f", @csv_file, "--dry-run", "--blanchisserie", "1"]).execute
+        end
+
+        assert_match /Blanchisserie - Appart Paris \(LNDRY-REF001\)/, out
+
+        # Import without dry-run
+        capture_io do
+          LMNPCompta::JournalCommand.new(["importer-airbnb", "-f", @csv_file, "--blanchisserie", "1"]).execute
+        end
+
+        # Verify Journal Entries
+        journal = LMNPCompta::Journal.new('data/2025/journal.yaml')
+        assert_equal 2, journal.entries.length
+        
+        # Original Entry
+        assert_equal "REF001-01", journal.entries.first.ref
+
+        # Laundry Entry
+        laundry_entry = journal.entries.last
+        assert_equal "LNDRY-REF001", laundry_entry.ref
+        assert_equal "Blanchisserie - Appart Paris", laundry_entry.libelle
+        assert_equal "0,95", laundry_entry.lines.first[:debit].to_s
     end
 end
