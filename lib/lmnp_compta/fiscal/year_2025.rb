@@ -263,6 +263,42 @@ module LMNPCompta
                 result = analyze
                 doc = Reporting::Document.new("AIDE À LA DÉCLARATION LMNP (Année #{@year})")
 
+                # --- 2031-SD (DÉCLARATION DE RÉSULTATS) ---
+                form_2031 = Reporting::Form.new("FORMULAIRE 2031-SD (Déclaration de résultats)")
+                sec_c = Reporting::Section.new("C. RÉCAPITULATION DES ÉLÉMENTS D'IMPOSITION")
+                
+                final_val = result[:resultat_fiscal].round
+                res_avant_def = result[:resultat_avant_deficit].round
+
+                if final_val >= RoundedMontant.new(0)
+                    sec_c.add_box("1.", "Résultat fiscal (Bénéfice)", final_val, show_zero: true)
+                else
+                    sec_c.add_box("1.", "Résultat fiscal (Déficit)", final_val.abs, show_zero: true)
+                end
+
+                if res_avant_def >= RoundedMontant.new(0)
+                    sec_c.add_box("7a.", "dont BIC non professionnels (Bénéfice)", res_avant_def, show_zero: true)
+                else
+                    sec_c.add_box("7b.", "dont BIC non professionnels (Déficit)", res_avant_def.abs, show_zero: true)
+                end
+                form_2031.add_section(sec_c)
+
+                sec_h = Reporting::Section.new("H. PLUS-VALUES ACQUISES EN FRANCHISE D'IMPÔT")
+                sec_h.add_text("  (Non géré par ce logiciel - se référer à la notice)")
+                form_2031.add_section(sec_h)
+
+                sec_i = Reporting::Section.new("I. BIC NON PROFESSIONNELS")
+                if res_avant_def >= RoundedMontant.new(0)
+                    sec_i.add_box("-", "Autres locations meublées non professionnelles (Bénéfice)", res_avant_def, show_zero: true)
+                    sec_i.add_box("-", "Résultat avant imputation des déficits antérieurs (reporter case 7a)", res_avant_def, show_zero: true)
+                else
+                    sec_i.add_box("-", "Autres locations meublées non professionnelles (Déficit)", res_avant_def.abs, show_zero: true)
+                    sec_i.add_box("-", "Résultat avant imputation des déficits antérieurs (reporter case 7b)", res_avant_def.abs, show_zero: true)
+                end
+                form_2031.add_section(sec_i)
+
+                doc.add_form(form_2031)
+
                 # --- 2033-A (BILAN) ---
                 form_a = Reporting::Form.new("FORMULAIRE 2033-A (Bilan Actif / Passif)")
 

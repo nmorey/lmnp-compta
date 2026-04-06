@@ -11,7 +11,7 @@ module LMNPCompta
   module Commands
     module Bilan
       class Liasse < SubCommand
-        register 'liasse', 'Afficher les données pour la liasse fiscale (2033)'
+        register 'liasse', 'Afficher les données pour la liasse fiscale (2031-SD et 2033)'
 
         def execute
           # Parse arguments

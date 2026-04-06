@@ -102,7 +102,7 @@ lmnp bilan liasse
 # Pour une année spécifique (ex: 2024 au lieu de l'année configurée)
 lmnp bilan liasse --year 2024
 ```
-Affiche les montants pour la déclaration 2033 (A/B/C/D) et met à jour le stock de déficits.
+Affiche les montants pour la déclaration 2031-SD et 2033 (A/B/C/D) et met à jour le stock de déficits.
 
 **Export FEC :**
 ```bash

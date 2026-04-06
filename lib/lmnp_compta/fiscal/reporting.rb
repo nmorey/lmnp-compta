@@ -12,17 +12,18 @@ module LMNPCompta
       class Box < Component
         attr_reader :code, :label, :value
 
-        def initialize(code, label, value)
+        def initialize(code, label, value, show_zero: false)
           unless value.is_a?(LMNPCompta::RoundedMontant)
             raise ArgumentError, "Box value must be a RoundedMontant, got #{value.class}"
           end
           @code = code
           @label = label
           @value = value
+          @show_zero = show_zero
         end
 
         def to_s
-          return "" if @value.respond_to?(:zero?) && @value.zero?
+          return "" if !@show_zero && @value.respond_to?(:zero?) && @value.zero?
           # Format: CODE | LABEL : VALUE €
           " #{@code.to_s.ljust(4)} | #{@label.ljust(45)} : #{@value.to_s.rjust(10)} €"
         end
@@ -68,8 +69,8 @@ module LMNPCompta
           @items << item
         end
 
-        def add_box(code, label, value)
-          add(Box.new(code, label, value))
+        def add_box(code, label, value, show_zero: false)
+          add(Box.new(code, label, value, show_zero: show_zero))
         end
 
         def add_info(label, value, comment = nil)
