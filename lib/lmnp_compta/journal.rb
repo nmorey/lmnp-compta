@@ -21,10 +21,11 @@ module LMNPCompta
 
         # Charge les entrées depuis le fichier YAML
         # Vérifie l'unicité des références après chargement
-        def load!
+        def load!(skip_integrity: false)
             data = YAML.load_file(@file_path) || []
             @entries = data.map { |d| Entry.new(d) }
             check_duplicate_refs
+            verify_integrity! unless skip_integrity
         end
 
         # Sauvegarde les entrées dans le fichier YAML
@@ -60,6 +61,14 @@ module LMNPCompta
                 end
             end
 
+            # Inaltérabilité
+            entry.created_at ||= Date.today.to_s
+
+            # The hash generation must happen *after* pushing to @entries or we won't find it to index?
+            # Wait, `generate_hash` uses `idx = @entries.index { |e| e.id == entry.id }` which might be nil.
+            # If it's nil, it's just about to be added, so it gets the hash of `@entries.last`.
+            entry.hash = generate_hash(entry)
+
             @entries << entry
         end
 
@@ -81,6 +90,59 @@ module LMNPCompta
         # @param id [Integer] L'ID de l'écriture à supprimer
         def delete(id)
             @entries.reject! { |e| e.id == id }
+        end
+
+        def generate_hash(entry)
+            require 'digest'
+            # Find previous entry
+            idx = @entries.index { |e| e.id == entry.id }
+            prev_hash = ""
+            if idx && idx > 0
+                prev_hash = @entries[idx - 1].hash.to_s
+            elsif idx.nil? && @entries.any?
+                prev_hash = @entries.last.hash.to_s
+            else
+                # Very first entry: load previous year's journal if exists
+                if @year
+                    require 'lmnp_compta/settings'
+                    prev_year = @year - 1
+                    # Avoid instantiating Journal fully to prevent loops/integrity checks
+                    prev_year_file = LMNPCompta::Settings.instance.journal_file(annee: prev_year)
+                    if File.exist?(prev_year_file)
+                        data = YAML.load_file(prev_year_file) || []
+                        if data.any?
+                            prev_hash = data.last['hash'].to_s
+                        end
+                    end
+                end
+            end
+
+            data_str = [
+                prev_hash,
+                entry.id.to_s,
+                entry.date.to_s,
+                entry.created_at.to_s,
+                entry.journal.to_s,
+                entry.ref.to_s,
+                entry.libelle.to_s,
+                entry.lines.map { |l| "#{l[:compte]}:#{l[:debit]}:#{l[:credit]}:#{l[:libelle_ligne]}" }.join("|")
+            ].join("||")
+
+            ::Digest::SHA256.hexdigest(data_str)
+        end
+
+        def verify_integrity!
+            return if @entries.empty?
+
+            # On skip if the very first entry doesn't have a hash (meaning it's an old journal before migration)
+            return if @entries.first.hash.nil?
+            @entries.each do |entry|
+                next if entry.hash.nil? # Tolerant for migration purposes, but full check happens if hashes are present
+                expected_hash = generate_hash(entry)
+                if entry.hash != expected_hash
+                    raise "ERREUR CRITIQUE D'INTÉGRITÉ : Le journal a été altéré ! L'écriture #{entry.id} (#{entry.libelle}) est invalide."
+                end
+            end
         end
 
         private

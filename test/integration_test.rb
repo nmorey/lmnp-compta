@@ -151,13 +151,16 @@ class IntegrationTest < Minitest::Test
 
         assert_in_delta 4134.84, stock.ard, 0.01
 
-        # 5. Export FEC
+        # Export FEC
         puts "\n--- Test: Export FEC ---"
-        LMNPCompta::BilanCommand.new(['fec']).execute
-        fec_filename = "data/2025/123456789FEC20251231.txt"
-        assert File.exist?(fec_filename), "FEC file should be created"
+        require_relative '../lib/lmnp_compta/commands/journal/migrer_hash'
+        LMNPCompta::Commands::Journal::MigrerHash.new(["migrer-hash"]).execute
 
-        content = File.read(fec_filename)
+        LMNPCompta::BilanCommand.new(["fec"]).execute
+        fec_file = "data/2025/123456789FEC20251231.txt"
+        assert File.exist?(fec_file), "FEC file should be created"
+
+        content = File.read(fec_file)
         assert_match /JournalCode\tJournalLib/, content
         assert_match /Airbnb - RESA001/, content
     end

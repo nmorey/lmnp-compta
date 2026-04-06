@@ -74,7 +74,7 @@ module LMNPCompta
 
                 def execute
                     year = Settings.instance.annee
-                    journal = LMNPCompta::Journal.new(Settings.instance.journal_file)
+                    journal = LMNPCompta::Journal.new(Settings.instance.journal_file, year: year)
                     full_mode = @args.include?('--full')
 
                     relevant = journal.entries.select do |e|

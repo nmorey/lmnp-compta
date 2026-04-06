@@ -5,6 +5,7 @@ module LMNPCompta
     class Entry
         attr_accessor :id, :date, :journal, :libelle, :ref
         attr_accessor :lines # Array of hashes {compte:, debit:, credit:, libelle_ligne:}
+        attr_accessor :created_at, :hash
 
         # Métadonnées pour l'analyse/import (transitoires)
         attr_accessor :source_file, :parser_type, :error, :warnings
@@ -18,6 +19,8 @@ module LMNPCompta
             @libelle = attrs[:libelle] || attrs['libelle']
             @ref = attrs[:ref] || attrs['ref']
             @source_file = attrs[:file] || attrs['file']
+            @created_at = attrs[:created_at] || attrs['created_at']
+            @hash = attrs[:hash] || attrs['hash']
 
             @lines = []
 
@@ -99,10 +102,14 @@ module LMNPCompta
         # Sérialise l'écriture en Hash pour l'export YAML/JSON
         # @return [Hash] Représentation hash de l'écriture
         def to_h
-            # Force l'ordre des clés : id, date, libelle, journal, ref, lignes
+            raise "ERREUR CRITIQUE : Impossible d'exporter une écriture sans signature (hash) ! Utilisez migrer-hash." if @hash.nil? || @hash.empty?
+
+            # Force l'ordre des clés : id, date, created_at, hash, libelle, journal, ref, lignes
             h = {}
             h['id'] = @id
             h['date'] = @date.to_s
+            h['created_at'] = @created_at if @created_at
+            h['hash'] = @hash
             h['libelle'] = @libelle
             h['journal'] = @journal
             h['ref'] = @ref

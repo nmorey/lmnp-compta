@@ -25,7 +25,7 @@ module LMNPCompta
             Settings.instance.annee = options[:year]
           end
 
-          journal = LMNPCompta::Journal.new(Settings.instance.journal_file)
+          journal = LMNPCompta::Journal.new(Settings.instance.journal_file, year: Settings.instance.annee)
 
                   content = FECGenerator.generate(journal.entries)
 
@@ -38,7 +38,13 @@ module LMNPCompta
 
           FileUtils.mkdir_p(File.dirname(file_path))
           File.write(file_path, content)
+
+          require 'digest'
+          sha256 = Digest::SHA256.hexdigest(content)
+          File.write("#{file_path}.sha256", sha256)
+
           puts "✅ Fichier FEC généré: #{file_path}"
+          puts "🔒 Signature SHA-256 (Inaltérabilité) générée: #{file_path}.sha256"
         end
       end
     end

@@ -25,6 +25,13 @@ module LMNPCompta
 
         def self.process_entry(entry, csv)
             date_formatted = LMNPCompta.format_date(entry.date.to_s)
+
+            # Validation date via created_at
+            unless entry.created_at
+                raise "ERREUR CRITIQUE: L'écriture #{entry.id} n'a pas de date de validation (created_at). Veuillez d'abord la migrer."
+            end
+            valid_date_formatted = LMNPCompta.format_date(entry.created_at.to_s)
+
             ecriture_num = entry.id
 
             total_debit = Montant.new("0")
@@ -47,7 +54,7 @@ module LMNPCompta
                     ligne[:compte], compte_lib, nil, nil,
                     entry.ref, date_formatted, entry.libelle,
                     debit, credit,
-                    nil, nil, date_formatted, nil, nil
+                    nil, nil, valid_date_formatted, nil, nil
                 ]
                 csv << row
             end

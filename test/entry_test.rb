@@ -49,6 +49,7 @@ class EntryTest < Minitest::Test
     def test_serialization
         @entry.add_debit("606000", 100)
         @entry.add_credit("512000", 100)
+        @entry.hash = "fake_hash"
 
         hash = @entry.to_h
         assert_equal 1, hash['id']
