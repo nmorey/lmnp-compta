@@ -11,6 +11,26 @@ module LMNPCompta
         register 'trajets', 'Gérer les trajets kilométriques'
 
         def execute
+          require 'optparse'
+          parser = OptionParser.new do |opts|
+             opts.banner = "Usage: lmnp journal trajets {ajouter|lister} [options]"
+             opts.on("-h", "--help", "Affiche l'aide") do
+                 puts opts
+                 puts "\nSous-commandes :"
+                 puts "  ajouter DATE VEHICULE KM RAISON  Ajouter un trajet"
+                 puts "  lister                           Lister les trajets de l'année en cours"
+                 exit 0
+             end
+          end
+
+          begin
+             parser.parse!(@args)
+          rescue OptionParser::InvalidOption => e
+             puts e
+             puts parser
+             exit 1
+          end
+
           sub = @args.shift
           case sub
           when 'ajouter'

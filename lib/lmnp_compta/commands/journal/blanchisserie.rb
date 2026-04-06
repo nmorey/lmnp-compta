@@ -11,6 +11,26 @@ module LMNPCompta
         register 'blanchisserie', 'Ajouter ou lister les frais de blanchisserie'
 
         def execute
+          require 'optparse'
+          parser = OptionParser.new do |opts|
+             opts.banner = "Usage: lmnp journal blanchisserie {ajouter|lister} [options]"
+             opts.on("-h", "--help", "Affiche l'aide") do
+                 puts opts
+                 puts "\nSous-commandes :"
+                 puts "  ajouter <id|nom> <YYYY-MM-DD>  Ajouter un frais de blanchisserie"
+                 puts "  lister                         Lister les frais de l'année en cours"
+                 exit 0
+             end
+          end
+
+          begin
+             parser.parse!(@args)
+          rescue OptionParser::InvalidOption => e
+             puts e
+             puts parser
+             exit 1
+          end
+
           sub = @args.shift
           case sub
           when 'ajouter'

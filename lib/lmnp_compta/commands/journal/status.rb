@@ -73,9 +73,30 @@ module LMNPCompta
                 end
 
                 def execute
+                    require 'optparse'
+                    full_mode = false
+
+                    parser = OptionParser.new do |opts|
+                        opts.banner = "Usage: lmnp journal status [options]"
+                        opts.on("--full", "Affiche une vue complète (incluant le compte de l'exploitant)") do
+                            full_mode = true
+                        end
+                        opts.on("-h", "--help", "Affiche l'aide") do
+                            puts opts
+                            exit 0
+                        end
+                    end
+
+                    begin
+                        parser.parse!(@args)
+                    rescue OptionParser::InvalidOption => e
+                        puts e
+                        puts parser
+                        exit 1
+                    end
+
                     year = Settings.instance.annee
                     journal = LMNPCompta::Journal.new(Settings.instance.journal_file, year: year)
-                    full_mode = @args.include?('--full')
 
                     relevant = journal.entries.select do |e|
                         is_current_year = Date.parse(e.date.to_s).year == year.to_i

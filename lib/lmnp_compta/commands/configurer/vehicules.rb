@@ -8,6 +8,26 @@ module LMNPCompta
         register 'vehicules', 'Gérer les véhicules personnels (ajouter, lister)'
 
         def execute
+          require 'optparse'
+          parser = OptionParser.new do |opts|
+             opts.banner = "Usage: lmnp configurer vehicules {ajouter|lister} [options]"
+             opts.on("-h", "--help", "Affiche l'aide") do
+                 puts opts
+                 puts "\nSous-commandes :"
+                 puts "  ajouter \"Nom\" CV    Ajouter un véhicule personnel"
+                 puts "  lister              Lister les véhicules enregistrés"
+                 exit 0
+             end
+          end
+
+          begin
+             parser.parse!(@args)
+          rescue OptionParser::InvalidOption => e
+             puts e
+             puts parser
+             exit 1
+          end
+
           sub = @args.shift
           case sub
           when 'ajouter'

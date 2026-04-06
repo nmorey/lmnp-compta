@@ -15,7 +15,27 @@ module LMNPCompta
         register 'cloturer', 'Générer les écritures de fin d\'année'
 
         def execute
-          timestamp_only = @args && @args.any? { |a| ['--timestamp', '--timestamp-only'].include?(a) }
+          require 'optparse'
+          timestamp_only = false
+
+          parser = OptionParser.new do |opts|
+            opts.banner = "Usage: lmnp bilan cloturer [options]"
+            opts.on("--timestamp", "--timestamp-only", "Horodater uniquement le journal (sans générer d'écritures)") do
+              timestamp_only = true
+            end
+            opts.on("-h", "--help", "Affiche l'aide") do
+              puts opts
+              exit 0
+            end
+          end
+
+          begin
+            parser.parse!(@args)
+          rescue OptionParser::InvalidOption => e
+            puts e
+            puts parser
+            exit 1
+          end
 
           puts "==========================================================="
           puts "       CLÔTURE DE L'EXERCICE #{Settings.instance.annee}"
