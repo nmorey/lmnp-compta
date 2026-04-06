@@ -114,7 +114,7 @@ module LMNPCompta
                         @new_entries << entry
                     end
                     if index == items.length - 1 && @blanchisseries.any?
-                        hebergement = row['Logement']
+                        hebergement = row['Logement'] || row['Hébergement'] || row[6]
                         laundry = @blanchisseries.find { |l| l.nom_bien == hebergement }
                         if laundry
                             add_laundry_entry(laundry, code, res_end_date)
