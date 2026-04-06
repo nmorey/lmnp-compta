@@ -128,7 +128,7 @@ module LMNPCompta
 
         def add_laundry_entry(laundry, res_code, date)
             ref = "LNDRY-#{res_code}"
-            
+
             # Use @journal because the entry might be saved already during previous runs,
             # but also check @new_entries in case it's added in this run (should be 1 max per res_code).
             existing = find_duplicate(ref)
@@ -136,10 +136,10 @@ module LMNPCompta
                  puts "⚠️  Frais de blanchisserie déjà présents : #{ref} (Ignoré)"
                  return
             end
-            
+
             puts "Ajout blanchisserie pour réservation #{res_code}"
             cost = LMNPCompta::Montant.new(laundry.cost_per_wash)
-            
+
             entry = LMNPCompta::Entry.new(
                 date: date.to_s,
                 journal: "OD",
@@ -147,10 +147,10 @@ module LMNPCompta
                 ref: ref,
                 file: File.basename(@file_path)
             )
-            
+
             entry.add_debit(LMNPCompta::COMPTE["Entretien et réparations"], cost, "Frais de blanchisserie")
             entry.add_credit(LMNPCompta::COMPTE["Compte de l'exploitant"], cost, "Frais avancés")
-            
+
             @new_entries << entry
         end
 

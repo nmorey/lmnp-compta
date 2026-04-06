@@ -105,7 +105,7 @@ class AirbnbCommandTest < Minitest::Test
         # Verify Journal Entries
         journal = LMNPCompta::Journal.new('data/2025/journal.yaml')
         assert_equal 2, journal.entries.length
-        
+
         # Original Entry
         assert_equal "REF001-01", journal.entries.first.ref
 

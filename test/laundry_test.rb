@@ -43,11 +43,11 @@ class LaundryTest < Minitest::Test
       "Appart Paris",
       0.05, 4.0, 1.0, 0.25, 0.5
     )
-    
+
     l = LMNPCompta::Laundry.find('my-id')
     assert l
     assert_equal 'Appart Paris', l.nom_bien
-    
+
     # Also find by name
     l2 = LMNPCompta::Laundry.find('Appart Paris')
     assert l2

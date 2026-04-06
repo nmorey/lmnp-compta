@@ -266,7 +266,7 @@ module LMNPCompta
                 # --- 2031-SD (DÉCLARATION DE RÉSULTATS) ---
                 form_2031 = Reporting::Form.new("FORMULAIRE 2031-SD (Déclaration de résultats)")
                 sec_c = Reporting::Section.new("C. RÉCAPITULATION DES ÉLÉMENTS D'IMPOSITION")
-                
+
                 final_val = result[:resultat_fiscal].round
                 res_avant_def = result[:resultat_avant_deficit].round
 
