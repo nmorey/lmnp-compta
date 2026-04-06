@@ -163,6 +163,18 @@ class IntegrationTest < Minitest::Test
         content = File.read(fec_file)
         assert_match /JournalCode\tJournalLib/, content
         assert_match /Airbnb - RESA001/, content
+
+        # Timestamp
+        puts "\n--- Test: Timestamping (--timestamp-only) ---"
+        # Net::HTTP.start is globally mocked in test_helper.rb to prevent live TSA network calls
+        # We expect it to run without error, even if timestamp fails due to mocked HTTP returning nil
+        out, err = capture_io do
+            LMNPCompta::BilanCommand.new(['cloturer', '--timestamp-only']).execute
+        end
+
+        # Sanity checks: Ensure the mock was hit and the network call failed, so no TSA spam happens
+        assert_match /Impossible d'horodater le journal \(RFC 3161\)/, err, "Should warn about timestamp failure due to mock"
+        refute File.exist?("data/2025/journal.yaml.tsr"), "TSR file should not be created during tests because TSA is mocked"
     end
 
     def test_importer_facture_unknown_invoice_output_format

@@ -145,6 +145,49 @@ module LMNPCompta
             end
         end
 
+        def timestamp!(tsa_url: nil)
+            require 'openssl'
+            require 'net/http'
+            require 'uri'
+            require 'lmnp_compta/settings'
+
+            tsa_url ||= LMNPCompta::Settings.instance.tsa_url
+            uri = URI(tsa_url)
+
+            return unless File.exist?(@file_path)
+
+            file_data = File.read(@file_path)
+            digest = OpenSSL::Digest.new('SHA256')
+            hash = digest.digest(file_data)
+
+            request = OpenSSL::Timestamp::Request.new
+            request.version = 1
+            request.algorithm = 'SHA256'
+            request.message_imprint = hash
+            request.nonce = OpenSSL::BN.rand(64)
+            request.cert_requested = true
+
+            req = Net::HTTP::Post.new(uri)
+            req.content_type = "application/timestamp-query"
+            req.body = request.to_der
+
+            begin
+                res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') do |http|
+                    http.request(req)
+                end
+
+                response = OpenSSL::Timestamp::Response.new(res.body)
+                if response.status == 0
+                    File.write("#{@file_path}.tsr", response.to_der)
+                    puts "✅ Journal horodaté avec succès via RFC 3161."
+                else
+                    warn "⚠️  L'horodatage a échoué. Le serveur a répondu avec le statut : #{response.status}"
+                end
+            rescue => e
+                warn "⚠️  Impossible d'horodater le journal (RFC 3161) : #{e.message}"
+            end
+        end
+
         private
 
         # Vérifie les doublons de référence dans le journal chargé

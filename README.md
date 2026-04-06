@@ -95,6 +95,12 @@ Cette commande unique effectue :
 1.  Le calcul et l'écriture des **amortissements**.
 2.  Le calcul et l'écriture des **indemnités kilométriques**.
 3.  Le calcul et l'écriture du **solde de trésorerie** (Compte courant exploitant).
+4.  La **vérification d'intégrité** et l'**horodatage RFC 3161** du journal.
+
+Pour exécuter uniquement l'horodatage RFC 3161 du journal sans modifier ni générer d'écritures :
+```bash
+lmnp bilan cloturer --timestamp-only
+```
 
 **Liasse fiscale :**
 ```bash

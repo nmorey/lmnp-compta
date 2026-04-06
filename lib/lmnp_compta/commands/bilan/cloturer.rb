@@ -15,6 +15,8 @@ module LMNPCompta
         register 'cloturer', 'Générer les écritures de fin d\'année'
 
         def execute
+          timestamp_only = @args && @args.any? { |a| ['--timestamp', '--timestamp-only'].include?(a) }
+
           puts "==========================================================="
           puts "       CLÔTURE DE L'EXERCICE #{Settings.instance.annee}"
           puts "==========================================================="
@@ -23,9 +25,20 @@ module LMNPCompta
           annee = Settings.instance.annee
           journal = LMNPCompta::Journal.new(journal_path, year: annee)
 
+          if timestamp_only
+            puts "\n👉 Mode horodatage uniquement."
+            journal.verify_integrity!
+            journal.timestamp!
+            return
+          end
+
           step_amortissements(journal, annee)
           step_indemnites_km(journal, annee)
           step_solde_tresorerie(journal, annee)
+
+          journal.save!
+          journal.verify_integrity!
+          journal.timestamp!
 
           puts "\n✅ Clôture terminée. Toutes les écritures ont été générées."
         end

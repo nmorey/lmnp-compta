@@ -4,7 +4,7 @@ require 'date'
 module LMNPCompta
     # Gestion de la configuration globale
     class Settings
-        attr_reader :siren, :data_dir, :extra_invoice_dir
+        attr_reader :siren, :data_dir, :extra_invoice_dir, :tsa_url
         attr_accessor :annee
 
         # Charge la configuration
@@ -22,6 +22,7 @@ module LMNPCompta
             @stock_file_setting = config['stock_file'] || "stock_fiscal.yaml"
             @immo_file_setting = config['immo_file'] || "immobilisations.yaml"
             @extra_invoice_dir = config['extra_invoice_dir']
+            @tsa_url = config['tsa_url'] || "https://freetsa.org/tsr"
         end
 
         def journal_file(annee: @annee)

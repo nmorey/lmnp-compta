@@ -92,6 +92,11 @@ _lmnp_completion()
             # Niveau 3 pour bilan
             local subcmd="${COMP_WORDS[2]}"
             case "${subcmd}" in
+                cloturer)
+                    opts="--timestamp-only"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;;
                 liasse|fec)
                     opts="--year"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
