@@ -76,18 +76,18 @@ class StatusCommandTest < Minitest::Test
         e9 = LMNPCompta::Entry.new(date: "2025-12-31", libelle: "Virement solde trésorerie (Clôture)", ref: "CLOTURE2025")
         e9.add_debit("108000", "450.00")
         e9.add_credit("512000", "450.00")
-        journal.add_entry(e9)
+        journal.add_entry(e9, force: true)
 
         # Wrong year - Should NOT appear
-        journal.save!
+        journal.save!(force: true)
 
         # Add a 2024 entry bypassing constraint (re-open without year)
         j_mixed = LMNPCompta::Journal.new(JOURNAL_FILE) # year nil
         e4 = LMNPCompta::Entry.new(date: "2024-12-31", libelle: "Vieux Loyer", ref: "REFOLD")
         e4.add_debit("512000", "500.00")
         e4.add_credit("706000", "500.00")
-        j_mixed.add_entry(e4)
-        j_mixed.save!
+        j_mixed.add_entry(e4, force: true)
+        j_mixed.save!(force: true)
     end
 
     def teardown

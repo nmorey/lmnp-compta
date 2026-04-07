@@ -52,11 +52,16 @@ module LMNPCompta
             return
           end
 
+          if journal.closed?
+            puts "⚠️  Le journal est déjà clôturé. Il ne peut plus être modifié."
+            return
+          end
+
           step_amortissements(journal, annee)
           step_indemnites_km(journal, annee)
           step_solde_tresorerie(journal, annee)
 
-          journal.save!
+          journal.save!(force: true)
           journal.verify_integrity!
           journal.timestamp!
 
@@ -220,8 +225,8 @@ module LMNPCompta
                 entry.add_credit(compte_exploitant, mnt)
             end
 
-            journal.add_entry(entry)
-            journal.save!
+            journal.add_entry(entry, force: true)
+            journal.save!(force: true)
             puts "✅ Écriture de solde générée."
         end
       end

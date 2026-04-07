@@ -64,7 +64,7 @@ module LMNPCompta
           end
 
           if modifications > 0
-            journal.save!
+            journal.save!(force: true)
             puts "✅ Migration terminée avec succès !"
             puts "   #{modifications} écritures ont été scellées cryptographiquement."
             puts "   ⚠️  Pensez à faire un `git commit` pour valider ces modifications."

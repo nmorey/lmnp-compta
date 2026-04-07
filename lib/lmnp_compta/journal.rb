@@ -28,8 +28,16 @@ module LMNPCompta
             verify_integrity! unless skip_integrity
         end
 
+        # Vérifie si le journal a été clôturé
+        def closed?
+            @entries.any? { |e| e.ref.to_s.start_with?("CLOTURE") }
+        end
+
         # Sauvegarde les entrées dans le fichier YAML
-        def save!
+        def save!(force: false)
+            if closed? && !force
+                raise "ERREUR : Le journal est clôturé et ne peut plus être modifié."
+            end
             # Sort by date
             sorted = @entries.sort_by { |e| e.id }
             FileUtils.mkdir_p(File.dirname(@file_path))
@@ -39,8 +47,13 @@ module LMNPCompta
         # Ajoute une écriture au journal
         #
         # @param entry [Entry] L'écriture à ajouter
+        # @param force [Boolean] Permet d'ignorer la vérification de clôture
         # @raise [RuntimeError] Si l'année ne correspond pas ou si la référence existe déjà
-        def add_entry(entry)
+        def add_entry(entry, force: false)
+            if closed? && !force
+                raise "ERREUR : Le journal est clôturé et ne peut plus être modifié."
+            end
+
             entry.id = next_id if entry.id.nil?
 
             # Validation de la date
@@ -88,7 +101,11 @@ module LMNPCompta
 
         # Supprime une écriture par son ID
         # @param id [Integer] L'ID de l'écriture à supprimer
-        def delete(id)
+        # @param force [Boolean] Permet d'ignorer la vérification de clôture
+        def delete(id, force: false)
+            if closed? && !force
+                raise "ERREUR : Le journal est clôturé et ne peut plus être modifié."
+            end
             @entries.reject! { |e| e.id == id }
         end
 
