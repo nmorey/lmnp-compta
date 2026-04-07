@@ -17,11 +17,15 @@ module LMNPCompta
         def execute
           require 'optparse'
           timestamp_only = false
+          skip_timestamp = false
 
           parser = OptionParser.new do |opts|
             opts.banner = "Usage: lmnp bilan cloturer [options]"
             opts.on("--timestamp", "--timestamp-only", "Horodater uniquement le journal (sans générer d'écritures)") do
               timestamp_only = true
+            end
+            opts.on("--no-timestamp", "Ne pas horodater le journal à la fin de la clôture (pour tests/debug)") do
+              skip_timestamp = true
             end
             opts.on("-h", "--help", "Affiche l'aide") do
               puts opts
@@ -48,7 +52,7 @@ module LMNPCompta
           if timestamp_only
             puts "\n👉 Mode horodatage uniquement."
             journal.verify_integrity!
-            journal.timestamp!
+            journal.timestamp! unless skip_timestamp
             return
           end
 
@@ -63,7 +67,7 @@ module LMNPCompta
 
           journal.save!(force: true)
           journal.verify_integrity!
-          journal.timestamp!
+          journal.timestamp! unless skip_timestamp
 
           puts "\n✅ Clôture terminée. Toutes les écritures ont été générées."
         end
