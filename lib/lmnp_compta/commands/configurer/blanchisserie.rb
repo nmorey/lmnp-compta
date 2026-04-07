@@ -40,6 +40,10 @@ module LMNPCompta
             opts.on("--conso-kwh KWH", Float, "Consommation d'électricité par lessive (en kWh)") { |v| options[:conso_kwh] = v }
             opts.on("--prix-kwh PRIX", Float, "Prix de l'électricité au kWh") { |v| options[:prix_kwh] = v }
             opts.on("--prix-produit PRIX", Float, "Prix du produit par lessive") { |v| options[:prix_produit] = v }
+            opts.on("-h", "--help", "Affiche l'aide") do
+              puts opts
+              exit 0
+            end
           end
 
           begin

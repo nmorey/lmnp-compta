@@ -35,6 +35,10 @@ module LMNPCompta
             opts.on("--facade PERCENT", Integer) { |v| overrides['Façade'] = v }
             opts.on("--installations PERCENT", Integer) { |v| overrides['Installations Générales'] = v }
             opts.on("--agencements PERCENT", Integer) { |v| overrides['Agencements Intérieurs'] = v }
+            opts.on("-h", "--help", "Affiche l'aide") do
+              puts opts
+              exit 0
+            end
           end
 
           begin
