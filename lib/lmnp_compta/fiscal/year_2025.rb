@@ -298,12 +298,15 @@ module LMNPCompta
 
                 doc.add_form(form_2031)
 
+                # Pre-calcul pour 2033-C utilisé dans 2033-A pour les correspondances exactes
+                form_c_data = calculate_form_c_data
+
                 # --- 2033-A (BILAN) ---
                 form_a = Reporting::Form.new("FORMULAIRE 2033-A (Bilan Actif / Passif)")
 
                 actif = Reporting::Section.new("ACTIF")
-                val_immo_brut = immo_brut.round
-                val_amort_cumules = amort_cumules.round
+                val_immo_brut = form_c_data[:total_brut_fin]
+                val_amort_cumules = form_c_data[:total_amort_fin]
                 actif.add_box("028", "Immobilisations Corporelles (Brut)", val_immo_brut)
                 actif.add_box("030", "Amortissements corporelles (à déduire)", val_amort_cumules)
 
@@ -438,7 +441,7 @@ module LMNPCompta
                 # --- 2033-C (IMMOBILISATIONS) ---
                 form_c = Reporting::Form.new("FORMULAIRE 2033-C (Immobilisations & Amortissements)")
 
-                generate_form_c_content(form_c)
+                populate_form_c(form_c, form_c_data)
                 doc.add_form(form_c)
 
                 # --- 2033-D (DEFICITS) ---
@@ -541,7 +544,7 @@ module LMNPCompta
                 end
             end
 
-            def generate_form_c_content(form_c)
+            def calculate_form_c_data
                 data_c = {
                     terrains: { label: "Terrains (211)", codes: %w[420 422 426 510 512 516] },
                     constructions: { label: "Constructions (213)", codes: %w[430 432 436 520 522 526] },
@@ -595,9 +598,35 @@ module LMNPCompta
                     end
                 end
 
-                # Totalization variables
                 total_brut_debut = RoundedMontant.new(0)
                 total_brut_fin = RoundedMontant.new(0)
+                total_amort_start = RoundedMontant.new(0)
+                total_dotation = RoundedMontant.new(0)
+
+                data_c.each do |k, v|
+                    brute_start_r = v[:brute_start].round
+                    brute_aug_r = v[:brute_aug].round
+                    total_brut_debut += brute_start_r
+                    total_brut_fin += (brute_start_r + brute_aug_r)
+
+                    amort_start_r = v[:amort_start].round
+                    dotation_r = v[:dotation].round
+                    total_amort_start += amort_start_r
+                    total_dotation += dotation_r
+                end
+
+                {
+                    data_c: data_c,
+                    total_brut_debut: total_brut_debut,
+                    total_brut_fin: total_brut_fin,
+                    total_amort_start: total_amort_start,
+                    total_dotation: total_dotation,
+                    total_amort_fin: total_amort_start + total_dotation
+                }
+            end
+
+            def populate_form_c(form_c, form_c_data)
+                data_c = form_c_data[:data_c]
 
                 cadre_i = Reporting::Section.new("I - IMMOBILISATIONS (Valeur Brute)")
                 data_c.each do |k, v|
@@ -608,9 +637,6 @@ module LMNPCompta
                     brute_aug_r = v[:brute_aug].round
                     brute_fin_r = brute_start_r + brute_aug_r
 
-                    total_brut_debut += brute_start_r
-                    total_brut_fin += brute_fin_r
-
                     cadre_i.add_text("--- #{v[:label]} ---")
                     cadre_i.add_box(v[:codes][0], "Valeur brute début", brute_start_r)
                     cadre_i.add_box(v[:codes][1], "Augmentations", brute_aug_r) if brute_aug_r > RoundedMontant.new(0)
@@ -618,24 +644,18 @@ module LMNPCompta
                 end
 
                 cadre_i.add_text("--- TOTAUX ---")
-                cadre_i.add_box("490", "Total Valeur brute début", total_brut_debut)
-                cadre_i.add_box("496", "Total Valeur brute fin", total_brut_fin)
+                cadre_i.add_box("490", "Total Valeur brute début", form_c_data[:total_brut_debut])
+                cadre_i.add_box("496", "Total Valeur brute fin", form_c_data[:total_brut_fin])
 
                 form_c.add_section(cadre_i)
 
                 cadre_ii = Reporting::Section.new("II - AMORTISSEMENTS")
-                total_amort_start = RoundedMontant.new(0)
-                total_dotation = RoundedMontant.new(0)
-
                 data_c.each do |k, v|
                     next if v[:amort_start] == Montant.new(0) && v[:dotation] == Montant.new(0)
 
                     amort_start_r = v[:amort_start].round
                     dotation_r = v[:dotation].round
                     amort_fin_r = amort_start_r + dotation_r
-
-                    total_amort_start += amort_start_r
-                    total_dotation += dotation_r
 
                     cadre_ii.add_text("--- #{v[:label]} ---")
                     cadre_ii.add_box(v[:codes][3], "Amortissements début", amort_start_r)
@@ -644,9 +664,9 @@ module LMNPCompta
                 end
 
                 cadre_ii.add_text("--- TOTAL ---")
-                cadre_ii.add_box("570", "Total Amort. Début", total_amort_start)
-                cadre_ii.add_box("572", "Total Dotations", total_dotation)
-                cadre_ii.add_box("576", "Total Amort. Fin", total_amort_start + total_dotation)
+                cadre_ii.add_box("570", "Total Amort. Début", form_c_data[:total_amort_start])
+                cadre_ii.add_box("572", "Total Dotations", form_c_data[:total_dotation])
+                cadre_ii.add_box("576", "Total Amort. Fin", form_c_data[:total_amort_fin])
 
                 form_c.add_section(cadre_ii)
             end
