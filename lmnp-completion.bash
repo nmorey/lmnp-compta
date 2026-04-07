@@ -5,6 +5,15 @@ _lmnp_completion()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
+    # File completion handling for specific options
+    case "${prev}" in
+        -f|--file|--journal|--stock|--immo)
+            compopt -o filenames 2>/dev/null
+            mapfile -t COMPREPLY < <(compgen -f -- "${cur}")
+            return 0
+            ;;
+    esac
+
     # Commandes de niveau 1
     if [[ ${COMP_CWORD} -eq 1 ]]; then
         opts="configurer journal bilan help"
@@ -26,22 +35,26 @@ _lmnp_completion()
             local subcmd="${COMP_WORDS[2]}"
             case "${subcmd}" in
                 vehicules)
-                    opts="ajouter lister"
+                    opts="ajouter lister -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
                     ;; 
                 blanchisserie)
-                    opts="ajouter lister"
+                    if [[ ${COMP_CWORD} -eq 3 ]]; then
+                        opts="ajouter lister -h --help"
+                    else
+                        opts="--nom-bien --conso-eau --prix-eau --conso-kwh --prix-kwh --prix-produit -h --help"
+                    fi
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
                     ;; 
                 init)
-                    opts="--siren --annee --help"
+                    opts="--siren --annee --data-dir --journal --stock --immo -f --force -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
                     ;; 
                 immo)
-                    opts="--nom --valeur --date --help"
+                    opts="--valeur --date --nom --terrain --gros-oeuvre --facade --installations --agencements -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
                     ;; 
@@ -49,7 +62,7 @@ _lmnp_completion()
             ;; 
         journal)
             if [[ ${COMP_CWORD} -eq 2 ]]; then
-                opts="saisir importer-airbnb analyser-facture trajets blanchisserie status"
+                opts="saisir importer-airbnb analyser-facture trajets blanchisserie status migrer-hash"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                 return 0
             fi
@@ -57,27 +70,43 @@ _lmnp_completion()
             local subcmd="${COMP_WORDS[2]}"
             case "${subcmd}" in
                 trajets)
-                    opts="ajouter lister"
+                    opts="ajouter lister -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
                     ;; 
                 blanchisserie)
-                    opts="ajouter lister"
+                    opts="ajouter lister -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
                     ;; 
                 saisir)
-                    opts="--date --journal --libelle --montant --compte --sens"
+                    opts="-d --date -j --journal -l --libelle -r --ref -f --file -c --compte -s --sens -m --montant -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
                     ;; 
-                analyser-facture)
-                    opts="--type --help"
+                importer-airbnb)
+                    opts="-f --file --blanchisserie --dry-run -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-                    # Fichiers PDF
-                    local IFS=$'\n'
-                    compopt -o filenames 2>/dev/null
-                    COMPREPLY+=( $(compgen -f -- "${cur}") )
+                    return 0
+                    ;;
+                status)
+                    opts="--full -h --help"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;;
+                migrer-hash)
+                    opts="--year -h --help"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;;
+                analyser-facture)
+                    if [[ "$cur" == -* ]]; then
+                        opts="-t --type --amortize-duration --no-amortize -h --help"
+                        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    else
+                        compopt -o filenames 2>/dev/null
+                        mapfile -t COMPREPLY < <(compgen -f -- "${cur}")
+                    fi
                     return 0
                     ;; 
             esac
@@ -93,12 +122,12 @@ _lmnp_completion()
             local subcmd="${COMP_WORDS[2]}"
             case "${subcmd}" in
                 cloturer)
-                    opts="--timestamp-only"
+                    opts="--timestamp --timestamp-only --no-timestamp -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
                     ;;
                 liasse|fec)
-                    opts="--year"
+                    opts="--year -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
                     ;;
