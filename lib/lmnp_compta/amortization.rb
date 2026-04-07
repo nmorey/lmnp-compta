@@ -9,18 +9,28 @@ module LMNPCompta
             dotation = val_mnt * taux
 
             d_start = Date.parse(date_start.to_s)
-            d_fin_amort = d_start.next_year(duree)
-            d_debut_ex = Date.new(annee, 1, 1)
-            d_fin_ex = Date.new(annee, 12, 31)
+            return Montant.new(0) if annee < d_start.year
 
-            return Montant.new(0) if d_fin_amort <= d_debut_ex || d_start > d_fin_ex
+            total_jours_amort = (duree * 360).to_i
 
-            debut_calc = [d_start, d_debut_ex].max
-            fin_calc = [d_fin_amort, d_fin_ex].min
-            nb_jours = (fin_calc - debut_calc).to_i + 1
-            nb_jours_an = (d_fin_ex - d_debut_ex).to_i + 1 # Gère les années bissextiles
+            if annee == d_start.year
+                jours_deja = 0
+                max_jours = (30 - [d_start.day, 30].min + 1) + (12 - d_start.month) * 30
+            else
+                jours_an1 = (30 - [d_start.day, 30].min + 1) + (12 - d_start.month) * 30
+                annees_pleines = annee - d_start.year - 1
+                jours_deja = jours_an1 + (annees_pleines * 360)
+                max_jours = 360
+            end
 
-            (nb_jours == nb_jours_an) ? dotation : (dotation * (nb_jours.to_f / nb_jours_an))
+            return Montant.new(0) if jours_deja >= total_jours_amort
+
+            jours_restants = total_jours_amort - jours_deja
+            jours_ex = [max_jours, jours_restants].min
+
+            return Montant.new(0) if jours_ex <= 0
+
+            jours_ex == 360 ? dotation : (dotation * (jours_ex.to_f / 360.0))
         end
     end
 end
