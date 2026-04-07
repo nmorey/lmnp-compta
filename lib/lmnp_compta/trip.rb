@@ -11,7 +11,7 @@ module LMNPCompta
       @date = Date.parse(attrs[:date].to_s)
       @vehicle_name = attrs[:vehicle_name] || attrs['vehicle_name']
       @reason = attrs[:reason] || attrs['reason']
-      @distance_km = (attrs[:distance_km] || attrs['distance_km']).to_f
+      @distance_km = Montant.new(attrs[:distance_km] || attrs['distance_km'])
     end
 
     def self.file_path(year)
@@ -44,7 +44,7 @@ module LMNPCompta
           'date' => t.date.to_s,
           'vehicle_name' => t.vehicle_name,
           'reason' => t.reason,
-          'distance_km' => t.distance_km
+          'distance_km' => t.distance_km.to_s
         }
       end
       File.write(path, data.to_yaml)
@@ -65,7 +65,7 @@ module LMNPCompta
           'date' => @date.to_s,
           'vehicle_name' => @vehicle_name,
           'reason' => @reason,
-          'distance_km' => @distance_km
+          'distance_km' => @distance_km.to_s
         }
     end
   end

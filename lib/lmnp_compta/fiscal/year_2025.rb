@@ -58,7 +58,7 @@ module LMNPCompta
                 scale = MILEAGE_SCALE[cv]
                 raise "Barème introuvable pour #{cv} CV" unless scale
 
-                d = BigDecimal(distance_km.to_s)
+                d = BigDecimal(distance_km.to_f)
                 factors = nil
 
                 if d <= scale[:limits][0]
@@ -68,7 +68,6 @@ module LMNPCompta
                 else
                     factors = scale[:factors][2]
                 end
-
                 amount = (d * BigDecimal(factors[:mult].to_s)) + BigDecimal(factors[:add].to_s)
                 Montant.new(amount.round(2))
             end
