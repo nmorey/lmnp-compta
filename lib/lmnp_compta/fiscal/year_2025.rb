@@ -157,34 +157,6 @@ module LMNPCompta
                 sum_prefix('63')
             end
 
-            # --- IMMOBILISATIONS ---
-
-            def immo_brut
-                total = Montant.new(0)
-                @assets.each do |asset_data|
-                    comps = asset_data.is_a?(Hash) ? asset_data['composants'] : asset_data.composants
-                    comps.each do |c|
-                        val = c.is_a?(Hash) ? c['valeur'] : c.valeur
-                        total += val
-                    end
-                end
-                total
-            end
-
-            def amort_cumules
-                dotation_annee = Montant.new(0)
-                @assets.each do |asset_data|
-                    start_date = asset_data.date_mise_en_location
-                    comps = asset_data.composants
-                    comps.each do |c|
-                        valeur = c.valeur
-                        duree = c.duree
-                        dotation_annee += Amortization.calcul_dotation(valeur, duree, start_date, @year)
-                    end
-                end
-                @opening.amort_cumules_start + dotation_annee
-            end
-
             # --- ANALYSE FISCALE ---
 
             def analyze
@@ -254,310 +226,249 @@ module LMNPCompta
                           })
             end
 
-            def generate_report
+
+            LAYOUT = [
+                {
+                    title: "FORMULAIRE 2031-SD (Déclaration de résultats)",
+                    sections: [
+                        {
+                            title: "C. RÉCAPITULATION DES ÉLÉMENTS D'IMPOSITION",
+                            elements: [
+                                { type: :box, code: "1.", label: "Résultat fiscal (Bénéfice)", source: :res_fisc_benefice, show_zero: true },
+                                { type: :box, code: "1.", label: "Résultat fiscal (Déficit)", source: :res_fisc_deficit, show_zero: true },
+                                { type: :box, code: "7a.", label: "dont BIC non professionnels (Bénéfice)", source: :res_avant_def_benefice, show_zero: true },
+                                { type: :box, code: "7b.", label: "dont BIC non professionnels (Déficit)", source: :res_avant_def_deficit, show_zero: true }
+                            ]
+                        },
+                        {
+                            title: "H. PLUS-VALUES ACQUISES EN FRANCHISE D'IMPÔT",
+                            elements: [
+                                { type: :text, text: "  (Non géré par ce logiciel - se référer à la notice)" }
+                            ]
+                        },
+                        {
+                            title: "I. BIC NON PROFESSIONNELS",
+                            elements: [
+                                { type: :box, code: "-", label: "Autres locations meublées non professionnelles (Bénéfice)", source: :res_avant_def_benefice, show_zero: true },
+                                { type: :box, code: "-", label: "Résultat avant imputation des déficits antérieurs (reporter case 7a)", source: :res_avant_def_benefice, show_zero: true },
+                                { type: :box, code: "-", label: "Autres locations meublées non professionnelles (Déficit)", source: :res_avant_def_deficit, show_zero: true },
+                                { type: :box, code: "-", label: "Résultat avant imputation des déficits antérieurs (reporter case 7b)", source: :res_avant_def_deficit, show_zero: true }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: "FORMULAIRE 2033-A (Bilan Actif / Passif)",
+                    sections: [
+                        {
+                            title: "ACTIF",
+                            elements: [
+                                { type: :box, code: "028", label: "Immobilisations Corporelles (Brut)", source: :val_immo_brut },
+                                { type: :box, code: "030", label: "Amortissements corporelles (à déduire)", source: :val_amort_cumules },
+                                { type: :box, code: "032", label: "Immobilisations Corporelles (Net)", source: :val_immo_net },
+                                { type: :box, code: "084", label: "Trésorerie & Disponibilités (Banque)", source: :tresorerie },
+                                { type: :box, code: "068", label: "Créances clients et comptes rattachés", source: :creances_clients },
+                                { type: :box, code: "072", label: "Autres créances (TVA, État...)", source: :autres_creances },
+                                { type: :text, text: "--- TOTAUX ACTIF ---" },
+                                { type: :box, code: "110", label: "Total Général ACTIF (Brut)", source: :total_actif_brut },
+                                { type: :box, code: "112", label: "Total Général ACTIF (Amortissements)", source: :val_amort_cumules },
+                                { type: :box, code: "11X", label: "Total Général ACTIF (Net)", source: :total_actif_net }
+                            ]
+                        },
+                        {
+                            title: "PASSIF (Avant répartition du résultat)",
+                            elements: [
+                                { type: :text, text: "  > Capital Initial (Au 01/01) .... : %{val} €", source: :capital_start_text },
+                                { type: :text, text: "  > Apports / Retraits (108) ...... : -%{val} €", source: :mouv_expl_text },
+                                { type: :box, code: "120", label: "Capital & Report à nouveau", source: :capital },
+                                { type: :box, code: "136", label: "Résultat de l'exercice (Bénéfice ou Perte)", source: :rc },
+                                { type: :box, code: "142", label: "Total Capitaux Propres", source: :total_capitaux },
+                                { type: :box, code: "156", label: "Emprunts et dettes assimilées", source: :emprunts },
+                                { type: :box, code: "166", label: "Fournisseurs et comptes rattachés", source: :dettes_fournisseurs },
+                                { type: :box, code: "172", label: "Dettes fiscales et sociales", source: :dettes_fiscales_sociales },
+                                { type: :box, code: "175", label: "Autres dettes", source: :autres_dettes },
+                                { type: :text, text: "--- TOTAUX PASSIF ---" },
+                                { type: :box, code: "180", label: "Total Général PASSIF", source: :total_passif }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: "FORMULAIRE 2033-B (Compte de résultat)",
+                    sections: [
+                        {
+                            title: "A. RÉSULTAT COMPTABLE",
+                            elements: [
+                                { type: :box, code: "218", label: "Chiffre d'affaires (Loyers)", source: :ca },
+                                { type: :box, code: "232", label: "Total produits d'exploitation hors TVA", source: :ca },
+                                { type: :box, code: "238", label: "Achats de matières/approvisionnements", source: :achats },
+                                { type: :box, code: "242", label: "Autres charges externes", source: :ext },
+                                { type: :box, code: "244", label: "Impôts et Taxes", source: :imp },
+                                { type: :box, code: "254", label: "Dotations aux amortissements", source: :dot },
+                                { type: :box, code: "264", label: "Total charges d'exploitation", source: :total_charges_exploit },
+                                { type: :box, code: "270", label: "Résultat d'exploitation", source: :res_exploit },
+                                { type: :box, code: "294", label: "Charges financières (Intérêts)", source: :charges_fi },
+                                { type: :box, code: "310", label: "RÉSULTAT COMPTABLE (Bénéfice)", source: :rc_benefice },
+                                { type: :box, code: "310", label: "RÉSULTAT COMPTABLE (Perte)", source: :rc_deficit }
+                            ]
+                        },
+                        {
+                            title: "B. RÉSULTAT FISCAL",
+                            elements: [
+                                { type: :box, code: "312", label: "Reporter le bénéfice comptable col. 1", source: :rc_benefice },
+                                { type: :box, code: "314", label: "Reporter le déficit comptable col. 2", source: :rc_deficit },
+                                { type: :box, code: "318", label: "Réintégrations (Amort. excédentaires / ARD créés)", source: :reint },
+                                { type: :box, code: "350", label: "Déductions (Divers / ARD utilisés)", source: :deduc },
+                                { type: :box, code: "352", label: "Résultat fiscal avant imputation déficits (Bénéfice)", source: :res_avant_def_benefice },
+                                { type: :box, code: "354", label: "Résultat fiscal avant imputation déficits (Déficit)", source: :res_avant_def_deficit },
+                                { type: :box, code: "360", label: "Déficits antérieurs imputés", source: :def_imp },
+                                { type: :box, code: "370", label: "BÉNÉFICE FISCAL FINAL", source: :res_fisc_benefice },
+                                { type: :box, code: "372", label: "DÉFICIT FISCAL FINAL", source: :res_fisc_deficit }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: "FORMULAIRE 2033-C (Immobilisations & Amortissements)",
+                    sections: [
+                        {
+                            title: "I - IMMOBILISATIONS (Valeur Brute)",
+                            elements: [
+                                { type: :text, text: "--- Terrains (211) ---" },
+                                { type: :box, code: "420", label: "Valeur brute début", source: :c_terrains_brute_start },
+                                { type: :box, code: "422", label: "Augmentations", source: :c_terrains_brute_aug },
+                                { type: :box, code: "426", label: "Valeur brute fin", source: :c_terrains_brute_fin },
+
+                                { type: :text, text: "--- Constructions (213) ---" },
+                                { type: :box, code: "430", label: "Valeur brute début", source: :c_constructions_brute_start },
+                                { type: :box, code: "432", label: "Augmentations", source: :c_constructions_brute_aug },
+                                { type: :box, code: "436", label: "Valeur brute fin", source: :c_constructions_brute_fin },
+
+                                { type: :text, text: "--- Inst. Techniques (215) ---" },
+                                { type: :box, code: "440", label: "Valeur brute début", source: :c_inst_tech_brute_start },
+                                { type: :box, code: "442", label: "Augmentations", source: :c_inst_tech_brute_aug },
+                                { type: :box, code: "446", label: "Valeur brute fin", source: :c_inst_tech_brute_fin },
+
+                                { type: :text, text: "--- Inst. Générales (2181/212) ---" },
+                                { type: :box, code: "450", label: "Valeur brute début", source: :c_inst_gen_brute_start },
+                                { type: :box, code: "452", label: "Augmentations", source: :c_inst_gen_brute_aug },
+                                { type: :box, code: "456", label: "Valeur brute fin", source: :c_inst_gen_brute_fin },
+
+                                { type: :text, text: "--- Autres / Mobilier (2184) ---" },
+                                { type: :box, code: "470", label: "Valeur brute début", source: :c_autres_brute_start },
+                                { type: :box, code: "472", label: "Augmentations", source: :c_autres_brute_aug },
+                                { type: :box, code: "476", label: "Valeur brute fin", source: :c_autres_brute_fin },
+
+                                { type: :text, text: "--- TOTAUX ---" },
+                                { type: :box, code: "490", label: "Total Valeur brute début", source: :total_brut_debut },
+                                { type: :box, code: "496", label: "Total Valeur brute fin", source: :total_brut_fin }
+                            ]
+                        },
+                        {
+                            title: "II - AMORTISSEMENTS",
+                            elements: [
+                                { type: :text, text: "--- Terrains (211) ---" },
+                                { type: :box, code: "510", label: "Amortissements début", source: :c_terrains_amort_start },
+                                { type: :box, code: "512", label: "Dotations", source: :c_terrains_dotation },
+                                { type: :box, code: "516", label: "Amortissements fin", source: :c_terrains_amort_fin },
+
+                                { type: :text, text: "--- Constructions (213) ---" },
+                                { type: :box, code: "520", label: "Amortissements début", source: :c_constructions_amort_start },
+                                { type: :box, code: "522", label: "Dotations", source: :c_constructions_dotation },
+                                { type: :box, code: "526", label: "Amortissements fin", source: :c_constructions_amort_fin },
+
+                                { type: :text, text: "--- Inst. Techniques (215) ---" },
+                                { type: :box, code: "530", label: "Amortissements début", source: :c_inst_tech_amort_start },
+                                { type: :box, code: "532", label: "Dotations", source: :c_inst_tech_dotation },
+                                { type: :box, code: "536", label: "Amortissements fin", source: :c_inst_tech_amort_fin },
+
+                                { type: :text, text: "--- Inst. Générales (2181/212) ---" },
+                                { type: :box, code: "540", label: "Amortissements début", source: :c_inst_gen_amort_start },
+                                { type: :box, code: "542", label: "Dotations", source: :c_inst_gen_dotation },
+                                { type: :box, code: "546", label: "Amortissements fin", source: :c_inst_gen_amort_fin },
+
+                                { type: :text, text: "--- Autres / Mobilier (2184) ---" },
+                                { type: :box, code: "560", label: "Amortissements début", source: :c_autres_amort_start },
+                                { type: :box, code: "562", label: "Dotations", source: :c_autres_dotation },
+                                { type: :box, code: "566", label: "Amortissements fin", source: :c_autres_amort_fin },
+
+                                { type: :text, text: "--- TOTAL ---" },
+                                { type: :box, code: "570", label: "Total Amort. Début", source: :total_amort_start },
+                                { type: :box, code: "572", label: "Total Dotations", source: :total_dotation },
+                                { type: :box, code: "576", label: "Total Amort. Fin", source: :total_amort_fin }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: "FORMULAIRE 2033-D (Suivi des Déficits)",
+                    sections: [
+                        {
+                            title: "II. Suivi des Déficits",
+                            elements: [
+                                { type: :box, code: "982", label: "Déficits reportables au début de l'exercice", source: :def_rep_debut },
+                                { type: :box, code: "983", label: "Déficits imputés sur le résultat (Box 360)", source: :def_imp_d },
+                                { type: :box, code: "984", label: "Déficits antérieurs non imputés", source: :deficits_restants },
+                                { type: :box, code: "860", label: "Déficits de l'exercice (Si Box 354)", source: :def_cree },
+                                { type: :box, code: "870", label: "Total des déficits restant à reporter", source: :total_def_reporter }
+                            ]
+                        },
+                        {
+                            title: "III. DIVERS",
+                            elements: [
+                                { type: :box, code: "399", label: "Montant des prélèvements personnels", source: :prelev_perso }
+                            ]
+                        },
+                        {
+                            title: "IV. TRAVAILLEURS INDÉPENDANTS (Revenu Brut Social)",
+                            elements: [
+                                { type: :box, code: "690", label: "Sommes à réintégrer", source: :zero },
+                                { type: :box, code: "691", label: "Sommes à déduire", source: :zero },
+                                { type: :box, code: "693", label: "Revenu brut social (positif)", source: :res_avant_def_benefice },
+                                { type: :box, code: "692", label: "Revenu brut social (négatif)", source: :res_avant_def_deficit }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: "ANNEXE - SUIVI DES ARD (Hors Liasse)",
+                    sections: [
+                        {
+                            title: "Stocks d'Amortissements Réputés Différés",
+                            elements: [
+                                { type: :info, label: "Stock ARD début exercice", source: :ard_debut },
+                                { type: :info, label: "+ ARD créé (Box 318)", source: :ard_cree },
+                                { type: :info, label: "- ARD utilisé (Box 350)", source: :ard_utilise },
+                                { type: :info, label: "= STOCK ARD FIN D'EXERCICE", source: :ard_fin, comment: "<-- À conserver pour l'an prochain" }
+                            ]
+                        }
+                    ]
+                }
+            ]
+
+            # Calcule toutes les données requises pour le rapport et renvoie un Hash
+            # Utilise et conserve Montant / RoundedMontant pour de futurs ajouts
+            # et evite les erreurs d'arrondis cumulés.
+            def calculate_data
                 if sum_prefix('64') > Montant.new(0) || sum_prefix('65') > Montant.new(0)
                     raise "ERREUR FATALE: La liasse 2033-B ne gère pas les comptes 64x (Personnel) et 65x (Autres charges de gestion courante). Veuillez corriger les écritures ou adapter le logiciel."
                 end
 
                 result = analyze
-                doc = Reporting::Document.new("AIDE À LA DÉCLARATION LMNP (Année #{@year})")
 
-                # --- 2031-SD (DÉCLARATION DE RÉSULTATS) ---
-                form_2031 = Reporting::Form.new("FORMULAIRE 2031-SD (Déclaration de résultats)")
-                sec_c = Reporting::Section.new("C. RÉCAPITULATION DES ÉLÉMENTS D'IMPOSITION")
-
-                final_val = result[:resultat_fiscal].round
-                res_avant_def = result[:resultat_avant_deficit].round
-
-                if final_val >= RoundedMontant.new(0)
-                    sec_c.add_box("1.", "Résultat fiscal (Bénéfice)", final_val, show_zero: true)
-                else
-                    sec_c.add_box("1.", "Résultat fiscal (Déficit)", final_val.abs, show_zero: true)
-                end
-
-                if res_avant_def >= RoundedMontant.new(0)
-                    sec_c.add_box("7a.", "dont BIC non professionnels (Bénéfice)", res_avant_def, show_zero: true)
-                else
-                    sec_c.add_box("7b.", "dont BIC non professionnels (Déficit)", res_avant_def.abs, show_zero: true)
-                end
-                form_2031.add_section(sec_c)
-
-                sec_h = Reporting::Section.new("H. PLUS-VALUES ACQUISES EN FRANCHISE D'IMPÔT")
-                sec_h.add_text("  (Non géré par ce logiciel - se référer à la notice)")
-                form_2031.add_section(sec_h)
-
-                sec_i = Reporting::Section.new("I. BIC NON PROFESSIONNELS")
-                if res_avant_def >= RoundedMontant.new(0)
-                    sec_i.add_box("-", "Autres locations meublées non professionnelles (Bénéfice)", res_avant_def, show_zero: true)
-                    sec_i.add_box("-", "Résultat avant imputation des déficits antérieurs (reporter case 7a)", res_avant_def, show_zero: true)
-                else
-                    sec_i.add_box("-", "Autres locations meublées non professionnelles (Déficit)", res_avant_def.abs, show_zero: true)
-                    sec_i.add_box("-", "Résultat avant imputation des déficits antérieurs (reporter case 7b)", res_avant_def.abs, show_zero: true)
-                end
-                form_2031.add_section(sec_i)
-
-                doc.add_form(form_2031)
-
-                # Pre-calcul pour 2033-C utilisé dans 2033-A pour les correspondances exactes
-                form_c_data = calculate_form_c_data
-
-                # --- 2033-A (BILAN) ---
-                form_a = Reporting::Form.new("FORMULAIRE 2033-A (Bilan Actif / Passif)")
-
-                actif = Reporting::Section.new("ACTIF")
-                val_immo_brut = form_c_data[:total_brut_fin]
-                val_amort_cumules = form_c_data[:total_amort_fin]
-                actif.add_box("028", "Immobilisations Corporelles (Brut)", val_immo_brut)
-                actif.add_box("030", "Amortissements corporelles (à déduire)", val_amort_cumules)
-
-                val_immo_net = val_immo_brut - val_amort_cumules
-                actif.add_box("032", "Immobilisations Corporelles (Net)", val_immo_net)
-
-                tresorerie_r = tresorerie.round
-                creances_clients_r = @creances_clients.round
-                autres_creances_r = @autres_creances.round
-
-                actif.add_box("084", "Trésorerie & Disponibilités (Banque)", tresorerie_r)
-                actif.add_box("068", "Créances clients et comptes rattachés", creances_clients_r) if @creances_clients > Montant.new(0)
-                actif.add_box("072", "Autres créances (TVA, État...)", autres_creances_r) if @autres_creances > Montant.new(0)
-
-                total_actif_brut = val_immo_brut + tresorerie_r + creances_clients_r + autres_creances_r
-                total_actif_net = val_immo_net + tresorerie_r + creances_clients_r + autres_creances_r
-
-                actif.add_text("--- TOTAUX ACTIF ---")
-                actif.add_box("110", "Total Général ACTIF (Brut)", total_actif_brut)
-                actif.add_box("112", "Total Général ACTIF (Amortissements)", val_amort_cumules)
-                actif.add_box("11X", "Total Général ACTIF (Net)", total_actif_net)
-                form_a.add_section(actif)
-
-                passif = Reporting::Section.new("PASSIF (Avant répartition du résultat)")
-
-                # Capital
-                mouv_expl = sum_prefix('108')
-                passif.add_text("  > Capital Initial (Au 01/01) .... : #{@opening.capital_start.round.rjust(10)} €")
-                passif.add_text("  > Apports / Retraits (108) ...... : -#{mouv_expl.round.rjust(10)} €")
-
-                capital_r = capital.round
-                passif.add_box("120", "Capital & Report à nouveau", capital_r)
-
-                # Résultat
-                rc = resultat_comptable.round
-                passif.add_box("136", "Résultat de l'exercice (Bénéfice ou Perte)", rc)
-
-                total_capitaux = capital_r + rc
-                passif.add_box("142", "Total Capitaux Propres", total_capitaux)
-
-                # Dettes
-                emprunts_r = emprunts.round
-                dettes_fournisseurs_r = @dettes_fournisseurs.round
-                dettes_fiscales_sociales_r = @dettes_fiscales_sociales.round
-                autres_dettes_r = @autres_dettes.round
-
-                passif.add_box("156", "Emprunts et dettes assimilées", emprunts_r)
-                passif.add_box("166", "Fournisseurs et comptes rattachés", dettes_fournisseurs_r) if @dettes_fournisseurs > Montant.new(0)
-                passif.add_box("172", "Dettes fiscales et sociales", dettes_fiscales_sociales_r) if @dettes_fiscales_sociales > Montant.new(0)
-                passif.add_box("175", "Autres dettes", autres_dettes_r) if @autres_dettes > Montant.new(0)
-
-                total_dettes = emprunts_r + dettes_fournisseurs_r + dettes_fiscales_sociales_r + autres_dettes_r
-                total_passif = total_capitaux + total_dettes
-
-                passif.add_text("--- TOTAUX PASSIF ---")
-                passif.add_box("180", "Total Général PASSIF", total_passif)
-                form_a.add_section(passif)
-                doc.add_form(form_a)
-
-                # --- 2033-B (COMPTE DE RESULTAT) ---
-                form_b = Reporting::Form.new("FORMULAIRE 2033-B (Compte de résultat)")
-                res = Reporting::Section.new("A. RÉSULTAT COMPTABLE")
-
-                ca = chiffre_affaires.round
-                res.add_box("218", "Chiffre d'affaires (Loyers)", ca)
-                res.add_box("232", "Total produits d'exploitation hors TVA", ca)
-
-                achats = achats_matieres.round
-                ext = autres_charges_externes.round
-                imp = impots_taxes.round
-                dot = dotations.round
-
-                res.add_box("238", "Achats de matières/approvisionnements", achats)
-                res.add_box("242", "Autres charges externes", ext)
-                res.add_box("244", "Impôts et Taxes", imp)
-                res.add_box("254", "Dotations aux amortissements", dot)
-
-                total_charges_exploit = achats + ext + imp + dot
-                res.add_box("264", "Total charges d'exploitation", total_charges_exploit)
-
-                res_exploit = ca - total_charges_exploit
-                res.add_box("270", "Résultat d'exploitation", res_exploit)
-
-                charges_fi_r = charges_fi.round
-                res.add_box("294", "Charges financières (Intérêts)", charges_fi_r)
-
-                if rc >= RoundedMontant.new(0)
-                    res.add_box("310", "RÉSULTAT COMPTABLE (Bénéfice)", rc)
-                    # Report à la section B
-                    fiscal = Reporting::Section.new("B. RÉSULTAT FISCAL")
-                    fiscal.add_box("312", "Reporter le bénéfice comptable col. 1", rc)
-                else
-                    res.add_box("310", "RÉSULTAT COMPTABLE (Perte)", rc.abs)
-                    # Report à la section B
-                    fiscal = Reporting::Section.new("B. RÉSULTAT FISCAL")
-                    fiscal.add_box("314", "Reporter le déficit comptable col. 2", rc.abs)
-                end
-                form_b.add_section(res)
-
-                # Suite Section Fiscale
-
-                # Réintégrations
-                reint = result[:ard_cree].round
-                fiscal.add_box("318", "Réintégrations (Amort. excédentaires / ARD créés)", reint) if reint > RoundedMontant.new(0)
-
-                # Déductions
-                deduc = result[:ard_utilise].round
-                fiscal.add_box("350", "Déductions (Divers / ARD utilisés)", deduc) if deduc > RoundedMontant.new(0)
-
-                # Résultat avant déficit
-                res_avant_def = result[:resultat_avant_deficit].round
-                if res_avant_def >= RoundedMontant.new(0)
-                    fiscal.add_box("352", "Résultat fiscal avant imputation déficits (Bénéfice)", res_avant_def)
-                else
-                    fiscal.add_box("354", "Résultat fiscal avant imputation déficits (Déficit)", res_avant_def.abs)
-                end
-
-                # Déficit imputé
-                def_imp = result[:deficit_utilise].round
-                fiscal.add_box("360", "Déficits antérieurs imputés", def_imp) if def_imp > RoundedMontant.new(0)
-
-                # Final
-                final_val = result[:resultat_fiscal].round
-                if final_val >= RoundedMontant.new(0)
-                    fiscal.add_box("370", "BÉNÉFICE FISCAL FINAL", final_val)
-                else
-                    fiscal.add_box("372", "DÉFICIT FISCAL FINAL", final_val.abs)
-                end
-                form_b.add_section(fiscal)
-                doc.add_form(form_b)
-
-                # --- 2033-C (IMMOBILISATIONS) ---
-                form_c = Reporting::Form.new("FORMULAIRE 2033-C (Immobilisations & Amortissements)")
-
-                populate_form_c(form_c, form_c_data)
-                doc.add_form(form_c)
-
-                # --- 2033-D (DEFICITS) ---
-                form_d = Reporting::Form.new("FORMULAIRE 2033-D (Suivi des Déficits)")
-
-                s_def = Reporting::Section.new("II. Suivi des Déficits")
-                s_def.add_box("982", "Déficits reportables au début de l'exercice", result[:stock_deficit_debut].round)
-                s_def.add_box("983", "Déficits imputés sur le résultat (Box 360)", result[:deficit_utilise].round)
-
-                deficits_restants = result[:stock_deficit_debut] - result[:deficit_utilise]
-                s_def.add_box("984", "Déficits antérieurs non imputés", deficits_restants.round)
-
-                if result[:deficit_cree] > Montant.new(0)
-                    s_def.add_box("860", "Déficits de l'exercice (Si Box 354)", result[:deficit_cree].round)
-                end
-
-                s_def.add_box("870", "Total des déficits restant à reporter", result[:stock_deficit_fin].round)
-                form_d.add_section(s_def)
-
-                # Divers (Box 399)
-                s_div = Reporting::Section.new("III. DIVERS")
-                prelev_perso = prelevements_personnels
-                if prelev_perso > Montant.new(0)
-                    s_div.add_box("399", "Montant des prélèvements personnels", prelev_perso.round)
-                end
-                form_d.add_section(s_div)
-
-                s_indep = Reporting::Section.new("IV. TRAVAILLEURS INDÉPENDANTS (Revenu Brut Social)")
-                s_indep.add_box("690", "Sommes à réintégrer", RoundedMontant.new(0))
-                s_indep.add_box("691", "Sommes à déduire", RoundedMontant.new(0))
-
-                res_avant_def = result[:resultat_avant_deficit].round
-                if res_avant_def >= RoundedMontant.new(0)
-                    s_indep.add_box("693", "Revenu brut social (positif)", res_avant_def)
-                else
-                    s_indep.add_box("692", "Revenu brut social (négatif)", res_avant_def.abs)
-                end
-                form_d.add_section(s_indep)
-
-                doc.add_form(form_d)
-
-                # --- ANNEXE ARD ---
-                form_ard = Reporting::Form.new("ANNEXE - SUIVI DES ARD (Hors Liasse)")
-                s_ard = Reporting::Section.new("Stocks d'Amortissements Réputés Différés")
-                s_ard.add_info("Stock ARD début exercice", result[:stock_ard_debut].round)
-                s_ard.add_info("+ ARD créé (Box 318)", result[:ard_cree].round)
-                s_ard.add_info("- ARD utilisé (Box 350)", result[:ard_utilise].round)
-                s_ard.add_info("= STOCK ARD FIN D'EXERCICE", result[:stock_ard_fin].round, "<-- À conserver pour l'an prochain")
-                form_ard.add_section(s_ard)
-                doc.add_form(form_ard)
-
-                doc
-            end
-
-            private
-
-            def prelevements_personnels
-                total = Montant.new(0)
-                @entries.each do |e|
-                    next if Date.parse(e.date.to_s).year != @year
-                    next if e.journal == 'AN'
-                    e.lines.each do |l|
-                        if l[:compte].to_s.start_with?('108') && l[:debit] > Montant.new(0)
-                            total += l[:debit]
-                        end
-                    end
-                end
-                total
-            end
-
-            def categorize_accounts
-                @creances_clients = Montant.new(0)
-                @autres_creances = Montant.new(0)
-                @dettes_fournisseurs = Montant.new(0)
-                @dettes_fiscales_sociales = Montant.new(0)
-                @autres_dettes = Montant.new(0)
-
-                @balances.each do |compte, solde|
-                    s = compte.to_s
-                    next unless s.start_with?('4')
-
-                    if solde > Montant.new(0)
-                        # Solde DEBITEUR -> ACTIF (Créance)
-                        if s.start_with?('41')
-                            @creances_clients += solde
-                        else
-                            @autres_creances += solde
-                        end
-                    elsif solde < Montant.new(0)
-                        # Solde CREDITEUR -> PASSIF (Dette)
-                        val = solde.abs
-                        if s.start_with?('40')
-                            @dettes_fournisseurs += val
-                        elsif s.start_with?('42') || s.start_with?('43') || s.start_with?('44')
-                            @dettes_fiscales_sociales += val
-                        else
-                            @autres_dettes += val
-                        end
-                    end
-                end
-            end
-
-            def calculate_form_c_data
                 data_c = {
-                    terrains: { label: "Terrains (211)", codes: %w[420 422 426 510 512 516] },
-                    constructions: { label: "Constructions (213)", codes: %w[430 432 436 520 522 526] },
-                    inst_tech: { label: "Inst. Techniques (215)", codes: %w[440 442 446 530 532 536] },
-                    inst_gen: { label: "Inst. Générales (2181/212)", codes: %w[450 452 456 540 542 546] },
-                    autres: { label: "Autres / Mobilier (2184)", codes: %w[470 472 476 560 562 566] }
+                    terrains: {},
+                    constructions: {},
+                    inst_tech: {},
+                    inst_gen: {},
+                    autres: {}
                 }
 
                 data_c.each do |k, v|
                     v[:brute_start] = Montant.new(0)
-                    v[:brute_aug] = Montant.new(0)
+                    v[:brute_aug]   = Montant.new(0)
                     v[:amort_start] = Montant.new(0)
-                    v[:dotation] = Montant.new(0)
+                    v[:dotation]    = Montant.new(0)
                 end
 
                 @assets.each do |asset_data|
@@ -615,61 +526,223 @@ module LMNPCompta
                     total_dotation += dotation_r
                 end
 
-                {
-                    data_c: data_c,
+                total_amort_fin = total_amort_start + total_dotation
+
+                final_val = result[:resultat_fiscal].round
+                res_avant_def = result[:resultat_avant_deficit].round
+
+                res_fisc_benefice = final_val >= RoundedMontant.new(0) ? final_val : nil
+                res_fisc_deficit  = final_val <  RoundedMontant.new(0) ? final_val.abs : nil
+
+                res_avant_def_benefice = res_avant_def >= RoundedMontant.new(0) ? res_avant_def : nil
+                res_avant_def_deficit  = res_avant_def <  RoundedMontant.new(0) ? res_avant_def.abs : nil
+
+                val_immo_brut_r = total_brut_fin
+                val_amort_cumules_r = total_amort_fin
+                val_immo_net_r = val_immo_brut_r - val_amort_cumules_r
+
+                tresorerie_r = tresorerie.round
+                creances_clients_r = @creances_clients.round
+                autres_creances_r = @autres_creances.round
+
+                total_actif_brut = val_immo_brut_r + tresorerie_r + creances_clients_r + autres_creances_r
+                total_actif_net  = val_immo_net_r + tresorerie_r + creances_clients_r + autres_creances_r
+
+                mouv_expl = sum_prefix('108')
+                mouv_expl_r = mouv_expl.round
+
+                capital_start_text = @opening.capital_start.round.rjust(10)
+                mouv_expl_text = mouv_expl_r.rjust(10)
+
+                capital_r = capital.round
+                rc = resultat_comptable.round
+                total_capitaux = capital_r + rc
+
+                emprunts_r = emprunts.round
+                dettes_fournisseurs_r = @dettes_fournisseurs.round
+                dettes_fiscales_sociales_r = @dettes_fiscales_sociales.round
+                autres_dettes_r = @autres_dettes.round
+
+                total_dettes = emprunts_r + dettes_fournisseurs_r + dettes_fiscales_sociales_r + autres_dettes_r
+                total_passif = total_capitaux + total_dettes
+
+                ca = chiffre_affaires.round
+                achats = achats_matieres.round
+                ext = autres_charges_externes.round
+                imp = impots_taxes.round
+                dot = dotations.round
+
+                total_charges_exploit = achats + ext + imp + dot
+                res_exploit = ca - total_charges_exploit
+                charges_fi_r = charges_fi.round
+
+                rc_benefice = rc >= RoundedMontant.new(0) ? rc : nil
+                rc_deficit  = rc <  RoundedMontant.new(0) ? rc.abs : nil
+
+                reint = result[:ard_cree].round
+                reint_disp = reint > RoundedMontant.new(0) ? reint : nil
+
+                deduc = result[:ard_utilise].round
+                deduc_disp = deduc > RoundedMontant.new(0) ? deduc : nil
+
+                def_imp = result[:deficit_utilise].round
+                def_imp_disp = def_imp > RoundedMontant.new(0) ? def_imp : nil
+
+                deficits_restants = (result[:stock_deficit_debut] - result[:deficit_utilise]).round
+                def_cree = result[:deficit_cree].round
+                def_cree_disp = def_cree > RoundedMontant.new(0) ? def_cree : nil
+
+                prelev_perso = prelevements_personnels.round
+                prelev_perso_disp = prelev_perso > RoundedMontant.new(0) ? prelev_perso : nil
+
+                ard_debut_r = result[:stock_ard_debut].round
+                ard_cree_r  = result[:ard_cree].round
+                ard_uti_r   = result[:ard_utilise].round
+                ard_fin_r   = result[:stock_ard_fin].round
+
+                h = {
+                    res_fisc_benefice: res_fisc_benefice,
+                    res_fisc_deficit: res_fisc_deficit,
+                    res_avant_def_benefice: res_avant_def_benefice,
+                    res_avant_def_deficit: res_avant_def_deficit,
+
+                    val_immo_brut: val_immo_brut_r,
+                    val_amort_cumules: val_amort_cumules_r,
+                    val_immo_net: val_immo_net_r,
+
+                    tresorerie: tresorerie_r,
+                    creances_clients: (creances_clients_r > RoundedMontant.new(0) ? creances_clients_r : nil),
+                    autres_creances: (autres_creances_r > RoundedMontant.new(0) ? autres_creances_r : nil),
+
+                    total_actif_brut: total_actif_brut,
+                    total_actif_amorts: val_amort_cumules_r,
+                    total_actif_net: total_actif_net,
+
+                    capital_start_text: capital_start_text,
+                    mouv_expl_text: mouv_expl_text,
+
+                    capital: capital_r,
+                    rc: rc,
+                    total_capitaux: total_capitaux,
+
+                    emprunts: emprunts_r,
+                    dettes_fournisseurs: (dettes_fournisseurs_r > RoundedMontant.new(0) ? dettes_fournisseurs_r : nil),
+                    dettes_fiscales_sociales: (dettes_fiscales_sociales_r > RoundedMontant.new(0) ? dettes_fiscales_sociales_r : nil),
+                    autres_dettes: (autres_dettes_r > RoundedMontant.new(0) ? autres_dettes_r : nil),
+
+                    total_passif: total_passif,
+
+                    ca: ca,
+                    achats: achats,
+                    ext: ext,
+                    imp: imp,
+                    dot: dot,
+                    total_charges_exploit: total_charges_exploit,
+                    res_exploit: res_exploit,
+                    charges_fi: charges_fi_r,
+
+                    rc_benefice: rc_benefice,
+                    rc_deficit: rc_deficit,
+
+                    reint: reint_disp,
+                    deduc: deduc_disp,
+
+                    def_imp: def_imp_disp,
+
+                    def_rep_debut: result[:stock_deficit_debut].round,
+                    def_imp_d: result[:deficit_utilise].round,
+                    deficits_restants: deficits_restants,
+                    def_cree: def_cree_disp,
+                    total_def_reporter: result[:stock_deficit_fin].round,
+
+                    prelev_perso: prelev_perso_disp,
+                    zero: RoundedMontant.new(0),
+
+                    ard_debut: ard_debut_r,
+                    ard_cree: ard_cree_r,
+                    ard_utilise: ard_uti_r,
+                    ard_fin: ard_fin_r,
+
                     total_brut_debut: total_brut_debut,
                     total_brut_fin: total_brut_fin,
                     total_amort_start: total_amort_start,
                     total_dotation: total_dotation,
-                    total_amort_fin: total_amort_start + total_dotation
+                    total_amort_fin: total_amort_fin
                 }
-            end
 
-            def populate_form_c(form_c, form_c_data)
-                data_c = form_c_data[:data_c]
+                [:terrains, :constructions, :inst_tech, :inst_gen, :autres].each do |cat|
+                    base_k = "c_#{cat}"
+                    v = data_c[cat]
 
-                cadre_i = Reporting::Section.new("I - IMMOBILISATIONS (Valeur Brute)")
-                data_c.each do |k, v|
-                    next if v[:brute_start] == Montant.new(0) && v[:brute_aug] == Montant.new(0)
-
-                    # Rounding
                     brute_start_r = v[:brute_start].round
-                    brute_aug_r = v[:brute_aug].round
-                    brute_fin_r = brute_start_r + brute_aug_r
-
-                    cadre_i.add_text("--- #{v[:label]} ---")
-                    cadre_i.add_box(v[:codes][0], "Valeur brute début", brute_start_r)
-                    cadre_i.add_box(v[:codes][1], "Augmentations", brute_aug_r) if brute_aug_r > RoundedMontant.new(0)
-                    cadre_i.add_box(v[:codes][2], "Valeur brute fin", brute_fin_r)
-                end
-
-                cadre_i.add_text("--- TOTAUX ---")
-                cadre_i.add_box("490", "Total Valeur brute début", form_c_data[:total_brut_debut])
-                cadre_i.add_box("496", "Total Valeur brute fin", form_c_data[:total_brut_fin])
-
-                form_c.add_section(cadre_i)
-
-                cadre_ii = Reporting::Section.new("II - AMORTISSEMENTS")
-                data_c.each do |k, v|
-                    next if v[:amort_start] == Montant.new(0) && v[:dotation] == Montant.new(0)
+                    brute_aug_r   = v[:brute_aug].round
+                    brute_fin_r   = brute_start_r + brute_aug_r
 
                     amort_start_r = v[:amort_start].round
-                    dotation_r = v[:dotation].round
-                    amort_fin_r = amort_start_r + dotation_r
+                    dotation_r    = v[:dotation].round
+                    amort_fin_r   = amort_start_r + dotation_r
 
-                    cadre_ii.add_text("--- #{v[:label]} ---")
-                    cadre_ii.add_box(v[:codes][3], "Amortissements début", amort_start_r)
-                    cadre_ii.add_box(v[:codes][4], "Dotations", dotation_r)
-                    cadre_ii.add_box(v[:codes][5], "Amortissements fin", amort_fin_r)
+                    has_brute = brute_start_r > RoundedMontant.new(0) || brute_aug_r > RoundedMontant.new(0)
+                    h["#{base_k}_brute_start".to_sym] = has_brute ? brute_start_r : nil
+                    h["#{base_k}_brute_aug".to_sym]   = has_brute && brute_aug_r > RoundedMontant.new(0) ? brute_aug_r : nil
+                    h["#{base_k}_brute_fin".to_sym]   = has_brute ? brute_fin_r : nil
+
+                    has_amort = amort_start_r > RoundedMontant.new(0) || dotation_r > RoundedMontant.new(0)
+                    h["#{base_k}_amort_start".to_sym] = has_amort ? amort_start_r : nil
+                    h["#{base_k}_dotation".to_sym]    = has_amort ? dotation_r : nil
+                    h["#{base_k}_amort_fin".to_sym]   = has_amort ? amort_fin_r : nil
                 end
 
-                cadre_ii.add_text("--- TOTAL ---")
-                cadre_ii.add_box("570", "Total Amort. Début", form_c_data[:total_amort_start])
-                cadre_ii.add_box("572", "Total Dotations", form_c_data[:total_dotation])
-                cadre_ii.add_box("576", "Total Amort. Fin", form_c_data[:total_amort_fin])
-
-                form_c.add_section(cadre_ii)
+                h
             end
+            private
+
+            def prelevements_personnels
+                total = Montant.new(0)
+                @entries.each do |e|
+                    next if Date.parse(e.date.to_s).year != @year
+                    next if e.journal == 'AN'
+                    e.lines.each do |l|
+                        if l[:compte].to_s.start_with?('108') && l[:debit] > Montant.new(0)
+                            total += l[:debit]
+                        end
+                    end
+                end
+                total
+            end
+
+            def categorize_accounts
+                @creances_clients = Montant.new(0)
+                @autres_creances = Montant.new(0)
+                @dettes_fournisseurs = Montant.new(0)
+                @dettes_fiscales_sociales = Montant.new(0)
+                @autres_dettes = Montant.new(0)
+
+                @balances.each do |compte, solde|
+                    s = compte.to_s
+                    next unless s.start_with?('4')
+
+                    if solde > Montant.new(0)
+                        # Solde DEBITEUR -> ACTIF (Créance)
+                        if s.start_with?('41')
+                            @creances_clients += solde
+                        else
+                            @autres_creances += solde
+                        end
+                    elsif solde < Montant.new(0)
+                        # Solde CREDITEUR -> PASSIF (Dette)
+                        val = solde.abs
+                        if s.start_with?('40')
+                            @dettes_fournisseurs += val
+                        elsif s.start_with?('42') || s.start_with?('43') || s.start_with?('44')
+                            @dettes_fiscales_sociales += val
+                        else
+                            @autres_dettes += val
+                        end
+                    end
+                end
+            end
+
         end
     end
 end

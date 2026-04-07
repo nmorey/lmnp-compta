@@ -44,10 +44,48 @@ module LMNPCompta
                 @balances.select { |k, _| k.to_s.start_with?(prefix) }.values.sum(Montant.new(0))
             end
 
-            # Génère le rapport fiscal (structure de données pour affichage)
+            # Calcule toutes les données requises pour le rapport et renvoie un Hash
+            # @return [Hash]
+            def calculate_data
+                raise NotImplementedError
+            end
+
+            # Génère le rapport fiscal de manière déclarative en se basant sur self.class::LAYOUT
             # @return [LMNPCompta::Fiscal::Reporting::Document]
             def generate_report
-                raise NotImplementedError
+                data = calculate_data
+                doc = Reporting::Document.new("AIDE À LA DÉCLARATION LMNP (Année #{@year})")
+
+                self.class::LAYOUT.each do |form_def|
+                    form = Reporting::Form.new(form_def[:title])
+
+                    form_def[:sections].each do |sec_def|
+                        sec = Reporting::Section.new(sec_def[:title])
+
+                        sec_def[:elements].each do |elem|
+                            case elem[:type]
+                            when :text
+                                text_str = elem[:text]
+                                # Permet des interpolations simples si un :source est fourni (bien qu'on privilégiera :info)
+                                text_str = text_str.gsub("%{val}", data[elem[:source]].to_s) if elem[:source] && data[elem[:source]]
+                                sec.add_text(text_str)
+                            when :box
+                                val = data[elem[:source]]
+                                # On passe si la valeur est nil (utile pour les champs mutuellement exclusifs)
+                                next if val.nil?
+                                sec.add_box(elem[:code], elem[:label], val, show_zero: elem[:show_zero] || false)
+                            when :info
+                                val = data[elem[:source]]
+                                next if val.nil?
+                                sec.add_info(elem[:label], val, elem[:comment])
+                            end
+                        end
+                        form.add_section(sec) if sec.items.any? || elem_types_all_text?(sec_def[:elements])
+                    end
+                    doc.add_form(form)
+                end
+
+                doc
             end
 
             # Retourne les données de stock à sauvegarder pour l'année suivante
@@ -56,32 +94,14 @@ module LMNPCompta
                 raise NotImplementedError
             end
 
-            # Méthodes abstraites (Doivent être implémentées par les sous-classes annuelles)
-            def analyze; raise NotImplementedError; end
-            def immo_brut; raise NotImplementedError; end
-            def amort_cumules; raise NotImplementedError; end
-            def tresorerie; raise NotImplementedError; end
-            def creances; raise NotImplementedError; end
-            def capital; raise NotImplementedError; end
-            def emprunts; raise NotImplementedError; end
-            def dettes_fournisseurs; raise NotImplementedError; end
-            def recettes; raise NotImplementedError; end
-            def charges_exploit; raise NotImplementedError; end
-            def charges_fi; raise NotImplementedError; end
-            def dotations; raise NotImplementedError; end
-
-            # Méthodes pour le rapport détaillé (Liasse 2033)
-            def chiffre_affaires; raise NotImplementedError; end
-            def achats_matieres; raise NotImplementedError; end
-            def autres_charges_externes; raise NotImplementedError; end
-            def impots_taxes; raise NotImplementedError; end
-
-            def immo_net
-                immo_brut - amort_cumules
-            end
-
             def resultat_comptable
                 recettes - (charges_exploit + charges_fi + dotations)
+            end
+
+            private
+
+            def elem_types_all_text?(elements)
+                elements.all? { |e| e[:type] == :text }
             end
         end
     end
