@@ -102,6 +102,14 @@ Pour exécuter uniquement l'horodatage RFC 3161 du journal sans modifier ni gén
 lmnp bilan cloturer --timestamp-only
 ```
 
+**Simulation de clôture (Mock mode) :**
+```bash
+lmnp bilan status
+# Pour une année spécifique
+lmnp bilan status --year 2024
+```
+Simule l'exécution de `bilan cloturer` (sans horodatage) et de `bilan liasse` sans modifier aucun fichier.
+
 **Liasse fiscale :**
 ```bash
 lmnp bilan liasse

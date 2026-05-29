@@ -11,6 +11,7 @@ require_relative 'lmnp_compta/entry'
 require_relative 'lmnp_compta/journal'
 require_relative 'lmnp_compta/asset'
 require_relative 'lmnp_compta/settings'
+require_relative 'lmnp_compta/cloture'
 
 module LMNPCompta
     def self.format_date(date_str)

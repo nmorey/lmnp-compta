@@ -113,7 +113,7 @@ _lmnp_completion()
             ;; 
         bilan)
             if [[ ${COMP_CWORD} -eq 2 ]]; then
-                opts="cloturer liasse fec"
+                opts="cloturer liasse fec status"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                 return 0
             fi
@@ -126,7 +126,7 @@ _lmnp_completion()
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
                     ;;
-                liasse|fec)
+                liasse|fec|status)
                     opts="--year -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
