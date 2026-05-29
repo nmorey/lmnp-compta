@@ -4,4 +4,7 @@ lmnp.yaml
 data/
 test/fixtures/*.yaml
 test/tmp/
-
+.bundle
+Gemfile.lock
+vendor/
+*.pdf
