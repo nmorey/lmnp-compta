@@ -75,4 +75,23 @@ class NewParsersTest < Minitest::Test
         assert_equal "Achat Entrepôt du Bricolage", data[:libelle]
         assert_equal "606300", data[:compte_charge]
     end
+
+    def test_point_p_parser
+        text = <<~TXT
+            Facture N° 9069801947
+            27 Mai 2026
+            LE FAYET POINT.P
+            Total TTC :              30,00 €
+        TXT
+
+        parser = LMNPCompta::InvoiceParser::Factory.build(nil, text)
+        assert_instance_of LMNPCompta::InvoiceParser::PointP, parser
+
+        data = parser.parse.first
+        assert_equal Date.new(2026, 5, 27), data[:date]
+        assert_equal "POINTP-20260527-9069801947", data[:ref]
+        assert_equal "30.00", data[:montant].to_s
+        assert_equal "Achat Point.P", data[:libelle]
+        assert_equal "606300", data[:compte_charge]
+    end
 end
