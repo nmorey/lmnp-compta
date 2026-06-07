@@ -7,6 +7,11 @@ require_relative 'plan_comptable'
 module LMNPCompta
     # Importateur pour les fichiers CSV d'export Airbnb
     class AirbnbImporter
+        SUPPORTED_TYPES = {
+            'Réservation' => :create_booking_entry,
+            'Versement de résolution' => :create_resolution_entry
+        }
+
         attr_reader :new_entries
 
         # @param file_path [String] Chemin vers le fichier CSV
@@ -58,7 +63,7 @@ module LMNPCompta
                     next
                 end
 
-                if type == 'Réservation'
+                if SUPPORTED_TYPES.key?(type)
                     code = row['Code de confirmation']
                     date_comptable = current_payout_date || parse_date(row['Date'])
 
@@ -79,10 +84,11 @@ module LMNPCompta
                 first_row = items.first[:csv_data]
                 res_end_date_str = first_row['Date de départ'] || first_row[6]
                 res_end_date = parse_date(res_end_date_str)
-                counter=1
+                counters = Hash.new(1)
                 items.each_with_index do |item, index|
                     date_virement = item[:date_comptable]
                     row = item[:csv_data]
+                    type = row['Type']
 
                     start_period = parse_date(row['Date'])
                     if index < items.length - 1
@@ -101,7 +107,13 @@ module LMNPCompta
                         next
                     end
 
-                    full_ref = "#{code}-#{counter.to_s.rjust(2, '0')}"
+                    if type == 'Versement de résolution'
+                        full_ref = "#{code}-RES-#{counters[type].to_s.rjust(2, '0')}"
+                    else
+                        full_ref = "#{code}-#{counters[type].to_s.rjust(2, '0')}"
+                    end
+                    counters[type] += 1
+
                     entry = create_entry(full_ref, date_virement, row, start_str, end_str)
 
                     if (existing = find_duplicate(full_ref))
@@ -120,8 +132,6 @@ module LMNPCompta
                             add_laundry_entry(laundry, code, res_end_date)
                         end
                     end
-
-                    counter+=1
                 end
             end
         end
@@ -173,6 +183,15 @@ module LMNPCompta
         end
 
         def create_entry(code, date_virement, row, start_str, end_str)
+            creator_method = SUPPORTED_TYPES[row['Type']]
+            if creator_method
+                send(creator_method, code, date_virement, row, start_str, end_str)
+            else
+                raise "Type d'écriture non supporté : #{row['Type']}"
+            end
+        end
+
+        def create_booking_entry(code, date_virement, row, start_str, end_str)
             libelle = "Airbnb - #{code} (Période #{start_str} - #{end_str})"
             revenu_brut = ParsingUtils.parse_french_amount(row['Revenus bruts'])
             frais_service = ParsingUtils.parse_french_amount(row['Frais de service'])
@@ -187,6 +206,35 @@ module LMNPCompta
             )
 
             entry.add_credit(LMNPCompta::COMPTE["Prestations de services (Loyers)"], revenu_brut, "Revenu Brut")
+
+            if frais_service > Montant.new(0)
+                entry.add_debit(LMNPCompta::COMPTE["Honoraires (Comptable, CGA, Agence)"], frais_service, "Commissions Airbnb")
+            end
+
+            if net_banque > Montant.new(0)
+                entry.add_debit(LMNPCompta::COMPTE["Banque"], net_banque, "Virement Net")
+            end
+
+            entry
+        end
+
+        def create_resolution_entry(code, date_virement, row, start_str, end_str)
+            details = row['Détails'] || "Résolution du dossier"
+            libelle = "Airbnb - Résolution #{code} (#{details})"
+
+            revenu_brut = ParsingUtils.parse_french_amount(row['Revenus bruts'] || row['Montant'])
+            frais_service = ParsingUtils.parse_french_amount(row['Frais de service'])
+            net_banque = revenu_brut - frais_service
+
+            entry = Entry.new(
+                date: date_virement.to_s,
+                journal: "VT",
+                libelle: libelle,
+                ref: code,
+                file: File.basename(@file_path)
+            )
+
+            entry.add_credit(LMNPCompta::COMPTE["Produits divers de gestion courante"], revenu_brut, "Dédommagement")
 
             if frais_service > Montant.new(0)
                 entry.add_debit(LMNPCompta::COMPTE["Honoraires (Comptable, CGA, Agence)"], frais_service, "Commissions Airbnb")

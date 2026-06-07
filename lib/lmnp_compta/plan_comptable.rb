@@ -45,7 +45,8 @@ module LMNPCompta
         "681100" => "Dotations aux amortissements",
 
         # --- CLASSE 7 : PRODUITS ---
-        "706000" => "Prestations de services (Loyers)"
+        "706000" => "Prestations de services (Loyers)",
+        "758000" => "Produits divers de gestion courante"
     }
 
     COMPTE = PLAN_COMPTABLE.invert
