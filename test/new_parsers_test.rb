@@ -72,7 +72,7 @@ class NewParsersTest < Minitest::Test
         # So it should match 900600200000599577
         assert_equal "ENTREPOT-20260102-900600200000599577", data[:ref]
         assert_equal "56.70", data[:montant].to_s
-        assert_equal "Achat Entrepôt du Bricolage", data[:libelle]
+        assert_equal "Achat Entrepôt du Bricolage 900600200000599577", data[:libelle]
         assert_equal "606300", data[:compte_charge]
     end
 
@@ -91,7 +91,7 @@ class NewParsersTest < Minitest::Test
         assert_equal Date.new(2026, 5, 27), data[:date]
         assert_equal "POINTP-20260527-9069801947", data[:ref]
         assert_equal "30.00", data[:montant].to_s
-        assert_equal "Achat Point.P", data[:libelle]
+        assert_equal "Achat Point.P 9069801947", data[:libelle]
         assert_equal "606300", data[:compte_charge]
     end
 end
