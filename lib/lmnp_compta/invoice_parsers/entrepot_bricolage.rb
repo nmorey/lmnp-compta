@@ -36,7 +36,7 @@ module LMNPCompta
       end
 
       def extract_label
-        "Achat Entrepôt du Bricolage"
+        "Achat Entrepôt du Bricolage #{extract_internal_ref}"
       end
 
       def charge_account

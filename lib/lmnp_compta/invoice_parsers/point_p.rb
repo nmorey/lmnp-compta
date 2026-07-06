@@ -32,7 +32,7 @@ module LMNPCompta
       end
 
       def extract_label
-        "Achat Point.P"
+        "Achat Point.P #{extract_internal_ref}"
       end
 
       def charge_account
