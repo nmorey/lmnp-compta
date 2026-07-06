@@ -241,6 +241,7 @@ module LMNPCompta
         def format_invoice_entry(entry)
             str = "# Fichier: #{entry.source_file}\n"
             str += "# Libelle: #{entry.libelle}\n"
+            entry.warnings.each { |msg| str += msg } if entry.warnings
             if entry.error
                 str += entry.error.to_s + "\n\n"
             else
