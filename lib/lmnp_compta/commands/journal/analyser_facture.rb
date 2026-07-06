@@ -221,9 +221,18 @@ module LMNPCompta
         end
 
         def add_or_merge_entry(list, new_e)
-            idx = list.find_index { |e| e.libelle == new_e.libelle }
-            if idx
-                list[idx] = new_e
+            existing_idx = list.find_index { |e| e.libelle == new_e.libelle }
+
+            if existing_idx
+                old_entry = list[existing_idx]
+                old_entry.warnings ||= []
+
+                new_e.warnings = old_entry.warnings
+                new_e.warnings << "# ⚠️ Warning: Remplacement de la transaction '#{old_entry.libelle}'\n"
+                new_e.warnings << "# 	 Originale venant de #{old_entry.source_file}\n"
+                new_e.warnings << "# 	 Remplacante venant de #{new_e.source_file}\n"
+
+                list[existing_idx] = new_e
             else
                 list << new_e
             end
