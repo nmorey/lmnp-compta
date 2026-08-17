@@ -163,4 +163,21 @@ class JournalsTest < Minitest::Test
     all_refs = journals.select { |e| e.ref =~ /^REF/ }
     assert_equal 2, all_refs.length
   end
+
+  # Test that entries loaded from read-only journals are frozen and cannot be mutated.
+  #
+  # @return [void]
+  def test_entries_are_frozen
+    journals = LMNPCompta::Journals.new(@test_dir)
+    entry = journals.find(2024, 1)
+
+    refute_nil entry
+    assert entry.frozen?
+    assert_raises(FrozenError) do
+      entry.ref = "MUTATED"
+    end
+    assert_raises(FrozenError) do
+      entry.add_debit("512", 100)
+    end
+  end
 end

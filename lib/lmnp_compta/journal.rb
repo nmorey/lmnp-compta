@@ -7,17 +7,19 @@ module LMNPCompta
     # Gère le fichier journal (chargement, sauvegarde, ajout d'écritures)
     class Journal
         attr_reader :file_path, :entries, :year
-        attr_accessor :volatile
+        attr_accessor :volatile, :maintenance
 
         # Initialise un nouveau Journal
         #
         # @param file_path [String] Chemin vers le fichier YAML du journal
         # @param year [Integer, nil] Année fiscale attendue (optionnel)
         # @param volatile [Boolean] Mode mémoire seule, empêche l'écriture sur disque (par défaut false)
-        def initialize(file_path, year: nil, volatile: false)
+        # @param maintenance [Boolean] Mode maintenance, permet la modification d'écritures existantes en mémoire (par défaut false)
+        def initialize(file_path, year: nil, volatile: false, maintenance: false)
             @file_path = file_path
             @year = year
             @volatile = volatile
+            @maintenance = maintenance
             @entries = []
             load! if File.exist?(file_path)
         end
@@ -26,7 +28,11 @@ module LMNPCompta
         # Vérifie l'unicité des références après chargement
         def load!(skip_integrity: false)
             data = YAML.load_file(@file_path) || []
-            @entries = data.map { |d| Entry.new(d) }
+            @entries = data.map do |d|
+                entry = Entry.new(d)
+                entry.freeze unless @maintenance
+                entry
+            end
             check_duplicate_refs
             verify_integrity! unless skip_integrity
         end

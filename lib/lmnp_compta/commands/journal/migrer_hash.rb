@@ -33,7 +33,7 @@ module LMNPCompta
           end
 
           puts "📂 Chargement du journal existant..."
-          journal = LMNPCompta::Journal.new(journal_path, year: Settings.instance.annee)
+          journal = LMNPCompta::Journal.new(journal_path, year: Settings.instance.annee, maintenance: true)
 
           # Force reloading without integrity check just in case
           journal.load!(skip_integrity: true)

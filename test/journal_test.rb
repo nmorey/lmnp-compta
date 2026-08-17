@@ -97,4 +97,41 @@ class JournalTest < Minitest::Test
             LMNPCompta.confirm!("Are you sure?") # Should not raise
         end
     end
+
+    # Test that save! in maintenance mode prompts for confirmation and aborts on No.
+    #
+    # @return [void]
+    def test_save_in_maintenance_mode_aborts
+        journal = LMNPCompta::Journal.new(TEST_JOURNAL, maintenance: true)
+        entry = LMNPCompta::Entry.new(date: "2025-05-01", journal: "VT", libelle: "Rent")
+        entry.add_debit("512", 10); entry.add_credit("706", 10)
+        journal.add_entry(entry)
+
+        # Stub STDIN to pretend it is a TTY and user says no
+        $stdin.stub(:tty?, true) do
+            $stdin.stub(:gets, "n\n") do
+                assert_raises(LMNPCompta::UserCancelledError) do
+                    journal.save!
+                end
+            end
+        end
+    end
+
+    # Test that save! in maintenance mode prompts for confirmation and succeeds on Yes.
+    #
+    # @return [void]
+    def test_save_in_maintenance_mode_succeeds
+        journal = LMNPCompta::Journal.new(TEST_JOURNAL, maintenance: true)
+        entry = LMNPCompta::Entry.new(date: "2025-05-01", journal: "VT", libelle: "Rent")
+        entry.add_debit("512", 10); entry.add_credit("706", 10)
+        journal.add_entry(entry)
+
+        # Stub STDIN to pretend it is a TTY and user says yes
+        $stdin.stub(:tty?, true) do
+            $stdin.stub(:gets, "y\n") do
+                journal.save! # Should succeed and write to disk
+            end
+        end
+        assert File.exist?(TEST_JOURNAL)
+    end
 end
