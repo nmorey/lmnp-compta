@@ -7,16 +7,17 @@ module LMNPCompta
     # Gère le fichier journal (chargement, sauvegarde, ajout d'écritures)
     class Journal
         attr_reader :file_path, :entries, :year
-        attr_accessor :in_mem
+        attr_accessor :volatile
 
         # Initialise un nouveau Journal
         #
         # @param file_path [String] Chemin vers le fichier YAML du journal
         # @param year [Integer, nil] Année fiscale attendue (optionnel)
-        def initialize(file_path, year: nil, in_mem: false)
+        # @param volatile [Boolean] Mode mémoire seule, empêche l'écriture sur disque (par défaut false)
+        def initialize(file_path, year: nil, volatile: false)
             @file_path = file_path
             @year = year
-            @in_mem = in_mem
+            @volatile = volatile
             @entries = []
             load! if File.exist?(file_path)
         end
@@ -37,7 +38,12 @@ module LMNPCompta
 
         # Sauvegarde les entrées dans le fichier YAML
         def save!(force: false)
-            return if @in_mem
+            return if @volatile
+
+            if @maintenance
+                LMNPCompta.confirm!("⚠️  ATTENTION : Le journal est ouvert en mode MAINTENANCE (les modifications d'écritures existantes sont autorisées). Êtes-vous sûr de vouloir enregistrer ?")
+            end
+
             if closed? && !force
                 raise "ERREUR : Le journal est clôturé et ne peut plus être modifié."
             end
@@ -175,7 +181,7 @@ module LMNPCompta
         end
 
         def timestamp!(tsa_url: nil)
-            return if @in_mem
+            return if @volatile
             require 'openssl'
             require 'net/http'
             require 'uri'

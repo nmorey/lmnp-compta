@@ -33,8 +33,8 @@ module LMNPCompta
                     end
                     annee = settings.annee
 
-                    # Load the journal in-memory mode
-                    journal = LMNPCompta::Journal.new(settings.journal_file, year: annee, in_mem: true)
+                    # Load the journal in volatile mode
+                    journal = LMNPCompta::Journal.new(settings.journal_file, year: annee, volatile: true)
 
                     puts "==========================================================="
                     puts "       [SIMULATION] CLÔTURE DE L'EXERCICE #{annee}"

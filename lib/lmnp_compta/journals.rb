@@ -91,7 +91,7 @@ module LMNPCompta
                 year = File.basename(year_dir).to_i
                 journal_file = LMNPCompta::Settings.instance.journal_file(annee: year)
                 if File.exist?(journal_file)
-                    @journals[year] = LMNPCompta::Journal.new(journal_file, year: year, in_mem: true)
+                    @journals[year] = LMNPCompta::Journal.new(journal_file, year: year, volatile: true)
                 end
             end
         end
