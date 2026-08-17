@@ -147,4 +147,20 @@ class JournalsTest < Minitest::Test
       journals.check_duplicate_refs
     end
   end
+
+  # Test that select method on Journals filters across all loaded journals.
+  #
+  # @return [void]
+  def test_select
+    journals = LMNPCompta::Journals.new(@test_dir)
+
+    # Filter entries with ref ending in 2024
+    selected_2024 = journals.select { |e| e.ref == 'REF2024' }
+    assert_equal 1, selected_2024.length
+    assert_equal 'Test 2024', selected_2024.first.libelle
+
+    # Filter entries matching a pattern
+    all_refs = journals.select { |e| e.ref =~ /^REF/ }
+    assert_equal 2, all_refs.length
+  end
 end

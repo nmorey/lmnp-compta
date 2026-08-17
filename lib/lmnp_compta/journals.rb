@@ -37,6 +37,15 @@ module LMNPCompta
             @journals.values.flat_map(&:entries)
         end
 
+        # Sélectionne les écritures de tous les journaux chargés correspondant aux critères du bloc donné.
+        #
+        # @yieldparam entry [Entry] L'écriture à évaluer
+        # @yieldreturn [Boolean] Vrai si l'écriture doit être sélectionnée
+        # @return [Array<Entry>] Les écritures sélectionnées
+        def select(&block)
+            @journals.values.flat_map { |j| j.select(&block) }
+        end
+
         # Recherche une écriture par son ID au sein d'un exercice fiscal spécifique.
         #
         # @param year [Integer] L'année de l'exercice fiscal

@@ -41,4 +41,26 @@ class JournalTest < Minitest::Test
         journal.add_entry(entry_2024)
         assert_equal 1, journal.entries.size
     end
+
+    # Test select method filters entries using the provided block.
+    #
+    # @return [void]
+    def test_select
+        journal = LMNPCompta::Journal.new(TEST_JOURNAL)
+
+        entry1 = LMNPCompta::Entry.new(date: "2025-05-01", journal: "VT", libelle: "Rent May", ref: "REF01")
+        entry1.add_debit("512", 10); entry1.add_credit("706", 10)
+        journal.add_entry(entry1)
+
+        entry2 = LMNPCompta::Entry.new(date: "2025-06-01", journal: "VT", libelle: "Rent June", ref: "REF02")
+        entry2.add_debit("512", 20); entry2.add_credit("706", 20)
+        journal.add_entry(entry2)
+
+        selected = journal.select { |e| e.libelle.include?("Rent June") }
+        assert_equal 1, selected.length
+        assert_equal "Rent June", selected.first.libelle
+
+        ref_selected = journal.select { |e| e.ref =~ /^REF/ }
+        assert_equal 2, ref_selected.length
+    end
 end

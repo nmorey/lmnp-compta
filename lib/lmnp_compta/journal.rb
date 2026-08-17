@@ -102,6 +102,15 @@ module LMNPCompta
             @entries.find { |e| e.id == id }
         end
 
+        # Sélectionne les écritures correspondant aux critères du bloc donné.
+        #
+        # @yieldparam entry [Entry] L'écriture à évaluer
+        # @yieldreturn [Boolean] Vrai si l'écriture doit être sélectionnée
+        # @return [Array<Entry>] Les écritures sélectionnées
+        def select(&block)
+            @entries.select(&block)
+        end
+
         # Supprime une écriture par son ID
         # @param id [Integer] L'ID de l'écriture à supprimer
         # @param force [Boolean] Permet d'ignorer la vérification de clôture
