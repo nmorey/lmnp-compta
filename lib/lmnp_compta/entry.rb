@@ -128,5 +128,14 @@ module LMNPCompta
             }
             h
         end
+
+        # Gèle l'écriture de manière récursive (deep freeze) pour la rendre immuable en lecture seule.
+        #
+        # @return [self]
+        def freeze
+            @lines.freeze
+            @lines.each(&:freeze)
+            super
+        end
     end
 end
