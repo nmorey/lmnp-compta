@@ -22,6 +22,8 @@ module LMNPCompta
             @journal = journal
             @new_entries = []
             @blanchisseries = []
+            require_relative 'journals'
+            @journals = LMNPCompta::Journals.new
 
             if blanchisserie_configs
                 require_relative 'laundry'
@@ -77,6 +79,46 @@ module LMNPCompta
             reservations_map
         end
 
+        # Retrouve toutes les écritures existantes pour un code et un type de réservation donnés
+        # à travers les écritures de cet import, le journal en cours et les autres exercices fiscaux.
+        #
+        # @param code [String] Code de confirmation de la réservation
+        # @param type [String] Type d'opération (Réservation ou Versement de résolution)
+        # @return [Array<Entry>] Les écritures existantes trouvées
+        def find_existing_entries(code, type)
+            pattern = if type == 'Versement de résolution'
+                /^#{Regexp.escape(code)}-RES-\d+$/
+            else
+                /^#{Regexp.escape(code)}-\d+$/
+            end
+
+            # 1. Écritures déjà générées durant cet import
+            found = @new_entries.select { |e| e.ref =~ pattern }
+
+            # 2. Écritures déjà enregistrées dans le journal de l'exercice en cours
+            found += @journal.select { |e| e.ref.to_s =~ pattern }
+
+            # 3. Écritures enregistrées dans les autres exercices fiscaux (en évitant les doublons)
+            found += @journals.select { |e| e.ref.to_s =~ pattern }.reject { |e| @journal.year && Date.parse(e.date).year == @journal.year }
+
+            found.uniq(&:ref)
+        end
+
+        # Calcule le prochain index de séquence disponible pour une réservation
+        # en inspectant les écritures existantes.
+        #
+        # @param existing_entries [Array<Entry>] Liste des écritures existantes
+        # @return [Integer] Le prochain index (ex: 2 si REF-01 existe déjà)
+        def next_available_index(existing_entries)
+            return 1 if existing_entries.empty?
+
+            max_index = existing_entries.map do |e|
+                e.ref.split('-').last.to_i
+            end.max
+
+            max_index + 1
+        end
+
         def generate_entries(reservations_map)
             reservations_map.each do |code, items|
                 items.sort_by! { |item| item[:date_comptable] }
@@ -84,7 +126,10 @@ module LMNPCompta
                 first_row = items.first[:csv_data]
                 res_end_date_str = first_row['Date de départ'] || first_row[6]
                 res_end_date = parse_date(res_end_date_str)
-                counters = Hash.new(1)
+
+                # Keep track of matched entries in the current CSV import loop
+                matched_existing_entries = []
+
                 items.each_with_index do |item, index|
                     date_virement = item[:date_comptable]
                     row = item[:csv_data]
@@ -107,24 +152,31 @@ module LMNPCompta
                         next
                     end
 
-                    if type == 'Versement de résolution'
-                        full_ref = "#{code}-RES-#{counters[type].to_s.rjust(2, '0')}"
-                    else
-                        full_ref = "#{code}-#{counters[type].to_s.rjust(2, '0')}"
+                    # 1. Retrieve all existing entries for this reservation across all years and new entries
+                    existing_entries = find_existing_entries(code, type)
+
+                    # 2. Build candidate entry to match dates and amounts
+                    candidate_entry = create_entry("#{code}-TEMP", date_virement, row, start_str, end_str)
+
+                    # 3. Check if there is an unmatched existing entry that matches our candidate
+                    existing_match = existing_entries.find do |existing|
+                        !matched_existing_entries.include?(existing) && entries_match?(existing, candidate_entry)
                     end
-                    counters[type] += 1
 
-                    entry = create_entry(full_ref, date_virement, row, start_str, end_str)
-
-                    if (existing = find_duplicate(full_ref))
-                        if entries_match?(existing, entry)
-                            puts "⚠️  Transaction déjà présente : #{full_ref} (Ignorée)"
-                        else
-                            raise "Erreur conflit : La transaction #{full_ref} existe déjà mais diffère (Date: #{existing.date} vs #{entry.date}, Montant: #{existing.lines.first[:credit]} vs #{entry.lines.first[:credit]})"
-                        end
+                    if existing_match
+                        matched_existing_entries << existing_match
+                        puts "⚠️  Transaction déjà présente : #{existing_match.ref} (Ignorée)"
                     else
+                        # It is a new payment, allocate the next sequence index
+                        idx = next_available_index(existing_entries)
+                        suffix = (type == 'Versement de résolution') ? "-RES-#{idx.to_s.rjust(2, '0')}" : "-#{idx.to_s.rjust(2, '0')}"
+                        full_ref = "#{code}#{suffix}"
+
+                        # Create the actual entry with the correct unique reference
+                        entry = create_entry(full_ref, date_virement, row, start_str, end_str)
                         @new_entries << entry
                     end
+
                     if index == items.length - 1 && @blanchisseries.any?
                         hebergement = row['Logement'] || row['Hébergement'] || row[6]
                         laundry = @blanchisseries.find { |l| l.nom_bien == hebergement }
@@ -165,8 +217,9 @@ module LMNPCompta
         end
 
         def find_duplicate(ref)
-            @journal.entries.find { |e| e.ref == ref } ||
-            @new_entries.find { |e| e.ref == ref }
+            @new_entries.find { |e| e.ref == ref } ||
+            @journal.select { |e| e.ref == ref }.first ||
+            @journals.select { |e| e.ref == ref }.first
         end
 
         def entries_match?(existing, new_entry)
