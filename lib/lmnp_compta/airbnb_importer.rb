@@ -51,8 +51,6 @@ module LMNPCompta
             @new_entries
         end
 
-        private
-
         def parse_csv
             reservations_map = Hash.new { |h, k| h[k] = [] }
             current_payout_date = nil
@@ -77,6 +75,10 @@ module LMNPCompta
                 end
             end
             reservations_map
+        end
+
+        def parse_date(str)
+            ParsingUtils.parse_us_date(str)
         end
 
         # Retrouve toutes les écritures existantes pour un code et un type de réservation donnés
@@ -118,6 +120,25 @@ module LMNPCompta
 
             max_index + 1
         end
+
+        # Génère une écriture pour une ligne unique du CSV de manière isolée
+        #
+        # @param row [CSV::Row] La ligne du CSV
+        # @param date_comptable [Date] La date comptable associée (tenant compte du Payout contextuel)
+        # @param full_ref [String] La référence calculée
+        # @return [Entry] L'écriture générée
+        def entry_for_row(row, date_comptable, full_ref)
+            start_period = parse_date(row['Date'])
+            res_end_date_str = row['Date de fin'] || row['Date de départ'] || row[6]
+            res_end_date = parse_date(res_end_date_str)
+
+            start_str = start_period ? start_period.strftime("%d/%m") : "??"
+            end_str = res_end_date ? res_end_date.strftime("%d/%m") : "??"
+
+            create_entry(full_ref, date_comptable, row, start_str, end_str)
+        end
+
+        private
 
         def generate_entries(reservations_map)
             reservations_map.each do |code, items|

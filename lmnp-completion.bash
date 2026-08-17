@@ -62,7 +62,7 @@ _lmnp_completion()
             ;; 
         journal)
             if [[ ${COMP_CWORD} -eq 2 ]]; then
-                opts="saisir importer-airbnb analyser-facture trajets blanchisserie status migrer-hash"
+                opts="saisir importer-airbnb analyser-facture trajets blanchisserie status migrer-hash verifier"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                 return 0
             fi
@@ -109,6 +109,16 @@ _lmnp_completion()
                     fi
                     return 0
                     ;; 
+                verifier)
+                    if [[ "$cur" == -* ]]; then
+                        opts="-u --until --blanchisserie -h --help"
+                        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    else
+                        compopt -o filenames 2>/dev/null
+                        mapfile -t COMPREPLY < <(compgen -f -- "${cur}")
+                    fi
+                    return 0
+                    ;;
             esac
             ;; 
         bilan)
