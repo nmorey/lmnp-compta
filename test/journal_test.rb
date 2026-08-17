@@ -63,4 +63,38 @@ class JournalTest < Minitest::Test
         ref_selected = journal.select { |e| e.ref =~ /^REF/ }
         assert_equal 2, ref_selected.length
     end
+
+    # Test LMNPCompta.confirm! helper when STDIN is a TTY and user says yes.
+    #
+    # @return [void]
+    def test_confirmation_helper_tty_yes
+        $stdin.stub(:tty?, true) do
+            $stdin.stub(:gets, "y\n") do
+                LMNPCompta.confirm!("Are you sure?") # Should not raise
+            end
+        end
+    end
+
+    # Test LMNPCompta.confirm! helper when STDIN is a TTY and user says no.
+    #
+    # @raise [LMNPCompta::UserCancelledError]
+    # @return [void]
+    def test_confirmation_helper_tty_no
+        $stdin.stub(:tty?, true) do
+            $stdin.stub(:gets, "n\n") do
+                assert_raises(LMNPCompta::UserCancelledError) do
+                    LMNPCompta.confirm!("Are you sure?")
+                end
+            end
+        end
+    end
+
+    # Test LMNPCompta.confirm! helper when STDIN is not a TTY.
+    #
+    # @return [void]
+    def test_confirmation_helper_non_tty
+        $stdin.stub(:tty?, false) do
+            LMNPCompta.confirm!("Are you sure?") # Should not raise
+        end
+    end
 end
