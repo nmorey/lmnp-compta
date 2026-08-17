@@ -196,4 +196,51 @@ class IntegrationTest < Minitest::Test
         end
         assert err.empty?, "Stderr should be empty for a clean output."
     end
+
+    def test_bash_execution_of_analyser_facture_output
+        puts "\n--- Test: Bash Execution of Analyser-Facture Output ---"
+
+        # Create a valid YAML invoice
+        invoice_file = "valid_facture.pdf.yaml"
+        invoice_data = {
+            'date' => '26/01/2025',
+            'journal' => 'AC',
+            'libelle' => 'Facture Internet Test',
+            'lignes' => [
+                {'compte' => '606300', 'debit' => 45.13},
+                {'compte' => '512000', 'credit' => 45.13}
+            ]
+        }
+        File.write(invoice_file, invoice_data.to_yaml)
+
+        # Capture output from analyser-facture (passing the .yaml file directly)
+        out, err = capture_io do
+            LMNPCompta::JournalCommand.new(["analyser-facture", "valid_facture.pdf.yaml"]).execute
+        end
+
+        assert err.empty?
+
+        # Find the saisir command line (ignoring comment lines starting with #)
+        command_line = out.strip.split("\n").find { |line| !line.start_with?("#") && !line.strip.empty? }
+        refute_nil command_line, "Should output at least one executable saisir command"
+        assert_match /^lmnp journal saisir /, command_line
+
+        # Execute the saisir command (by mocking argv and running JournalCommand)
+        # This simulates exactly what "bash <(...)" does!
+        require 'shellwords'
+        parsed_args = Shellwords.split(command_line).reject { |w| w == 'lmnp' || w == 'journal' }
+
+        # Run the command
+        out_saisir, err_saisir = capture_io do
+            LMNPCompta::JournalCommand.new(parsed_args).execute
+        end
+        assert_match /Écriture \d+ enregistrée/, out_saisir
+
+        # Verify that the entry was successfully written to the journal!
+        journal = LMNPCompta::Journal.new("data/2025/journal.yaml", year: 2025)
+        entry = journal.entries.last
+        refute_nil entry
+        assert_equal "Facture Internet Test", entry.libelle
+        assert_equal "valid_facture.pdf", entry.source_file
+    end
 end

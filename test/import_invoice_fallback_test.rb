@@ -10,13 +10,17 @@ class ImportInvoiceFallbackTest < Minitest::Test
         @original_stdout = $stdout
         FileUtils.mkdir_p(TEST_DIR)
         LMNPCompta::Settings.instance.instance_variable_set(:@annee, 2025)
-        # Mock extract_text to return empty string (so no parser matches)
         @cmd = LMNPCompta::Commands::Journal::AnalyserFacture.new([])
 
-        # We need to stub extract_text. Minitest stubbing is usually on the object.
-        # Since extract_text is private instance method, we can define it on the instance or use define_method.
-        def @cmd.extract_text(file_path)
-            "DUMMY CONTENT"
+        # Mock extract_text on Invoice class
+        LMNPCompta::Invoice.class_eval do
+            class << self
+                unless method_defined?(:original_extract_text)
+                    alias_method :original_extract_text, :extract_text
+                    remove_method :extract_text
+                    def extract_text(f); "DUMMY CONTENT"; end
+                end
+            end
         end
 
         # We also need to capture stdout to verify output
@@ -27,6 +31,16 @@ class ImportInvoiceFallbackTest < Minitest::Test
     def teardown
         FileUtils.rm_rf(TEST_DIR)
         $stdout = @original_stdout if @original_stdout
+
+        LMNPCompta::Invoice.class_eval do
+            class << self
+                if method_defined?(:original_extract_text)
+                    remove_method :extract_text if method_defined?(:extract_text)
+                    alias_method :extract_text, :original_extract_text
+                    remove_method :original_extract_text
+                end
+            end
+        end
     end
 
     def test_fallback_creates_template
@@ -105,10 +119,11 @@ class ImportInvoiceFallbackTest < Minitest::Test
         File.write(yaml_path, entry_data.to_yaml)
 
         entries = []
-        @cmd.send(:process_file, file_path, {}, entries)
+        err = assert_raises(RuntimeError) do
+            @cmd.send(:process_file, file_path, {}, entries)
+        end
 
-        assert_equal 1, entries.length
-        assert entries.first.error.include?("Champs manquants: journal")
-        assert entries.first.error.include?("lignes")
+        assert err.message.include?("Champs manquants: journal")
+        assert err.message.include?("lignes")
     end
 end

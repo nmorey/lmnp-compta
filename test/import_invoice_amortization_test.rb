@@ -46,52 +46,33 @@ class ImportInvoiceAmortizationTest < Minitest::Test
 
 
 
-        # Mock extract_text globally for this test class on the actual command class
-
-        LMNPCompta::Commands::Journal::AnalyserFacture.class_eval do
-
+        # Mock extract_text globally for this test class on the new LMNPCompta::Invoice class
+        LMNPCompta::Invoice.class_eval do
             unless method_defined?(:original_extract_text)
-
-                alias_method :original_extract_text, :extract_text
-
+                class << self
+                    alias_method :original_extract_text, :extract_text
+                    remove_method :extract_text
+                    def extract_text(f); "dummy text"; end
+                end
             end
-
-            remove_method :extract_text
-
-            def extract_text(f); "dummy text"; end
-
         end
-
     end
 
-
-
     def teardown
-
         $stdout = @original_stdout
-
         $stdin = @original_stdin
-
         FileUtils.rm_rf(TEST_DIR)
 
-
-
         # Restore original extract_text
-
-        LMNPCompta::Commands::Journal::AnalyserFacture.class_eval do
-
-            if method_defined?(:original_extract_text)
-
-                remove_method :extract_text if method_defined?(:extract_text)
-
-                alias_method :extract_text, :original_extract_text
-
-                remove_method :original_extract_text
-
+        LMNPCompta::Invoice.class_eval do
+            class << self
+                if method_defined?(:original_extract_text)
+                    remove_method :extract_text if method_defined?(:extract_text)
+                    alias_method :extract_text, :original_extract_text
+                    remove_method :original_extract_text
+                end
             end
-
         end
-
     end
 
 
