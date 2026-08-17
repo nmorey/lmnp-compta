@@ -156,8 +156,20 @@ module LMNPCompta
                 end
             end
 
-            unless d['lignes'].any? { |l| l['compte'].to_s == '512000' && l['credit'] }
-                raise "Le compte 512000 doit être présent au CRÉDIT (Paiement facture)."
+            journal_type = d['journal'].to_s.upcase
+            if journal_type == 'AC'
+                unless d['lignes'].any? { |l| l['compte'].to_s == LMNPCompta::COMPTE["Banque"] && l['credit'] }
+                    raise "Le compte #{LMNPCompta::COMPTE["Banque"]} doit être présent au CRÉDIT pour un journal d'Achats (AC)."
+                end
+            elsif journal_type == 'VT'
+                unless d['lignes'].any? { |l| l['compte'].to_s == LMNPCompta::COMPTE["Banque"] && l['debit'] }
+                    raise "Le compte #{LMNPCompta::COMPTE["Banque"]} doit être présent au DÉBIT pour un journal de Ventes (VT)."
+                end
+            elsif journal_type == 'OD'
+                # OD can have 108000 (Compte de l'exploitant) or 512000, both are fine
+                unless d['lignes'].any? { |l| [LMNPCompta::COMPTE["Banque"], LMNPCompta::COMPTE["Compte de l'exploitant"]].include?(l['compte'].to_s) }
+                    raise "Le compte #{LMNPCompta::COMPTE["Banque"]} ou #{LMNPCompta::COMPTE["Compte de l'exploitant"]} doit être présent dans un journal d'Opérations Diverses (OD)."
+                end
             end
         end
 

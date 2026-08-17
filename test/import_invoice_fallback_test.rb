@@ -126,4 +126,50 @@ class ImportInvoiceFallbackTest < Minitest::Test
         assert err.message.include?("Champs manquants: journal")
         assert err.message.include?("lignes")
     end
+
+    def test_fallback_validates_yaml_vt
+        file_path = File.join(TEST_DIR, 'vt_valid.pdf')
+        FileUtils.touch(file_path)
+        yaml_path = "#{file_path}.yaml"
+
+        # Valid VT (Ventes) data (512000 must be DEBITed)
+        entry_data = {
+            'date' => '01/01/2025',
+            'journal' => 'VT',
+            'libelle' => 'Airbnb Sales',
+            'lignes' => [
+                {'compte' => '512000', 'debit' => 100},
+                {'compte' => '706000', 'credit' => 100}
+            ]
+        }
+        File.write(yaml_path, entry_data.to_yaml)
+
+        entries = []
+        @cmd.send(:process_file, file_path, {}, entries)
+        assert_equal 1, entries.length
+        assert_equal 'Airbnb Sales', entries.first.libelle
+    end
+
+    def test_fallback_validates_yaml_od
+        file_path = File.join(TEST_DIR, 'od_valid.pdf')
+        FileUtils.touch(file_path)
+        yaml_path = "#{file_path}.yaml"
+
+        # Valid OD (Opérations diverses) data (no 512000 needed if 108000 is present)
+        entry_data = {
+            'date' => '01/01/2025',
+            'journal' => 'OD',
+            'libelle' => 'Laundry Partner Advance',
+            'lignes' => [
+                {'compte' => '615000', 'debit' => 50},
+                {'compte' => '108000', 'credit' => 50}
+            ]
+        }
+        File.write(yaml_path, entry_data.to_yaml)
+
+        entries = []
+        @cmd.send(:process_file, file_path, {}, entries)
+        assert_equal 1, entries.length
+        assert_equal 'Laundry Partner Advance', entries.first.libelle
+    end
 end
