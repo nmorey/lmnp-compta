@@ -53,8 +53,8 @@ lmnp configurer blanchisserie ajouter 1 --nom-bien "Appartement Mer" --conso-eau
 **Saisie manuelle :**
 ```bash
 lmnp journal saisir
-# Ou en ligne de commande
-lmnp journal saisir -d 2025-01-27 -j AC -l "Facture X" -m 100 ...
+# Ou en ligne de commande (chaque ligne commence par -c et peut comporter un libellé avec -L / --libelle-ligne)
+lmnp journal saisir -d 2025-01-27 -j AC -l "Facture X" -c 606000 -s D -m 100 -L "Fournitures" -c 512000 -s C -m 100 -L "Paiement CB"
 ```
 
 **Importer Airbnb (CSV) :**

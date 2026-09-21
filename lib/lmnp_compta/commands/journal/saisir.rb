@@ -24,22 +24,30 @@ module LMNPCompta
 
             # Multiple lines management
             opts.on("-c", "--compte COMPTE", "Compte pour la ligne") do |v|
-              options[:current_line] ||= {}
-              options[:current_line][:compte] = v
-              check_line_complete(options)
+              commit_current_line(options) if options[:current_line]
+              options[:current_line] = { compte: v }
             end
             opts.on("-s", "--sens SENS", "Sens (D/C)") do |v|
-              options[:current_line] ||= {}
-              options[:current_line][:sens] = v.upcase
-              check_line_complete(options)
+              ensure_current_line_started(options)
+              raise "Sens déjà spécifié pour la ligne en cours (#{options[:current_line][:compte]})" if options[:current_line][:sens]
+              val = v.upcase
+              raise "Sens invalide : #{v} (doit être D ou C)" unless %w[D C].include?(val)
+              options[:current_line][:sens] = val
             end
             opts.on("-m", "--montant MONTANT", "Montant") do |v|
-              options[:current_line] ||= {}
+              ensure_current_line_started(options)
+              raise "Montant déjà spécifié pour la ligne en cours (#{options[:current_line][:compte]})" if options[:current_line][:montant]
               options[:current_line][:montant] = v
-              check_line_complete(options)
+            end
+            opts.on("-L", "--libelle-ligne LIB", "--libelle-line LIB", "Libellé de la ligne (Facultatif)") do |v|
+              ensure_current_line_started(options)
+              raise "Libellé de ligne déjà spécifié pour la ligne en cours (#{options[:current_line][:compte]})" if options[:current_line][:libelle_ligne]
+              options[:current_line][:libelle_ligne] = v
             end
           end
           parser.parse!(@args)
+
+          commit_current_line(options) if options[:current_line]
 
           if options[:lignes].any?
             run_cli_mode(options)
@@ -50,12 +58,17 @@ module LMNPCompta
 
         private
 
-        def check_line_complete(options)
+        def ensure_current_line_started(options)
+          raise "Ligne non initialisée : spécifiez d'abord un compte avec -c/--compte" unless options[:current_line]
+        end
+
+        def commit_current_line(options)
           l = options[:current_line]
-          if l[:compte] && l[:sens] && l[:montant]
-            options[:lignes] << l
-            options[:current_line] = {}
+          unless l[:compte] && l[:sens] && l[:montant]
+            raise "Ligne incomplète pour le compte #{l[:compte]} : sens (-s) et montant (-m) obligatoires"
           end
+          options[:lignes] << l
+          options[:current_line] = nil
         end
 
         def run_cli_mode(options)
@@ -77,9 +90,9 @@ module LMNPCompta
           options[:lignes].each do |l|
             mnt = Montant.new(l[:montant])
             if l[:sens] == 'D'
-              entry.add_debit(l[:compte], mnt)
+              entry.add_debit(l[:compte], mnt, l[:libelle_ligne])
             else
-              entry.add_credit(l[:compte], mnt)
+              entry.add_credit(l[:compte], mnt, l[:libelle_ligne])
             end
           end
 
@@ -102,11 +115,13 @@ module LMNPCompta
 
             sens = prompt("Sens (D/C)", default: "D").upcase
             montant = Montant.new(prompt("Montant"))
+            libelle_ligne = prompt("Libellé de la ligne (Facultatif)")
+            libelle_ligne = nil if libelle_ligne && libelle_ligne.strip.empty?
 
             if sens == 'D'
-              entry.add_debit(compte, montant)
+              entry.add_debit(compte, montant, libelle_ligne)
             else
-              entry.add_credit(compte, montant)
+              entry.add_credit(compte, montant, libelle_ligne)
             end
 
             puts "Solde actuel: #{entry.balance}"

@@ -80,10 +80,10 @@ _lmnp_completion()
                     return 0
                     ;; 
                 saisir)
-                    opts="-d --date -j --journal -l --libelle -r --ref -f --file -c --compte -s --sens -m --montant -h --help"
+                    opts="-d --date -j --journal -l --libelle -r --ref -f --file -c --compte -s --sens -m --montant -L --libelle-ligne --libelle-line -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
-                    ;; 
+                    ;;
                 importer-airbnb)
                     opts="-f --file --blanchisserie --dry-run -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
