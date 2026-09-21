@@ -9,7 +9,8 @@ module LMNPCompta
     class AirbnbImporter
         SUPPORTED_TYPES = {
             'Réservation' => :create_booking_entry,
-            'Versement de résolution' => :create_resolution_entry
+            'Versement de résolution' => :create_resolution_entry,
+            'Régularisation' => :create_regularisation_entry
         }
 
         attr_reader :new_entries
@@ -90,6 +91,8 @@ module LMNPCompta
         def find_existing_entries(code, type)
             pattern = if type == 'Versement de résolution'
                 /^#{Regexp.escape(code)}-RES-\d+$/
+            elsif type == 'Régularisation'
+                /^#{Regexp.escape(code)}-REG-\d+$/
             else
                 /^#{Regexp.escape(code)}-\d+$/
             end
@@ -145,7 +148,7 @@ module LMNPCompta
                 items.sort_by! { |item| item[:date_comptable] }
 
                 first_row = items.first[:csv_data]
-                res_end_date_str = first_row['Date de départ'] || first_row[6]
+                res_end_date_str = first_row['Date de fin'] || first_row['Date de départ'] || first_row[6]
                 res_end_date = parse_date(res_end_date_str)
 
                 # Keep track of matched entries in the current CSV import loop
@@ -190,7 +193,14 @@ module LMNPCompta
                     else
                         # It is a new payment, allocate the next sequence index
                         idx = next_available_index(existing_entries)
-                        suffix = (type == 'Versement de résolution') ? "-RES-#{idx.to_s.rjust(2, '0')}" : "-#{idx.to_s.rjust(2, '0')}"
+                        suffix = case type
+                                 when 'Versement de résolution'
+                                     "-RES-#{idx.to_s.rjust(2, '0')}"
+                                 when 'Régularisation'
+                                     "-REG-#{idx.to_s.rjust(2, '0')}"
+                                 else
+                                     "-#{idx.to_s.rjust(2, '0')}"
+                                 end
                         full_ref = "#{code}#{suffix}"
 
                         # Create the actual entry with the correct unique reference
@@ -321,7 +331,57 @@ module LMNPCompta
             entry
         end
 
+        def create_regularisation_entry(code, date_virement, row, start_str, end_str)
+            details = row['Détails']
+            libelle_suffix = (details && !details.strip.empty?) ? " (#{details})" : " (Période #{start_str} - #{end_str})"
+            libelle = "Airbnb - Régularisation #{code}#{libelle_suffix}"
 
+            # Net bank amount from Montant column
+            net_banque = ParsingUtils.parse_french_amount(row['Montant'])
+
+            # Frais de service is normally positive in CSV, but since Montant is negative (refund),
+            # the actual service fee is also reversed (refunded).
+            frais_service_csv = ParsingUtils.parse_french_amount(row['Frais de service'])
+            frais_service = net_banque < Montant.new(0) ? -frais_service_csv : frais_service_csv
+
+            # If Revenus bruts is provided in CSV, use it. Otherwise, calculate as net_banque + frais_service
+            revenu_brut = if row['Revenus bruts'] && !row['Revenus bruts'].strip.empty?
+                ParsingUtils.parse_french_amount(row['Revenus bruts'])
+            else
+                net_banque + frais_service
+            end
+
+            entry = Entry.new(
+                date: date_virement.to_s,
+                journal: "VT",
+                libelle: libelle,
+                ref: code,
+                file: File.basename(@file_path)
+            )
+
+            # Prestations de services (Loyers)
+            if revenu_brut > Montant.new(0)
+                entry.add_credit(LMNPCompta::COMPTE["Prestations de services (Loyers)"], revenu_brut, "Revenu Brut")
+            elsif revenu_brut < Montant.new(0)
+                entry.add_debit(LMNPCompta::COMPTE["Prestations de services (Loyers)"], revenu_brut.abs, "Régularisation Revenu Brut")
+            end
+
+            # Honoraires (Comptable, CGA, Agence)
+            if frais_service > Montant.new(0)
+                entry.add_debit(LMNPCompta::COMPTE["Honoraires (Comptable, CGA, Agence)"], frais_service, "Commissions Airbnb")
+            elsif frais_service < Montant.new(0)
+                entry.add_credit(LMNPCompta::COMPTE["Honoraires (Comptable, CGA, Agence)"], frais_service.abs, "Remboursement Commissions Airbnb")
+            end
+
+            # Banque
+            if net_banque > Montant.new(0)
+                entry.add_debit(LMNPCompta::COMPTE["Banque"], net_banque, "Virement Net")
+            elsif net_banque < Montant.new(0)
+                entry.add_credit(LMNPCompta::COMPTE["Banque"], net_banque.abs, "Régularisation Virement Net")
+            end
+
+            entry
+        end
 
         def parse_date(str)
             ParsingUtils.parse_us_date(str)

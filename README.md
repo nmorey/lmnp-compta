@@ -63,7 +63,7 @@ lmnp journal importer-airbnb -f listings.csv
 # Avec automatisation des écritures de blanchisserie :
 lmnp journal importer-airbnb -f listings.csv --blanchisserie 1
 ```
-Gère les réservations standards (revenu locatif en compte `706000`) et les versements de résolution/dédommagements (assurances/AirCover ou voyageur, comptabilisés en compte `758000`).
+Gère les réservations standards (revenu locatif en compte `706000`), les versements de résolution/dédommagements (assurances/AirCover ou voyageur, comptabilisés en compte `758000`), ainsi que les écritures de remboursement/annulation via les lignes de `Régularisation`.
 
 **Analyser des factures (PDF) :**
 ```bash

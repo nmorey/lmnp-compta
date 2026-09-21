@@ -308,4 +308,73 @@ class AirbnbImporterTest < Minitest::Test
     assert_equal 1, entries.length
     assert_equal "HM43H5YC8Z-02", entries.first.ref
   end
+
+  def test_import_regularisation_negative
+    # From actual airbnb_regul.csv example
+    csv_content = <<~CSV
+      Date,Type,Code de confirmation,Date de réservation,Date de début,Date de fin,Nuits,Voyageur,Logement,Détails,Code de référence,Devise,Montant,Frais de service,Frais de ménage,Frais pour le linge de maison,Frais pour les animaux,Revenus bruts,Taxes reversées par Airbnb,Année des revenus
+      08/18/2026,Régularisation,HM43H5YC8Z,05/05/2026,06/15/2026,08/30/2026,76,Nassim Haouam,Studio pour 2 adultes+2 enfants sur les pistes,,,EUR,-68.00,"2,54",0.00,-0.38,0.00,,-2.29,
+    CSV
+    create_csv(csv_content)
+
+    importer = LMNPCompta::AirbnbImporter.new(@csv_file, @journal)
+    entries = importer.import
+
+    assert_equal 1, entries.length
+    entry = entries.first
+    assert_equal "HM43H5YC8Z-REG-01", entry.ref
+    assert_equal "Airbnb - Régularisation HM43H5YC8Z-REG-01 (Période 18/08 - 30/08)", entry.libelle
+
+    # Check balanced
+    assert entry.balanced?
+
+    # Verify debit on 706000 (Loyers) - we expect 68.00 + 2.54 = 70.54
+    loyers_line = entry.lines.find { |l| l[:compte] == LMNPCompta::COMPTE["Prestations de services (Loyers)"] }
+    assert_equal LMNPCompta::Montant.new("70.54"), loyers_line[:debit]
+    assert_equal LMNPCompta::Montant.new(0), loyers_line[:credit]
+
+    # Verify credit on 622600 (Honoraires) - we expect 2.54
+    honoraires_line = entry.lines.find { |l| l[:compte] == LMNPCompta::COMPTE["Honoraires (Comptable, CGA, Agence)"] }
+    assert_equal LMNPCompta::Montant.new(0), honoraires_line[:debit]
+    assert_equal LMNPCompta::Montant.new("2.54"), honoraires_line[:credit]
+
+    # Verify credit on 512000 (Banque) - we expect 68.00
+    banque_line = entry.lines.find { |l| l[:compte] == LMNPCompta::COMPTE["Banque"] }
+    assert_equal LMNPCompta::Montant.new(0), banque_line[:debit]
+    assert_equal LMNPCompta::Montant.new("68.00"), banque_line[:credit]
+  end
+
+  def test_import_regularisation_positive
+    csv_content = <<~CSV
+      Date,Type,Code de confirmation,Date de réservation,Date de début,Date de fin,Nuits,Voyageur,Logement,Détails,Code de référence,Devise,Montant,Frais de service,Frais de ménage,Frais pour le linge de maison,Frais pour les animaux,Revenus bruts,Taxes reversées par Airbnb,Année des revenus
+      08/18/2026,Régularisation,HM43H5YC8Z,05/05/2026,06/15/2026,08/30/2026,76,Nassim Haouam,Studio pour 2 adultes+2 enfants sur les pistes,,,EUR,68.00,"2,54",0.00,-0.38,0.00,,2.29,
+    CSV
+    create_csv(csv_content)
+
+    importer = LMNPCompta::AirbnbImporter.new(@csv_file, @journal)
+    entries = importer.import
+
+    assert_equal 1, entries.length
+    entry = entries.first
+    assert_equal "HM43H5YC8Z-REG-01", entry.ref
+    assert_equal "Airbnb - Régularisation HM43H5YC8Z-REG-01 (Période 18/08 - 30/08)", entry.libelle
+
+    # Check balanced
+    assert entry.balanced?
+
+    # Verify credit on 706000 (Loyers) - we expect 68.00 + 2.54 = 70.54
+    loyers_line = entry.lines.find { |l| l[:compte] == LMNPCompta::COMPTE["Prestations de services (Loyers)"] }
+    assert_equal LMNPCompta::Montant.new("70.54"), loyers_line[:credit]
+    assert_equal LMNPCompta::Montant.new(0), loyers_line[:debit]
+
+    # Verify debit on 622600 (Honoraires) - we expect 2.54
+    honoraires_line = entry.lines.find { |l| l[:compte] == LMNPCompta::COMPTE["Honoraires (Comptable, CGA, Agence)"] }
+    assert_equal LMNPCompta::Montant.new("2.54"), honoraires_line[:debit]
+    assert_equal LMNPCompta::Montant.new(0), honoraires_line[:credit]
+
+    # Verify debit on 512000 (Banque) - we expect 68.00
+    banque_line = entry.lines.find { |l| l[:compte] == LMNPCompta::COMPTE["Banque"] }
+    assert_equal LMNPCompta::Montant.new("68.00"), banque_line[:debit]
+    assert_equal LMNPCompta::Montant.new(0), banque_line[:credit]
+  end
 end
