@@ -127,7 +127,7 @@ module LMNPCompta
             puts "Solde actuel: #{entry.balance}"
             if entry.balanced? && entry.lines.any?
               print "Écriture équilibrée. Enregistrer ? (O/n/c pour continuer) "
-              r = STDIN.gets.chomp.downcase
+              r = $stdin.gets.to_s.chomp.downcase
               break if r == 'o' || r == ''
             end
           end
@@ -149,7 +149,7 @@ module LMNPCompta
         def prompt(q, default: nil)
           label = default ? "#{q} [#{default}]: " : "#{q}: "
           print label
-          input = STDIN.gets.chomp
+          input = $stdin.gets.to_s.chomp
           input = default if input.empty? && default
           input
         end
