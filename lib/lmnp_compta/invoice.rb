@@ -62,8 +62,8 @@ module LMNPCompta
                          libelle: data[:libelle],
                          ref: data[:ref]
                      )
-
-                     if !options[:no_amortize] && data[:montant] >= Montant.new(600)
+                     if !options[:no_amortize] && data[:montant] >= Montant.new(600) &&
+                        data[:compte_charge] != LMNPCompta::COMPTE["Impôts et taxes (Taxe Foncière, CFE)"]
                          apply_invoice_amortization(data, file_path, options)
                      end
 
