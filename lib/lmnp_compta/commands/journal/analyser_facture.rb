@@ -10,15 +10,30 @@ module LMNPCompta
 
         def execute
            options = { type: nil, interactive: true }
+           current_prorata = nil
+           files_with_prorata = []
+
            parser = OptionParser.new do |opts|
                opts.banner = "Usage: lmnp journal analyser-facture [options] <pdf>..."
                opts.on("-t", "--type TYPE", "Forcer le type") { |t| options[:type] = t.downcase.to_sym }
                opts.on("--amortize-duration N", Integer) { |n| options[:amortize_duration] = n }
                opts.on("--no-amortize") { options[:no_amortize] = true }
+               opts.on("--prorata BIEN", "Activer le prorata pour le bien spécifié sur les factures suivantes") do |b|
+                   current_prorata = b
+               end
            end
-           parser.parse!(@args)
 
-           if @args.empty?
+           begin
+               parser.order!(@args) do |file_arg|
+                   files_with_prorata << [file_arg, current_prorata]
+               end
+           rescue OptionParser::InvalidOption => e
+               puts "❌ Erreur: #{e.message}"
+               puts parser
+               return
+           end
+
+           if files_with_prorata.empty?
                puts parser
                return
            end
@@ -26,8 +41,9 @@ module LMNPCompta
            errors = 0
            entries_list = []
 
-           @args.each do |file_path|
-               process_file(file_path, options, entries_list)
+           files_with_prorata.each do |file_path, prorata_bien|
+               file_options = options.merge(prorata_bien: prorata_bien)
+               process_file(file_path, file_options, entries_list)
            rescue => e
                entry = Entry.new(
                    file: File.basename(file_path),
@@ -83,10 +99,12 @@ module LMNPCompta
         def generate_invoice_command(entry)
             cmd_lines = []
             entry.lines.each do |l|
+                lib_label = l[:libelle_ligne] || l[:libelle]
+                lib_str = (lib_label && !lib_label.to_s.strip.empty?) ? " -L \"#{lib_label}\"" : ""
                 if l[:debit] > Montant.new(0)
-                    cmd_lines << "-c #{l[:compte]} -s D -m #{l[:debit]}"
+                    cmd_lines << "-c #{l[:compte]} -s D -m #{l[:debit]}#{lib_str}"
                 elsif l[:credit] > Montant.new(0)
-                    cmd_lines << "-c #{l[:compte]} -s C -m #{l[:credit]}"
+                    cmd_lines << "-c #{l[:compte]} -s C -m #{l[:credit]}#{lib_str}"
                 end
             end
 

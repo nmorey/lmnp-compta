@@ -1,13 +1,20 @@
 module LMNPCompta
     # Représente un bien immobilier amortissable
     class Asset
-        attr_accessor :nom, :date_achat, :date_mise_en_location, :valeur_achat, :composants
-
+        attr_accessor :nom, :date_achat, :date_mise_en_location, :valeur_achat, :composants,
+                      :surface_totale, :surface_louee, :pleine_annee
+        attr_writer :prorata_surface
 
         def self.load(file)
-                data = (File.exist?(file) ? YAML.load_file(file) : [])
-                array = data || []
-                array.map {|x| Asset.new(x)}
+            data = (File.exist?(file) ? YAML.load_file(file) : [])
+            array = data || []
+            array.map { |x| Asset.new(x) }
+        end
+
+        def self.find(name, file = Settings.instance.immo_file)
+            assets = load(file)
+            assets.find { |a| a.nom == name } ||
+                assets.find { |a| a.nom.to_s.downcase == name.to_s.downcase }
         end
 
         # Initialise un nouveau bien
@@ -17,21 +24,47 @@ module LMNPCompta
             @date_achat = attrs['date_achat'] || attrs[:date_achat]
             @date_mise_en_location = attrs['date_mise_en_location'] || attrs[:date_mise_en_location]
             @valeur_achat = (attrs['valeur_achat'] || attrs[:valeur_achat] || 0.0).to_f
+            @surface_totale = (attrs['surface_totale'] || attrs[:surface_totale])&.to_f
+            @surface_louee = (attrs['surface_louee'] || attrs[:surface_louee])&.to_f
+            explicit_prorata = attrs['prorata_surface'] || attrs[:prorata_surface]
+            @prorata_surface = explicit_prorata ? explicit_prorata.to_f : nil
+            @pleine_annee = attrs['pleine_annee'] == true || attrs[:pleine_annee] == true
             @composants = (attrs['composants'] || attrs[:composants] || []).map do |c|
                 c.is_a?(Component) ? c : Component.new(c)
             end
         end
 
+        def pleine_annee?
+            !!@pleine_annee
+        end
+
+        # Retourne le prorata de surface déductible
+        # @return [Float, nil]
+        def prorata_surface
+            if @prorata_surface && @prorata_surface > 0
+                return @prorata_surface > 1.0 ? @prorata_surface / 100.0 : @prorata_surface
+            end
+            if @surface_totale && @surface_louee && @surface_totale > 0
+                return @surface_louee / @surface_totale
+            end
+            nil
+        end
+
         # Convertit l'objet en Hash pour la sérialisation
         # @return [Hash]
         def to_h
-            {
+            h = {
                 'nom' => @nom,
                 'date_achat' => @date_achat,
                 'date_mise_en_location' => @date_mise_en_location,
                 'valeur_achat' => @valeur_achat,
                 'composants' => @composants.map(&:to_h)
             }
+            h['surface_totale'] = @surface_totale if @surface_totale
+            h['surface_louee'] = @surface_louee if @surface_louee
+            h['prorata_surface'] = @prorata_surface if @prorata_surface
+            h['pleine_annee'] = true if @pleine_annee
+            h
         end
 
         # Représente un composant d'un bien immobilier (ex: Gros Oeuvre, Façade)

@@ -14,6 +14,9 @@ module LMNPCompta
 
         def execute
           options = { until_date: nil, blanchisserie_configs: [], files: [] }
+          current_prorata = nil
+          files_with_prorata = []
+
           parser = OptionParser.new do |opts|
             opts.banner = "Usage: lmnp journal verifier [options] <fichiers_ou_dossiers...>"
 
@@ -24,16 +27,28 @@ module LMNPCompta
             opts.on("--blanchisserie ID_OU_NOM", "Configuration blanchisserie") do |v|
               options[:blanchisserie_configs] << v
             end
+
+            opts.on("--prorata BIEN", "Activer le prorata pour le bien spécifié sur les factures suivantes") do |b|
+              current_prorata = b
+            end
           end
 
-          parser.parse!(@args)
-
-          if @args.empty?
+          begin
+            parser.order!(@args) do |non_opt|
+              files_with_prorata << [non_opt, current_prorata]
+            end
+          rescue OptionParser::InvalidOption => e
+            puts "❌ Erreur: #{e.message}"
             puts parser
             return
           end
 
-          resolve_files(@args, options[:files])
+          if files_with_prorata.empty?
+            puts parser
+            return
+          end
+
+          resolve_files(files_with_prorata, options[:files])
 
           if options[:files].empty?
             puts "⚠️  Aucun fichier CSV, PDF ou YAML trouvé pour la vérification."
@@ -59,8 +74,9 @@ module LMNPCompta
           missing_entries = []
           matched_entries = []
 
-          options[:files].each do |file|
-            process_file(file, unmatched_entries, matched_entries, missing_entries, options)
+          options[:files].each do |file, prorata_bien|
+            file_opts = options.merge(prorata_bien: prorata_bien)
+            process_file(file, unmatched_entries, matched_entries, missing_entries, file_opts)
           end
 
           print_report(matched_entries, missing_entries, unmatched_entries)
@@ -68,17 +84,17 @@ module LMNPCompta
 
         private
 
-        def resolve_files(args, out_files)
-          args.each do |arg|
+        def resolve_files(files_with_prorata, out_files)
+          files_with_prorata.each do |arg, prorata_bien|
             if File.directory?(arg)
               Dir.glob(File.join(arg, "*.{csv,pdf,yaml}")).each do |file|
                 # Skip template files, journal.yaml, and side yaml files whose PDF exists!
                 is_side_yaml = file.downcase.end_with?('.yaml') && File.exist?(file.sub(/\.yaml$/i, ""))
-                out_files << file unless file.end_with?('.tpl') || File.basename(file) == 'journal.yaml' || is_side_yaml
+                out_files << [file, prorata_bien] unless file.end_with?('.tpl') || File.basename(file) == 'journal.yaml' || is_side_yaml
               end
             elsif File.exist?(arg)
               is_side_yaml = arg.downcase.end_with?('.yaml') && File.exist?(arg.sub(/\.yaml$/i, ""))
-              out_files << arg unless arg.end_with?('.tpl') || File.basename(arg) == 'journal.yaml' || is_side_yaml
+              out_files << [arg, prorata_bien] unless arg.end_with?('.tpl') || File.basename(arg) == 'journal.yaml' || is_side_yaml
             else
               puts "⚠️  Introuvable : #{arg}"
             end
@@ -171,9 +187,20 @@ module LMNPCompta
 
         def process_invoice(file, unmatched_entries, matched_entries, missing_entries, options)
           begin
-            expected_entries = LMNPCompta::Invoice.parse(file, interactive: false, simulate_assets: false, ignore_bad_year: true)
+            parse_opts = {
+              interactive: false,
+              simulate_assets: false,
+              ignore_bad_year: true,
+              prorata_bien: options[:prorata_bien]
+            }
+            expected_entries = LMNPCompta::Invoice.parse(file, parse_opts)
           rescue => e
             puts "❌ Erreur de parsing pour #{file} : #{e.message}"
+            missing_entries << Entry.new(
+              file: File.basename(file),
+              libelle: "Erreur #{File.basename(file)}",
+              error: "# ❌ #{e.message}"
+            )
             return
           end
 
@@ -214,8 +241,8 @@ module LMNPCompta
             return false unless expected.total_credit == real.total_credit
 
             # Accounts must match perfectly (ignoring line labels)
-            expected_accts = expected.lines.map { |l| [l[:compte], l[:debit], l[:credit]] }.sort
-            real_accts = real.lines.map { |l| [l[:compte], l[:debit], l[:credit]] }.sort
+            expected_accts = expected.lines.map { |l| [l[:compte].to_s, l[:debit], l[:credit]] }.sort
+            real_accts = real.lines.map { |l| [l[:compte].to_s, l[:debit], l[:credit]] }.sort
             return false unless expected_accts == real_accts
 
             true

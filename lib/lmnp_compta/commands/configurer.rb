@@ -7,7 +7,7 @@ end
 
 module LMNPCompta
   class ConfigurerCommand < Command
-    register :configurer, "Commandes de configuration (init, immo, vehicules)"
+    register :configurer, "Commandes de configuration (init, immo, vehicules, blanchisserie, disponibilite)"
 
     def execute
       subcommand_name = @args.shift

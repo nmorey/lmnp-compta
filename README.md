@@ -36,6 +36,22 @@ lmnp configurer init --siren 123456789 --annee 2025
 Créer une immobilisation :
 ```bash
 lmnp configurer immo --nom "Appartement Mer" --valeur 150000 --date 2024-01-01
+# Avec prorata de surface si seule une partie du bien est louée :
+lmnp configurer immo --nom "Chalet" --valeur 200000 --date 2024-01-01 --surface-totale 100 --surface-louee 40
+# Ou avec prorata direct : --prorata-surface 0.40
+# Si le bien est disponible 100% de l'année (aucun besoin de renseigner les disponibilités annuelles pour commencer la comptabilité) :
+lmnp configurer immo --nom "Studio" --valeur 100000 --date 2024-01-01 --pleine-annee
+```
+
+Configurer les disponibilités annuelles (prorata temporis) :
+```bash
+# Indiquer soit les jours disponibles, soit les jours indisponibles (l'autre est calculé automatiquement) :
+lmnp configurer disponibilite --bien "Chalet" --annee 2025 --indisponibles 145
+# Ou : lmnp configurer disponibilite --bien "Chalet" --annee 2025 --disponibles 220
+# Pour déclarer rapidement un bien disponible 100% de l'année :
+lmnp configurer disponibilite --bien "Studio" --annee 2025 --pleine-annee
+# Lister les disponibilités :
+lmnp configurer disponibilite --annee 2025 --lister
 ```
 
 Gérer les véhicules :
@@ -68,8 +84,17 @@ Gère les réservations standards (revenu locatif en compte `706000`), les verse
 **Analyser des factures (PDF) :**
 ```bash
 lmnp journal analyser-facture mon_fichier.pdf
+# Avec prorata surface + temporis pour un bien spécifique :
+lmnp journal analyser-facture --prorata "Chalet" facture_eau.pdf facture_edf.pdf
 ```
-Génère une commande `lmnp journal saisir ...` à copier-coller.
+Génère une commande `lmnp journal saisir ...` à copier-coller (ventilation automatique de la part professionnelle déductible et de la quote-part personnelle non déductible).
+
+**Vérifier et réconcilier le journal :**
+```bash
+lmnp journal verifier factures/
+# Avec prorata multi-biens positionnel (factures globales, puis par bien) :
+lmnp journal verifier factures_communes/ --prorata "Chalet" factures_chalet/ --prorata "Studio" factures_studio/
+```
 
 **Gérer les trajets :**
 ```bash

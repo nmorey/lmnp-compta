@@ -38,10 +38,10 @@ module LMNPCompta
         # Ajoute une ligne à l'écriture
         # @param attrs [Hash] Attributs de la ligne (compte, debit, credit, libelle_ligne)
         def add_line(attrs)
-            compte = attrs[:compte] || attrs['compte']
+            compte = (attrs[:compte] || attrs['compte'])&.to_s
             debit = Montant.new(attrs[:debit] || attrs['debit'] || 0)
             credit = Montant.new(attrs[:credit] || attrs['credit'] || 0)
-            libelle_ligne = attrs[:libelle_ligne] || attrs['libelle_ligne']
+            libelle_ligne = attrs[:libelle_ligne] || attrs['libelle_ligne'] || attrs[:libelle] || attrs['libelle']
 
             @lines << {
                 compte: compte,

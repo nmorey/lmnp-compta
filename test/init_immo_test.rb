@@ -97,4 +97,52 @@ class InitImmoTest < Minitest::Test
         out, _ = capture_io { LMNPCompta::ConfigurerCommand.new(args).execute }
         assert_match /Erreur: Total pourcentages/, out
     end
+
+    def test_surface_options
+        args = [
+            "immo",
+            "--valeur", "100000",
+            "--date", "2025-01-01",
+            "--nom", "Surface Test",
+            "--surface-totale", "100",
+            "--surface-louee", "40"
+        ]
+
+        capture_io { LMNPCompta::ConfigurerCommand.new(args).execute }
+
+        asset = LMNPCompta::Asset.find("Surface Test")
+        assert_equal 100.0, asset.surface_totale
+        assert_equal 40.0, asset.surface_louee
+        assert_in_delta 0.4, asset.prorata_surface, 0.0001
+    end
+
+    def test_surface_validation
+        args = [
+            "immo",
+            "--valeur", "100000",
+            "--date", "2025-01-01",
+            "--nom", "Invalid Surface",
+            "--surface-totale", "50",
+            "--surface-louee", "100"
+        ]
+
+        out, _ = capture_io { LMNPCompta::ConfigurerCommand.new(args).execute }
+        assert_match /Erreur: La surface louée ne peut pas être supérieure à la surface totale/, out
+    end
+
+    def test_pleine_annee_option
+        args = [
+            "immo",
+            "--valeur", "120000",
+            "--date", "2025-01-01",
+            "--nom", "Pleine Annee Flat",
+            "--pleine-annee"
+        ]
+
+        capture_io { LMNPCompta::ConfigurerCommand.new(args).execute }
+
+        asset = LMNPCompta::Asset.find("Pleine Annee Flat")
+        refute_nil asset
+        assert asset.pleine_annee?
+    end
 end

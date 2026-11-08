@@ -29,6 +29,10 @@ module LMNPCompta
             opts.on("--valeur MONTANT", "Valeur totale du bien") { |v| options[:valeur] = v }
             opts.on("--date DATE", "Date d'achat (AAAA-MM-JJ)") { |v| options[:date] = v }
             opts.on("--nom NOM", "Nom du bien") { |v| options[:nom] = v }
+            opts.on("--surface-totale METRES", Float, "Surface totale du bien en m²") { |v| options[:surface_totale] = v }
+            opts.on("--surface-louee METRES", Float, "Surface louée du bien en m²") { |v| options[:surface_louee] = v }
+            opts.on("--prorata-surface RATIO", Float, "Prorata de surface direct (ex: 0.30)") { |v| options[:prorata_surface] = v }
+            opts.on("--pleine-annee", "Bien disponible à la location 100% de l'année") { options[:pleine_annee] = true }
             # Breakdown options
             opts.on("--terrain PERCENT", Integer) { |v| overrides['Terrain'] = v }
             opts.on("--gros-oeuvre PERCENT", Integer) { |v| overrides['Gros Oeuvre'] = v }
@@ -62,6 +66,11 @@ module LMNPCompta
           total_percent = breakdown.sum(&:valeur)
           if overrides.any? && total_percent != 100
             puts "Erreur: Total pourcentages = #{total_percent}% (doit être 100%)."
+            return
+          end
+
+          if options[:surface_totale] && options[:surface_louee] && options[:surface_louee] > options[:surface_totale]
+            puts "Erreur: La surface louée ne peut pas être supérieure à la surface totale."
             return
           end
 
@@ -100,12 +109,24 @@ module LMNPCompta
              target.valeur = (Montant.new(target.valeur) + diff).to_f
           end
 
+          pleine_annee = if !options[:pleine_annee].nil?
+            options[:pleine_annee]
+          elsif options[:valeur].nil?
+            prompt("Bien disponible 100% de l'année (pleine année) ? (O/n)", default: "O").to_s.strip.downcase != 'n'
+          else
+            false
+          end
+
           new_asset = Asset.new(
             nom: nom,
             date_achat: date_str,
             date_mise_en_location: date_str,
             valeur_achat: valeur_totale.to_f,
-            composants: composants
+            composants: composants,
+            surface_totale: options[:surface_totale],
+            surface_louee: options[:surface_louee],
+            prorata_surface: options[:prorata_surface],
+            pleine_annee: pleine_annee
           )
 
           if existing_assets.any? { |a| a['nom'] == nom }

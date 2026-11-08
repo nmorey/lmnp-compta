@@ -5,6 +5,7 @@ require_relative 'invoice_parser'
 require_relative 'entry'
 require_relative 'montant'
 require_relative 'asset'
+require_relative 'disponibilite'
 require_relative 'settings'
 
 module LMNPCompta
@@ -67,8 +68,15 @@ module LMNPCompta
                          apply_invoice_amortization(data, file_path, options)
                      end
 
-                     entry.add_debit(data[:compte_charge], data[:montant])
-                     entry.add_credit(data[:compte_banque], data[:montant])
+                     if options[:prorata_bien]
+                         pr = compute_prorata(options[:prorata_bien], data[:date].year, data[:montant])
+                         pct_str = (pr[:taux] * 100).round(2)
+                         entry.add_debit(data[:compte_charge], pr[:part_pro], "Part pro (Prorata #{pct_str}%)")
+                         entry.add_credit(data[:compte_banque], pr[:part_pro])
+                     else
+                         entry.add_debit(data[:compte_charge], data[:montant])
+                         entry.add_credit(data[:compte_banque], data[:montant])
+                     end
                      entries_list << entry
                 end
             rescue InvoiceParser::ParsingError => e
@@ -101,7 +109,7 @@ module LMNPCompta
         end
 
         def self.load_yaml_invoice_entry(yaml_path, original_file, options)
-            data = YAML.load_file(yaml_path)
+            data = YAML.load_file(yaml_path, permitted_classes: [Date, Time, Symbol])
             data = [data] unless data.is_a?(Array)
             entries_list = []
             target_year = Settings.instance.annee
@@ -135,9 +143,70 @@ module LMNPCompta
                      end
                 end
 
+                if d['prorata'] || options[:prorata_bien]
+                     bien_nom = options[:prorata_bien] || d['bien']
+                     charge_line = d['lignes'].find { |l| l['debit'] && l['compte'].to_s != LMNPCompta::COMPTE["Compte de l'exploitant"] }
+                     raise "Ligne de charge (débit) introuvable pour calculer le prorata" unless charge_line
+
+                     total_charge = Montant.new(charge_line['debit'])
+                     pr = compute_prorata(bien_nom, date_val.year, total_charge)
+                     pct_str = (pr[:taux] * 100).round(2)
+
+                     charge_line['debit'] = pr[:part_pro].to_f
+                     charge_line['libelle'] ||= "Part pro (Prorata #{pct_str}%)"
+
+                     credit_line = d['lignes'].find { |l| l['credit'] }
+                     is_personal = credit_line && credit_line['compte'].to_s == LMNPCompta::COMPTE["Compte de l'exploitant"]
+
+                     if is_personal
+                         credit_line['credit'] = pr[:part_pro].to_f
+                     else
+                         d['lignes'] << {
+                             'compte' => LMNPCompta::COMPTE["Compte de l'exploitant"],
+                             'debit' => pr[:part_perso].to_f,
+                             'libelle' => "Part perso (Non déductible)"
+                         }
+                     end
+                end
+
                 entries_list << Entry.new(d)
             end
             entries_list
+        end
+
+        def self.compute_prorata(nom_bien, year, montant_total)
+            raise "Prorata activé mais aucun bien spécifié ('bien' manquant ou option --prorata non fournie)" if nom_bien.nil? || nom_bien.to_s.strip.empty?
+
+            asset = Asset.find(nom_bien)
+            raise "Bien immobilier introuvable : '#{nom_bien}' (vérifiez immobilisations.yaml)" unless asset
+
+            p_surface = asset.prorata_surface
+            raise "Prorata de surface manquant ou invalide pour le bien '#{nom_bien}' dans immobilisations.yaml" unless p_surface && p_surface > 0
+
+            dispo = Disponibilite.find(nom_bien, year)
+            if dispo
+                p_temporis = dispo.prorata_temporis
+            elsif asset.pleine_annee?
+                p_temporis = 1.0
+            else
+                raise "Disponibilité non configurée pour le bien '#{nom_bien}' pour l'année #{year} (exécutez 'lmnp configurer disponibilite' ou configurez 'pleine_annee: true' sur le bien)"
+            end
+            raise "Prorata temporis invalide pour le bien '#{nom_bien}' pour l'année #{year} (#{p_temporis})" unless p_temporis && p_temporis > 0
+
+            taux = p_surface * p_temporis
+            raise "Taux de prorata calculé invalide : #{taux}" if taux <= 0 || taux > 1
+
+            total = Montant.new(montant_total)
+            part_pro = total * taux
+            part_perso = total - part_pro
+
+            {
+                taux: taux,
+                p_surface: p_surface,
+                p_temporis: p_temporis,
+                part_pro: part_pro,
+                part_perso: part_perso
+            }
         end
 
         def self.validate_yaml_entry!(d)

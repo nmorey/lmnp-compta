@@ -12,6 +12,20 @@ _lmnp_completion()
             mapfile -t COMPREPLY < <(compgen -f -- "${cur}")
             return 0
             ;;
+        --prorata|--bien)
+            local immo_files=("immobilisations.yaml" "data/immobilisations.yaml")
+            local biens=""
+            for f in "${immo_files[@]}"; do
+                if [[ -f "$f" ]]; then
+                    biens=$(grep -E '^\s*nom:\s*' "$f" | sed -E 's/^\s*nom:\s*["'"'"']?([^"'"'"']*)["'"'"']?/\1/' | tr '\n' ' ')
+                    break
+                fi
+            done
+            if [[ -n "$biens" ]]; then
+                COMPREPLY=( $(compgen -W "${biens}" -- "${cur}") )
+                return 0
+            fi
+            ;;
     esac
 
     # Commandes de niveau 1
@@ -27,18 +41,23 @@ _lmnp_completion()
     case "${cmd}" in
         configurer)
             if [[ ${COMP_CWORD} -eq 2 ]]; then
-                opts="init immo vehicules blanchisserie"
+                opts="init immo disponibilite vehicules blanchisserie"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                 return 0
             fi
             # Niveau 3 pour configurer
             local subcmd="${COMP_WORDS[2]}"
             case "${subcmd}" in
+                disponibilite)
+                    opts="--bien --annee --disponibles --indisponibles --pleine-annee --100 -l --lister -h --help"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                    ;;
                 vehicules)
                     opts="ajouter lister -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
-                    ;; 
+                    ;;
                 blanchisserie)
                     if [[ ${COMP_CWORD} -eq 3 ]]; then
                         opts="ajouter lister -h --help"
@@ -47,17 +66,17 @@ _lmnp_completion()
                     fi
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
-                    ;; 
+                    ;;
                 init)
                     opts="--siren --annee --data-dir --journal --stock --immo -f --force -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
-                    ;; 
+                    ;;
                 immo)
-                    opts="--valeur --date --nom --terrain --gros-oeuvre --facade --installations --agencements -h --help"
+                    opts="--valeur --date --nom --surface-totale --surface-louee --prorata-surface --pleine-annee --terrain --gros-oeuvre --facade --installations --agencements -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     return 0
-                    ;; 
+                    ;;
             esac
             ;; 
         journal)
@@ -101,7 +120,7 @@ _lmnp_completion()
                     ;;
                 analyser-facture)
                     if [[ "$cur" == -* ]]; then
-                        opts="-t --type --amortize-duration --no-amortize -h --help"
+                        opts="-t --type --amortize-duration --no-amortize --prorata -h --help"
                         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     else
                         compopt -o filenames 2>/dev/null
@@ -111,7 +130,7 @@ _lmnp_completion()
                     ;; 
                 verifier)
                     if [[ "$cur" == -* ]]; then
-                        opts="-u --until --blanchisserie -h --help"
+                        opts="-u --until --blanchisserie --prorata -h --help"
                         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
                     else
                         compopt -o filenames 2>/dev/null
