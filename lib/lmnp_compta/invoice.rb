@@ -28,6 +28,11 @@ module LMNPCompta
                 return load_yaml_invoice_entry(file_path, file_path, options)
             end
 
+            # Try the YAML first if it exists, if not, try the regular PDF and fallback on yaml + yaml.tpl
+            yaml_path = "#{file_path}.yaml"
+            if File.exist?(yaml_path)
+                 return load_yaml_invoice_entry(yaml_path, file_path, options)
+            end
             content = extract_text(file_path)
             parser = InvoiceParser::Factory.build(options[:type], content)
 
@@ -90,22 +95,17 @@ module LMNPCompta
         private
 
         def self.handle_unrecognized_invoice(file_path, options)
-            yaml_path = "#{file_path}.yaml"
-            if File.exist?(yaml_path)
-                 load_yaml_invoice_entry(yaml_path, file_path, options)
-            else
-                 # Pour le vérificateur on veut échouer directement (fail-fast) s'il n'y a pas d'interaction
-                 if options[:interactive] == false
-                     raise "Document PDF non reconnu et aucun fichier .yaml d'accompagnement trouvé : #{file_path}"
-                 end
-
-                 create_invoice_template(file_path)
-                 [Entry.new(
-                     file: File.basename(file_path),
-                     libelle: "Template created",
-                     error: "# ⚠️  Non reconnu. Template créé: #{yaml_path}.tpl"
-                 )]
+            # Pour le vérificateur on veut échouer directement (fail-fast) s'il n'y a pas d'interaction
+            if options[:interactive] == false
+                raise "Document PDF non reconnu et aucun fichier .yaml d'accompagnement trouvé : #{file_path}"
             end
+
+            create_invoice_template(file_path)
+            [Entry.new(
+                 file: File.basename(file_path),
+                 libelle: "Template created",
+                 error: "# ⚠️  Non reconnu. Template créé: #{yaml_path}.tpl"
+             )]
         end
 
         def self.load_yaml_invoice_entry(yaml_path, original_file, options)
