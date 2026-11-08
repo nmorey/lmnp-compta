@@ -55,7 +55,7 @@ class ImportInvoiceFallbackTest < Minitest::Test
         assert File.exist?(tpl_path), "Template should be created"
 
         content = YAML.load_file(tpl_path)
-        assert_equal "Facture unknown.pdf", content['libelle']
+        assert_equal "unknown.pdf", content['file']
     end
 
     def test_fallback_loads_yaml

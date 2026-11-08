@@ -176,7 +176,17 @@ module LMNPCompta
         def self.create_invoice_template(file_path)
             tpl_path = "#{file_path}.yaml.tpl"
             return if File.exist?(tpl_path)
-            tpl = { 'date' => Date.today.strftime("%d/%m/%Y"), 'journal' => 'AC', 'libelle' => "Facture #{File.basename(file_path)}", 'lignes' => [{'compte' => '6XXX', 'debit' => 0}, {'compte' => '512000', 'credit' => 0}] }
+            tpl = {
+                'date' => Date.today.strftime("%d/%m/%Y"),
+                'journal' => 'AC',
+                'libelle' => "",
+                'file' => File.basename(file_path),
+                'ref' => "TBD",
+                'lignes' => [
+                    {'compte' => '6XXX', 'debit' => 0},
+                    {'compte' => '512000', 'credit' => 0}
+                ]
+            }
             File.write(tpl_path, tpl.to_yaml)
         end
 
