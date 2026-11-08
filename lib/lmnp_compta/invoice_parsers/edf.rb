@@ -27,11 +27,28 @@ module LMNPCompta
                 if content.match(/(?:Détail de la facture du\s*\d{1,2}\/\d{2}\/\d{4}\s*N°\s*)([0-9]+)/i)
                     return $1
                 else
-                    raise ParsingError, "Référence facture Amazon introuvable"
+                    raise ParsingError, "Référence facture EDF introuvable"
                 end
             end
+
+            def extract_pdl
+                if content.match(/(?:Point de livraison(?:\s*\(PDL\))?|N° de PDL|PDL)\s*:\s*(?:N°\s*)?([0-9][0-9 \t]{12,22}[0-9])/i)
+                    digits = $1.gsub(/\s+/, '')
+                    return digits if digits.match?(/^\d{14}$/)
+                end
+
+                if content.match(/(?:Point de livraison(?:\s*\(PDL\))?|N° de PDL|PDL)\s*:[^\n]*\n\s*(?:N°\s*)?([0-9][0-9 \t]{12,22}[0-9])/i)
+                    digits = $1.gsub(/\s+/, '')
+                    return digits if digits.match?(/^\d{14}$/)
+                end
+
+                nil
+            end
+
             def extract_ref
-                "EDF-FAC-#{extract_date.strftime('%Y%m%d')}-#{extract_internal_ref}"
+                pdl = extract_pdl
+                prefix = pdl ? "EDF-#{pdl}" : "EDF"
+                "#{prefix}-FAC-#{extract_date.strftime('%Y%m%d')}-#{extract_internal_ref}"
             end
             def extract_label
                 "Rattrapage EDF #{extract_date}"
