@@ -1,0 +1,27 @@
+#!/bin/sh
+
+set -e
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+TMPDIR=$(mktemp -d)
+
+cleanup() {
+    if [ -d "$TMPDIR" ]; then
+        rm -Rf "$TMPDIR"
+    fi
+}
+trap cleanup EXIT INT TERM HUP
+
+git checkout-index --prefix="$TMPDIR/" -a
+
+# Ensure Bundler configuration and dependencies are available in the temporary index checkout
+[ -d "$REPO_ROOT/.bundle" ] && cp -r "$REPO_ROOT/.bundle" "$TMPDIR/"
+[ -d "$REPO_ROOT/vendor" ] && ln -s "$REPO_ROOT/vendor" "$TMPDIR/vendor"
+[ -f "$REPO_ROOT/Gemfile.lock" ] && cp "$REPO_ROOT/Gemfile.lock" "$TMPDIR/"
+
+(
+    cd "$TMPDIR"
+    unset $(git rev-parse --local-env-vars)
+    rake
+)
+rm -Rf "$TMPDIR"
