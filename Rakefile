@@ -1,5 +1,11 @@
+require 'yard'
 require 'bundler/setup'
 require 'rake/testtask'
+
+YARD::Rake::YardocTask.new do |t|
+  t.files   = ['lib/**/*.rb']
+  t.options = ['--title', 'LMNP-Compta Documentation', '--protected', '--private']
+end
 
 Rake::TestTask.new do |t|
   t.libs << 'test'
@@ -8,28 +14,26 @@ Rake::TestTask.new do |t|
   t.verbose = true
 end
 
-desc "Check for trailing whitespace"
-task :lint_whitespace do
+task :check_whitespace do
   puts "Checking for trailing whitespace..."
-  files = Dir.glob("{lib,test}/**/*") + ["README.md"]
+  files = Dir.glob('lib/**/*.rb') + Dir.glob('bin/*') + ['Rakefile']
   errors = []
-  
   files.each do |file|
     next if File.directory?(file)
-    next if file.end_with?('~') # Ignore backup files
-    File.foreach(file).with_index do |line, index|
+    lines = File.readlines(file)
+    lines.each_with_index do |line, index|
       if line =~ /[ \t]+$/
-        errors << "#{file}:#{index + 1} has trailing whitespace"
+        errors << "#{file}:#{index + 1}: trailing whitespace found"
       end
     end
   end
 
   if errors.any?
     puts errors.join("\n")
-    fail "Found trailing whitespace in #{errors.size} lines."
+    exit 1
   else
     puts "No trailing whitespace found."
   end
 end
 
-task default: [:lint_whitespace, :test]
+task default: [:check_whitespace, :test, :yard]

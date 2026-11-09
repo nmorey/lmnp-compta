@@ -30,10 +30,12 @@ Gem::Specification.new do |spec|
   # Standard library dependencies (explicitly required for Ruby 3.4+ where they are default gems)
   spec.add_dependency "csv"
   spec.add_dependency "bigdecimal"
-  spec.add_dependency "delegate"
+  spec.add_dependency "openssl"
+  spec.add_dependency "uri"
   # yaml, date, optparse, readline, open3 are default gems or stdlib
 
   # Development dependencies
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "minitest", "~> 5.0"
+  spec.add_development_dependency "yard"
 end
