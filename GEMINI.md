@@ -1,10 +1,11 @@
-## Gemini Added Memories
-- Implemented RoundedMontant and updated fiscal generation (Year 2025) to use integer rounding for 2033 forms, ensuring displayed sums match rounded components.
-- Project Rules:
-1. UI/CLI/Help in French, Internal Code in English.
-2. Always run `rake` for testing.
-3. Add tests for new features.
-4. Update README with new features.
-5. Update shell completion for command changes.
-6. Code Style: No indentation on empty lines, no trailing whitespace.
+## Project Guidelines
+
+Please adhere strictly to the following mandates and development workflows:
+
+- **Build and Test Verification:** Always run `rake` (with no extra arguments) to verify the build, check for trailing whitespace, run unit tests, and build documentation before making any commit.
+- **Documentation Coverage:** Maintain **100% YARD documentation coverage** at all times. All public, protected, and private classes, modules, constants, and methods must have high-quality YARD documentation comments.
+- **Testing:** Always add comprehensive automated unit tests for any new features or bug fixes.
+- **Shell Autocompletion:** All new commands and options must be updated and added to `lmnp-completion.sh`.
+- **Language** UI/CLI/Help must be in French, Internal Code in English.
+- **User documentation** Update README with new features.
 
