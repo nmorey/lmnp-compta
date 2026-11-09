@@ -1,5 +1,7 @@
 require 'minitest/autorun'
 require 'fileutils'
+require 'stringio'
+require_relative '../lib/lmnp_compta'
 require_relative '../lib/lmnp_compta/journal'
 require_relative '../lib/lmnp_compta/entry'
 
@@ -29,7 +31,7 @@ class JournalTest < Minitest::Test
         entry_bad.add_debit("600", 10); entry_bad.add_credit("512", 10)
 
         err = assert_raises(RuntimeError) { journal.add_entry(entry_bad) }
-        assert_match /Erreur de date/, err.message
+        assert_match(/Erreur de date/, err.message)
     end
 
     def test_no_year_enforcement
@@ -64,12 +66,28 @@ class JournalTest < Minitest::Test
         assert_equal 2, ref_selected.length
     end
 
+    # Temporarily redirects $stdin to a StringIO with configurable tty? behavior.
+    #
+    # @param input [String] The input string to provide to $stdin
+    # @param tty [Boolean] Whether $stdin.tty? should return true or false
+    # @yield Block executed with simulated $stdin
+    # @return [void]
+    def with_stdin(input = "", tty: true)
+        orig_stdin = $stdin
+        fake_stdin = StringIO.new(input)
+        fake_stdin.define_singleton_method(:tty?) { tty }
+        $stdin = fake_stdin
+        yield
+    ensure
+        $stdin = orig_stdin
+    end
+
     # Test LMNPCompta.confirm! helper when STDIN is a TTY and user says yes.
     #
     # @return [void]
     def test_confirmation_helper_tty_yes
-        $stdin.stub(:tty?, true) do
-            $stdin.stub(:gets, "y\n") do
+        with_stdin("y\n", tty: true) do
+            capture_io do
                 LMNPCompta.confirm!("Are you sure?") # Should not raise
             end
         end
@@ -80,8 +98,8 @@ class JournalTest < Minitest::Test
     # @raise [LMNPCompta::UserCancelledError]
     # @return [void]
     def test_confirmation_helper_tty_no
-        $stdin.stub(:tty?, true) do
-            $stdin.stub(:gets, "n\n") do
+        with_stdin("n\n", tty: true) do
+            capture_io do
                 assert_raises(LMNPCompta::UserCancelledError) do
                     LMNPCompta.confirm!("Are you sure?")
                 end
@@ -93,8 +111,10 @@ class JournalTest < Minitest::Test
     #
     # @return [void]
     def test_confirmation_helper_non_tty
-        $stdin.stub(:tty?, false) do
-            LMNPCompta.confirm!("Are you sure?") # Should not raise
+        with_stdin("", tty: false) do
+            capture_io do
+                LMNPCompta.confirm!("Are you sure?") # Should not raise
+            end
         end
     end
 
@@ -107,9 +127,8 @@ class JournalTest < Minitest::Test
         entry.add_debit("512", 10); entry.add_credit("706", 10)
         journal.add_entry(entry)
 
-        # Stub STDIN to pretend it is a TTY and user says no
-        $stdin.stub(:tty?, true) do
-            $stdin.stub(:gets, "n\n") do
+        with_stdin("n\n", tty: true) do
+            capture_io do
                 assert_raises(LMNPCompta::UserCancelledError) do
                     journal.save!
                 end
@@ -126,9 +145,8 @@ class JournalTest < Minitest::Test
         entry.add_debit("512", 10); entry.add_credit("706", 10)
         journal.add_entry(entry)
 
-        # Stub STDIN to pretend it is a TTY and user says yes
-        $stdin.stub(:tty?, true) do
-            $stdin.stub(:gets, "y\n") do
+        with_stdin("y\n", tty: true) do
+            capture_io do
                 journal.save! # Should succeed and write to disk
             end
         end
