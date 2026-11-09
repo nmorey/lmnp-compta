@@ -101,10 +101,11 @@ module LMNPCompta
             end
 
             create_invoice_template(file_path)
+            tpl_path = "#{file_path}.yaml.tpl"
             [Entry.new(
                  file: File.basename(file_path),
                  libelle: "Template created",
-                 error: "# ⚠️  Non reconnu. Template créé: #{yaml_path}.tpl"
+                 error: "# ⚠️  Non reconnu. Template créé: #{tpl_path}"
              )]
         end
 
