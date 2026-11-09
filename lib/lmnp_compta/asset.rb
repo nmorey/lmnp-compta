@@ -5,12 +5,19 @@ module LMNPCompta
                       :surface_totale, :surface_louee, :pleine_annee
         attr_writer :prorata_surface
 
+        # Charge les biens immobiliers depuis un fichier YAML
+        # @param file [String] Chemin vers le fichier YAML des immobilisations
+        # @return [Array<Asset>] Liste des biens chargés
         def self.load(file)
             data = (File.exist?(file) ? YAML.load_file(file) : [])
             array = data || []
             array.map { |x| Asset.new(x) }
         end
 
+        # Recherche un bien par son nom
+        # @param name [String] Nom du bien recherché
+        # @param file [String] Chemin vers le fichier YAML (utilise Settings par défaut)
+        # @return [Asset, nil] Bien trouvé ou nil
         def self.find(name, file = Settings.instance.immo_file)
             assets = load(file)
             assets.find { |a| a.nom == name } ||
@@ -34,6 +41,8 @@ module LMNPCompta
             end
         end
 
+        # Indique si le bien est considéré loué en pleine année
+        # @return [Boolean]
         def pleine_annee?
             !!@pleine_annee
         end

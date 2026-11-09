@@ -1,6 +1,6 @@
 module LMNPCompta
-    # --- CLASSE 2 : IMMOBILISATIONS (Actif) ---
-    # ... et autres comptes
+    # Plan comptable général adapté à l'activité LMNP (numéro de compte => libellé).
+    # @return [Hash{String => String}]
     PLAN_COMPTABLE = {
         # --- CLASSE 1 : CAPITAUX ---
         "108000" => "Compte de l'exploitant",
@@ -49,9 +49,12 @@ module LMNPCompta
         "758000" => "Produits divers de gestion courante"
     }
 
+    # Dictionnaire inversé du plan comptable (libellé => numéro de compte).
+    # @return [Hash{String => String}]
     COMPTE = PLAN_COMPTABLE.invert
 
-    # Codes journaux autorisés
+    # Codes journaux autorisés (code => description).
+    # @return [Hash{String => String}]
     JOURNAUX = {
         "BQ" => "Banque (Mouvements financiers)",
         "AC" => "Achats (Factures fournisseurs)",
@@ -60,6 +63,10 @@ module LMNPCompta
         "AN" => "A Nouveaux (Opérations d'ouverture)"
     }
 
+    # Retourne le libellé associé à un numéro de compte.
+    #
+    # @param compte_num [String, Integer] Numéro de compte
+    # @return [String] Libellé du compte ou chaîne de repli
     def self.get_compte_lib(compte_num)
         PLAN_COMPTABLE[compte_num.to_s] || "Compte #{compte_num}"
     end

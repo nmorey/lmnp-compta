@@ -133,6 +133,9 @@ module LMNPCompta
             @entries.reject! { |e| e.id == id }
         end
 
+        # Génère une empreinte SHA-256 chaînée pour une écriture comptable
+        # @param entry [Entry] L'écriture dont on veut générer l'empreinte
+        # @return [String] Empreinte hexadécimale SHA-256
         def generate_hash(entry)
             require 'digest'
             # Find previous entry
@@ -172,6 +175,9 @@ module LMNPCompta
             ::Digest::SHA256.hexdigest(data_str)
         end
 
+        # Vérifie l'intégrité de la chaîne cryptographique de toutes les écritures
+        # @raise [RuntimeError] Si une écriture présente une empreinte invalide
+        # @return [void]
         def verify_integrity!
             return if @entries.empty?
 
@@ -186,6 +192,9 @@ module LMNPCompta
             end
         end
 
+        # Horodate le fichier journal auprès d'une autorité d'horodatage RFC 3161 (TSA)
+        # @param tsa_url [String, nil] URL du service TSA (utilise la configuration par défaut si nil)
+        # @return [void]
         def timestamp!(tsa_url: nil)
             return if @volatile
             require 'openssl'

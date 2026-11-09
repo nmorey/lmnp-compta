@@ -6,9 +6,12 @@ require 'fileutils'
 module LMNPCompta
   module Commands
     module Configurer
+      # Sous-commande pour initialiser le fichier de configuration `lmnp.yaml`.
       class Init < SubCommand
         register 'init', 'Initialiser le projet'
 
+        # Initialise le fichier de configuration et les répertoires nécessaires.
+        # @return [void]
         def execute
           options = {}
           parser = OptionParser.new do |opts|

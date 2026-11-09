@@ -10,9 +10,12 @@ require 'yaml'
 module LMNPCompta
     module Commands
         module Bilan
+            # Sous-commande pour simuler la clôture et afficher la liasse fiscale sans modifier le journal.
             class Status < SubCommand
                 register 'status', 'Simuler la clôture et afficher la liasse fiscale (sans modification)'
 
+                # Exécute la simulation de clôture et affiche le rapport fiscal.
+                # @return [void]
                 def execute
                     options = {}
                     parser = OptionParser.new do |opts|

@@ -8,10 +8,13 @@ require 'csv'
 module LMNPCompta
     module Commands
         module Journal
+            # Sous-commande pour consulter l'état de trésorerie et les flux bancaires/exploitants.
             class Status < SubCommand
                 register 'status', 'État de la trésorerie'
 
-
+                # Affiche une écriture sous l'angle de l'entreprise (incluant compte exploitant).
+                # @param e [Entry] écriture comptable
+                # @return [Array<Montant, Montant>] `[credit, debit]`
                 def entreprise_view(e)
                     entry_credit = Montant.new(0)
                     entry_debit = Montant.new(0)
@@ -53,6 +56,10 @@ module LMNPCompta
                     end
                     return Montant.new(0), Montant.new(0)
                 end
+
+                # Affiche une écriture sous l'angle du relevé de compte bancaire pur (compte 512).
+                # @param e [Entry] écriture comptable
+                # @return [Array<Montant, Montant>] `[credit, debit]`
                 def account_view(e)
                     total_credit = Montant.new(0)
                     total_debit = Montant.new(0)
@@ -72,6 +79,8 @@ module LMNPCompta
                     return total_credit, total_debit
                 end
 
+                # Exécute l'affichage de l'état de trésorerie.
+                # @return [void]
                 def execute
                     require 'optparse'
                     full_mode = false

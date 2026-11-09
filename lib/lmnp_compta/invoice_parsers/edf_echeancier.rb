@@ -1,13 +1,20 @@
 module LMNPCompta
     module InvoiceParser
+        # Parser pour les échéanciers / calendriers de paiement EDF
         class EdfEcheancier < Base
+            # @return [Symbol]
             def self.parser_name; :edf_echeancier; end
+
+            # @param content [String]
+            # @return [Boolean]
             def self.match?(content)
                 (content.match?(/EDF/i) && content.match?(/calendrier de paiement/i))
             end
 
+            # @return [String]
             def charge_account; LMNPCompta::COMPTE["Eau, Électricité, Gaz, Chauffage"]; end
 
+            # @return [String, nil]
             def extract_pdl
                 if content.match(/(?:Point de livraison(?:\s*\(PDL\))?|N° de PDL|PDL)\s*:\s*(?:N°\s*)?([0-9][0-9 \t]{12,22}[0-9])/i)
                     digits = $1.gsub(/\s+/, '')
@@ -22,6 +29,7 @@ module LMNPCompta
                 nil
             end
 
+            # @return [Array<Hash>]
             def parse
                 entries = []
                 doc_date = Date.today
@@ -61,9 +69,13 @@ module LMNPCompta
                 entries
             end
 
+            # @return [String]
             def extract_ref; ""; end
+            # @return [Date]
             def extract_date; Date.today; end
+            # @return [String]
             def extract_amount; "0"; end
+            # @return [String]
             def extract_label; ""; end
         end
     end

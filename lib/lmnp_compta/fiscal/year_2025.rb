@@ -6,6 +6,7 @@ require 'bigdecimal'
 
 module LMNPCompta
     module Fiscal
+        # Analyseur fiscal et générateur de liasse fiscale (formulaires 2031 et 2033) pour l'année 2025.
         class Year2025 < Base
             # Barème kilométrique 2024 (pour les revenus 2023 et probable 2024/2025 jusqu'à mise à jour)
             MILEAGE_SCALE = {
@@ -51,6 +52,11 @@ module LMNPCompta
                 }
             }
 
+            # Calcule les indemnités kilométriques selon le barème officiel.
+            # @param cv [Integer] puissance fiscale du véhicule (en CV)
+            # @param distance_km [Numeric] distance parcourue en kilomètres
+            # @return [Montant] montant de l'indemnité kilométrique
+            # @raise [RuntimeError] si aucun barème ne correspond
             def self.calculate_mileage_allowance(cv, distance_km)
                 cv = 7 if cv > 7
                 cv = 3 if cv < 3
@@ -114,6 +120,8 @@ module LMNPCompta
                 @autres_dettes
             end
 
+            # Calcule le capital de fin d'exercice (compte 108).
+            # @return [Montant] montant du capital
             def capital
                 # Capital Fin = Capital Début (calculé par OpeningBalance) + Mouvements de l'exploitant (108)
                 mouvements_exploitant = sum_prefix('108')
@@ -126,33 +134,47 @@ module LMNPCompta
                 -(sum_prefix('70') + sum_prefix('75') + sum_prefix('79'))
             end
 
+            # Somme des charges d'exploitation (comptes 60, 61, 62, 63, 64, 65).
+            # @return [Montant] total des charges d'exploitation
             def charges_exploit
                 sum_prefix('60') + sum_prefix('61') + sum_prefix('62') +
                     sum_prefix('63') + sum_prefix('64') + sum_prefix('65')
             end
 
+            # Somme des charges financières (comptes 66).
+            # @return [Montant] total des charges financières
             def charges_fi
                 sum_prefix('66')
             end
 
+            # Somme des dotations aux amortissements (comptes 68).
+            # @return [Montant] total des dotations
             def dotations
                 sum_prefix('68')
             end
 
+            # Chiffre d'affaires de l'exercice (comptes 70).
+            # @return [Montant] chiffre d'affaires
             def chiffre_affaires
                 -sum_prefix('70')
             end
 
+            # Achats de matières et marchandises (comptes 60 hors 606).
+            # @return [Montant] montant des achats
             def achats_matieres
                 # Box 238: Achats de marchandises (607) et matières premières (601)
                 sum_prefix('60') - sum_prefix('606')
             end
 
+            # Autres charges externes (comptes 606, 61, 62).
+            # @return [Montant] montant des autres charges externes
             def autres_charges_externes
                 # Box 242: Autres charges externes (606 + 61 + 62)
                 sum_prefix('606') + sum_prefix('61') + sum_prefix('62')
             end
 
+            # Impôts et taxes (comptes 63).
+            # @return [Montant] montant des impôts et taxes
             def impots_taxes
                 sum_prefix('63')
             end
@@ -218,6 +240,8 @@ module LMNPCompta
                 }
             end
 
+            # Calcule les données de mise à jour des stocks d'ARD et de déficits pour l'exercice suivant.
+            # @return [Stock] nouvel état des stocks
             def stock_update_data
                 analyze unless @analysis_result
                 Stock.new({
@@ -226,7 +250,7 @@ module LMNPCompta
                           })
             end
 
-
+            # Structure déclarative de la liasse fiscale (formulaires 2031 et tableaux 2033-A à 2033-D).
             LAYOUT = [
                 {
                     title: "FORMULAIRE 2031-SD (Déclaration de résultats)",
@@ -697,6 +721,8 @@ module LMNPCompta
             end
             private
 
+            # Calcule le total des prélèvements personnels effectués durant l'exercice (débits compte 108).
+            # @return [Montant] montant total des prélèvements personnels
             def prelevements_personnels
                 total = Montant.new(0)
                 @entries.each do |e|
@@ -711,6 +737,8 @@ module LMNPCompta
                 total
             end
 
+            # Ventile les comptes de tiers (classe 4) entre créances et dettes pour le bilan.
+            # @return [void]
             def categorize_accounts
                 @creances_clients = Montant.new(0)
                 @autres_creances = Montant.new(0)

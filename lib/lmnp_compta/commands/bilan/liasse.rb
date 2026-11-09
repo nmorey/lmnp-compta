@@ -10,9 +10,12 @@ require 'fileutils'
 module LMNPCompta
   module Commands
     module Bilan
+      # Sous-commande pour générer et afficher les formulaires de la liasse fiscale (2031-SD et 2033).
       class Liasse < SubCommand
         register 'liasse', 'Afficher les données pour la liasse fiscale (2031-SD et 2033)'
 
+        # Calcule et affiche le rapport de liasse fiscale pour l'exercice.
+        # @return [void]
         def execute
           # Parse arguments
           options = {}

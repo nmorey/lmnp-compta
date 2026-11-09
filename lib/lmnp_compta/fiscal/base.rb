@@ -2,6 +2,7 @@ require_relative '../montant'
 require_relative 'reporting'
 
 module LMNPCompta
+    # Module regroupant la logique fiscale et de liasse fiscale pour le régime LMNP.
     module Fiscal
         # Classe de base pour l'analyse fiscale, contenant la logique commune
         class Base
@@ -94,12 +95,17 @@ module LMNPCompta
                 raise NotImplementedError
             end
 
+            # Calcule le résultat comptable de l'exercice.
+            # @return [Montant] résultat comptable
             def resultat_comptable
                 recettes - (charges_exploit + charges_fi + dotations)
             end
 
             private
 
+            # Vérifie si tous les éléments d'une section sont de type texte.
+            # @param elements [Array<Hash>] éléments de la section
+            # @return [Boolean] `true` si tous les éléments sont de type `:text`
             def elem_types_all_text?(elements)
                 elements.all? { |e| e[:type] == :text }
             end

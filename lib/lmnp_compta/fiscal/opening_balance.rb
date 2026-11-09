@@ -115,6 +115,9 @@ module LMNPCompta
 
             private
 
+            # Détermine les comptes d'actif et d'amortissement associés à un composant.
+            # @param nom [String] nom du composant
+            # @return [Array<String, String|nil>] tableau contenant `[compte_actif, compte_amortissement]`
             def classify_component(nom)
                 n = nom.downcase
                 if n.include?('terrain')

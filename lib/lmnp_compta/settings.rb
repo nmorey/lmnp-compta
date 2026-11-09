@@ -25,24 +25,35 @@ module LMNPCompta
             @tsa_url = config['tsa_url'] || "https://freetsa.org/tsr"
         end
 
+        # Retourne le chemin vers le fichier journal pour une année donnée
+        # @param annee [Integer] Année fiscale (par défaut l'année configurée)
+        # @return [String] Chemin du fichier journal
         def journal_file(annee: @annee)
             File.join(@data_dir, annee.to_s, @journal_file_setting)
         end
 
+        # Retourne le chemin vers le fichier de stock fiscal pour une année donnée
+        # @param annee [Integer] Année fiscale (par défaut l'année configurée)
+        # @return [String] Chemin du fichier de stock
         def stock_file(annee: @annee)
             File.join(@data_dir, annee.to_s, @stock_file_setting)
         end
 
+        # Retourne le chemin vers le fichier des immobilisations
+        # @return [String] Chemin du fichier d'immobilisations
         def immo_file
             File.join(@data_dir, @immo_file_setting)
         end
 
         # Charge et stocke le singleton de configuration
+        # @param config_file [String] Chemin vers le fichier YAML de configuration
+        # @return [Settings] Instance chargée
         def self.load(config_file = 'lmnp.yaml')
             @instance = new(config_file)
         end
 
         # Accès au singleton
+        # @return [Settings] Instance unique
         def self.instance
             @instance ||= new
         end

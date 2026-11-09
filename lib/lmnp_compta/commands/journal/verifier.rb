@@ -9,9 +9,12 @@ require 'date'
 module LMNPCompta
   module Commands
     module Journal
+      # Sous-commande pour vérifier et réconcilier les écritures du journal avec les pièces justificatives (factures, CSV Airbnb).
       class Verifier < SubCommand
         register 'verifier', 'Auditer et réconcilier le journal avec les pièces justificatives'
 
+        # Exécute l'audit et la réconciliation du journal avec les pièces justificatives.
+        # @return [void]
         def execute
           options = { until_date: nil, blanchisserie_configs: [], files: [] }
           current_prorata = nil
@@ -84,6 +87,10 @@ module LMNPCompta
 
         private
 
+        # Résout la liste des fichiers à auditer à partir des chemins ou dossiers spécifiés.
+        # @param files_with_prorata [Array<Array>] paires `[chemin, prorata_bien]`
+        # @param out_files [Array<Array>] liste de sortie
+        # @return [void]
         def resolve_files(files_with_prorata, out_files)
           files_with_prorata.each do |arg, prorata_bien|
             if File.directory?(arg)
@@ -101,6 +108,13 @@ module LMNPCompta
           end
         end
 
+        # Dispatche le traitement d'un fichier selon son extension (.csv ou .pdf/.yaml).
+        # @param file [String] chemin du fichier
+        # @param unmatched_entries [Array<Entry>] écritures du journal non encore réconciliées
+        # @param matched_entries [Array<Entry>] écritures réconciliées
+        # @param missing_entries [Array<Entry>] pièces justificatives manquantes dans le journal
+        # @param options [Hash] options d'audit
+        # @return [void]
         def process_file(file, unmatched_entries, matched_entries, missing_entries, options)
           if file.downcase.end_with?('.csv')
             process_csv(file, unmatched_entries, matched_entries, missing_entries, options)
@@ -109,6 +123,13 @@ module LMNPCompta
           end
         end
 
+        # Traite et réconcilie un fichier d'export Airbnb (CSV).
+        # @param file [String] chemin du fichier CSV
+        # @param unmatched_entries [Array<Entry>] écritures du journal non encore réconciliées
+        # @param matched_entries [Array<Entry>] écritures réconciliées
+        # @param missing_entries [Array<Entry>] écritures manquantes
+        # @param options [Hash] options d'audit
+        # @return [void]
         def process_csv(file, unmatched_entries, matched_entries, missing_entries, options)
            # Create a dummy empty journal in volatile mode to avoid conflicts
            dummy_journal = LMNPCompta::Journal.new("dummy.yaml", year: Settings.instance.annee, volatile: true)
@@ -185,6 +206,13 @@ module LMNPCompta
            end
         end
 
+        # Traite et réconcilie une facture PDF ou YAML.
+        # @param file [String] chemin du fichier de facture
+        # @param unmatched_entries [Array<Entry>] écritures du journal non encore réconciliées
+        # @param matched_entries [Array<Entry>] écritures réconciliées
+        # @param missing_entries [Array<Entry>] écritures manquantes
+        # @param options [Hash] options d'audit
+        # @return [void]
         def process_invoice(file, unmatched_entries, matched_entries, missing_entries, options)
           begin
             parse_opts = {
@@ -219,6 +247,12 @@ module LMNPCompta
           end
         end
 
+        # Tente de trouver et consommer une écriture correspondante dans les écritures non réconciliées.
+        # @param expected [Entry] écriture attendue (issue d'un justificatif)
+        # @param unmatched_entries [Array<Entry>] écritures du journal non encore réconciliées
+        # @param matched_entries [Array<Entry>] liste des écritures réconciliées
+        # @param missing_entries [Array<Entry>] liste des écritures manquantes
+        # @return [Entry, nil] l'écriture trouvée et réconciliée, ou nil si absente
         def match_and_consume(expected, unmatched_entries, matched_entries, missing_entries)
             # Find a matching entry in unmatched_entries
             idx = unmatched_entries.find_index do |ue|
@@ -235,6 +269,10 @@ module LMNPCompta
             end
         end
 
+        # Vérifie si une écriture attendue correspond à une écriture réelle du journal (date, totaux, comptes).
+        # @param expected [Entry] écriture attendue
+        # @param real [Entry] écriture réelle du journal
+        # @return [Boolean] `true` si les deux écritures concordent
         def reconcile_match?(expected, real)
             return false unless Date.parse(expected.date) == Date.parse(real.date)
             return false unless expected.total_debit == real.total_debit
@@ -248,6 +286,11 @@ module LMNPCompta
             true
         end
 
+        # Affiche le rapport final de réconciliation sur la sortie standard.
+        # @param matched [Array<Entry>] écritures réconciliées
+        # @param missing [Array<Entry>] pièces justificatives sans écriture
+        # @param unmatched [Array<Entry>] écritures du journal sans justificatif (orphelines)
+        # @return [void]
         def print_report(matched, missing, unmatched)
             puts "\n==========================================================="
             puts "       RAPPORT DE RÉCONCILIATION DU JOURNAL"

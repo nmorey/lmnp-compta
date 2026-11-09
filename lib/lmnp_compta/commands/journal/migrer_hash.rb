@@ -8,9 +8,12 @@ require 'optparse'
 module LMNPCompta
   module Commands
     module Journal
+      # Sous-commande de maintenance pour recalculer les empreintes SHA-256 et dates de création d'un journal existant.
       class MigrerHash < SubCommand
         register 'migrer-hash', 'Migre un ancien journal vers le format cryptographique (Date ajout + SHA256)'
 
+        # Exécute la migration cryptographique du journal.
+        # @return [void]
         def execute
           # Parse arguments
           options = {}
@@ -75,6 +78,10 @@ module LMNPCompta
 
         private
 
+        # Récupère la date de création dans l'historique Git ou utilise la date du jour.
+        # @param file_path [String] chemin du fichier journal
+        # @param entry_id [Integer] identifiant unique de l'écriture
+        # @return [String] date au format AAAA-MM-JJ
         def get_git_date(file_path, entry_id)
           # Utilise git log pour trouver la date du premier commit ajoutant cette écriture
           cmd = "git log --diff-filter=A -G \"^[ \t]*-?[ \t]*id: #{entry_id}[ \t]*$\" --format=%cs -- #{file_path} | tail -1"

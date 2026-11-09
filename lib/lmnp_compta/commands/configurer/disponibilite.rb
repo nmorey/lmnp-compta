@@ -7,9 +7,12 @@ require 'optparse'
 module LMNPCompta
   module Commands
     module Configurer
+      # Sous-commande pour configurer les jours de disponibilité annuelle d'un bien (prorata temporis).
       class DisponibiliteCommand < SubCommand
         register 'disponibilite', 'Configurer les jours de disponibilité annuelle (prorata temporis)'
 
+        # Exécute la configuration ou l'affichage de la disponibilité.
+        # @return [void]
         def execute
           options = {}
           parser = OptionParser.new do |opts|
@@ -96,6 +99,9 @@ module LMNPCompta
 
         private
 
+        # Affiche la liste des disponibilités configurées pour une année donnée.
+        # @param year [Integer] année fiscale
+        # @return [void]
         def lister_disponibilites(year)
           all = Disponibilite.load_all(year)
           if all.empty?
@@ -110,12 +116,18 @@ module LMNPCompta
           end
         end
 
+        # Demande interactivement le nom du bien à configurer.
+        # @return [String] nom du bien
         def prompt_bien
           assets = Asset.load(Settings.instance.immo_file)
           default_name = assets.first&.nom
           prompt("Nom du bien immobilier", default: default_name)
         end
 
+        # Affiche une invite de commande et lit la saisie utilisateur.
+        # @param q [String] question ou libellé de l'invite
+        # @param default [String, nil] valeur par défaut si saisie vide
+        # @return [String] réponse saisie ou valeur par défaut
         def prompt(q, default: nil)
           label = default ? "#{q} [#{default}]: " : "#{q}: "
           print label

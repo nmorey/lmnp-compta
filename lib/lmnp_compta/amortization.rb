@@ -1,7 +1,16 @@
 require 'date'
 
 module LMNPCompta
+    # Module de calcul des dotations aux amortissements linéaires
     module Amortization
+        # Calcule la dotation aux amortissements linéaire d'un composant pour une année donnée
+        # (prorata temporis en jours base 360 pour la première année).
+        #
+        # @param valeur [Numeric, Montant] Valeur d'achat / base amortissable
+        # @param duree [Integer, Numeric] Durée d'amortissement en années
+        # @param date_start [Date, String] Date de début d'amortissement (mise en service)
+        # @param annee [Integer] Année fiscale de calcul
+        # @return [Montant] Montant de la dotation pour l'année
         def self.calcul_dotation(valeur, duree, date_start, annee)
             return Montant.new(0) if duree <= 0
             val_mnt = Montant.new(valeur)

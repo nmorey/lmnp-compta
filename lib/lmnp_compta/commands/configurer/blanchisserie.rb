@@ -5,9 +5,12 @@ require 'optparse'
 module LMNPCompta
   module Commands
     module Configurer
+      # Sous-commande pour gérer les configurations de calcul des frais de blanchisserie.
       class Blanchisserie < SubCommand
         register 'blanchisserie', 'Gérer les configurations de blanchisserie (ajouter, lister)'
 
+        # Exécute l'action demandée (ajouter ou lister).
+        # @return [void]
         def execute
           sub = @args.shift
           case sub
@@ -23,6 +26,8 @@ module LMNPCompta
 
         private
 
+        # Ajoute une nouvelle configuration de blanchisserie à partir des options fournies.
+        # @return [void]
         def ajouter_blanchisserie
           id = @args.shift
           if id.nil? || id.start_with?('-')
@@ -87,6 +92,8 @@ module LMNPCompta
           end
         end
 
+        # Affiche la liste des configurations de blanchisserie enregistrées.
+        # @return [void]
         def lister_blanchisseries
           laundries = LMNPCompta::Laundry.load_all
           if laundries.empty?

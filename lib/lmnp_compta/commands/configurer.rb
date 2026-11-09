@@ -6,9 +6,12 @@ Dir.glob(File.join(__dir__, 'configurer', '*.rb')).each do |file|
 end
 
 module LMNPCompta
+  # Commande principale pour la configuration de l'environnement LMNP.
   class ConfigurerCommand < Command
     register :configurer, "Commandes de configuration (init, immo, vehicules, blanchisserie, disponibilite)"
 
+    # Exécute la sous-commande spécifiée ou affiche l'aide.
+    # @return [void]
     def execute
       subcommand_name = @args.shift
 
@@ -32,6 +35,8 @@ module LMNPCompta
 
     private
 
+    # Affiche l'aide de la commande configurer et la liste des sous-commandes disponibles.
+    # @return [void]
     def show_help
       puts "Usage: lmnp configurer <commande> [options]"
       puts "Commandes disponibles :"

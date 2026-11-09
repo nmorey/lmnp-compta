@@ -7,6 +7,8 @@ require_relative 'plan_comptable'
 module LMNPCompta
     # Importateur pour les fichiers CSV d'export Airbnb
     class AirbnbImporter
+        # Types de lignes supportés dans le CSV et méthode de création associée
+        # @return [Hash{String => Symbol}]
         SUPPORTED_TYPES = {
             'Réservation' => :create_booking_entry,
             'Versement de résolution' => :create_resolution_entry,
@@ -52,6 +54,8 @@ module LMNPCompta
             @new_entries
         end
 
+        # Parse le fichier CSV Airbnb et regroupe les lignes par code de réservation
+        # @return [Hash{String => Array<Hash>}] Dictionnaire code => données CSV
         def parse_csv
             reservations_map = Hash.new { |h, k| h[k] = [] }
             current_payout_date = nil
@@ -78,6 +82,9 @@ module LMNPCompta
             reservations_map
         end
 
+        # Parse une date au format américain
+        # @param str [String, nil] Date sous forme de chaîne
+        # @return [Date, nil] Date parsée
         def parse_date(str)
             ParsingUtils.parse_us_date(str)
         end
@@ -143,6 +150,9 @@ module LMNPCompta
 
         private
 
+        # Génère les écritures comptables à partir des réservations groupées
+        # @param reservations_map [Hash{String => Array<Hash>}] Réservations groupées par code
+        # @return [void]
         def generate_entries(reservations_map)
             reservations_map.each do |code, items|
                 items.sort_by! { |item| item[:date_comptable] }
@@ -219,6 +229,11 @@ module LMNPCompta
             end
         end
 
+        # Ajoute une écriture de frais de blanchisserie pour une réservation
+        # @param laundry [Laundry] Configuration de blanchisserie
+        # @param res_code [String] Code de réservation
+        # @param date [Date, String] Date de l'écriture
+        # @return [void]
         def add_laundry_entry(laundry, res_code, date)
             ref = "LNDRY-#{res_code}"
 
@@ -247,6 +262,9 @@ module LMNPCompta
             @new_entries << entry
         end
 
+        # Recherche une écriture existante par sa référence
+        # @param ref [String] Référence de pièce
+        # @return [Entry, nil]
         def find_duplicate(ref)
             @new_entries.find { |e| e.ref == ref } ||
             @journal.select { |e| e.ref == ref }.first ||
@@ -266,6 +284,13 @@ module LMNPCompta
             true
         end
 
+        # Délègue la création de l'écriture selon le type d'opération
+        # @param code [String] Code de référence de l'écriture
+        # @param date_virement [Date] Date comptable de virement
+        # @param row [CSV::Row] Ligne CSV
+        # @param start_str [String] Date de début formatée
+        # @param end_str [String] Date de fin formatée
+        # @return [Entry] Écriture comptable créée
         def create_entry(code, date_virement, row, start_str, end_str)
             creator_method = SUPPORTED_TYPES[row['Type']]
             if creator_method
@@ -275,6 +300,13 @@ module LMNPCompta
             end
         end
 
+        # Crée une écriture pour une réservation standard
+        # @param code [String] Code de confirmation ou référence
+        # @param date_virement [Date] Date du virement bancaire
+        # @param row [CSV::Row] Ligne CSV
+        # @param start_str [String] Début de séjour
+        # @param end_str [String] Fin de séjour
+        # @return [Entry]
         def create_booking_entry(code, date_virement, row, start_str, end_str)
             libelle = "Airbnb - #{code} (Période #{start_str} - #{end_str})"
             revenu_brut = ParsingUtils.parse_french_amount(row['Revenus bruts'])
@@ -302,6 +334,13 @@ module LMNPCompta
             entry
         end
 
+        # Crée une écriture pour un versement de résolution (dédommagement)
+        # @param code [String] Référence de résolution
+        # @param date_virement [Date] Date du virement
+        # @param row [CSV::Row] Ligne CSV
+        # @param start_str [String] Date de début
+        # @param end_str [String] Date de fin
+        # @return [Entry]
         def create_resolution_entry(code, date_virement, row, start_str, end_str)
             details = row['Détails'] || "Résolution du dossier"
             libelle = "Airbnb - Résolution #{code} (#{details})"
@@ -331,6 +370,13 @@ module LMNPCompta
             entry
         end
 
+        # Crée une écriture pour une régularisation (retenue ou remboursement)
+        # @param code [String] Référence de régularisation
+        # @param date_virement [Date] Date du virement/prélèvement
+        # @param row [CSV::Row] Ligne CSV
+        # @param start_str [String] Date de début
+        # @param end_str [String] Date de fin
+        # @return [Entry]
         def create_regularisation_entry(code, date_virement, row, start_str, end_str)
             details = row['Détails']
             libelle_suffix = (details && !details.strip.empty?) ? " (#{details})" : " (Période #{start_str} - #{end_str})"
@@ -381,10 +427,6 @@ module LMNPCompta
             end
 
             entry
-        end
-
-        def parse_date(str)
-            ParsingUtils.parse_us_date(str)
         end
     end
 end

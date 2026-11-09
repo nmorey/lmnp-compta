@@ -7,9 +7,12 @@ require 'date'
 module LMNPCompta
   module Commands
     module Journal
+      # Sous-commande pour gérer les trajets kilométriques déductibles (ajouter ou lister).
       class Trajets < SubCommand
         register 'trajets', 'Gérer les trajets kilométriques'
 
+        # Exécute l'action demandée sur les trajets.
+        # @return [void]
         def execute
           require 'optparse'
           parser = OptionParser.new do |opts|

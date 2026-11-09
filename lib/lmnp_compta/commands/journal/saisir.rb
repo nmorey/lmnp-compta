@@ -9,9 +9,12 @@ require 'optparse'
 module LMNPCompta
   module Commands
     module Journal
+      # Sous-commande pour saisir une écriture comptable dans le journal (en mode interactif ou en ligne de commande).
       class Saisir < SubCommand
         register 'saisir', 'Saisir une écriture (interactif ou CLI)'
 
+        # Exécute la saisie d'écriture en mode CLI ou interactif.
+        # @return [void]
         def execute
           options = { lignes: [] }
           parser = OptionParser.new do |opts|
@@ -58,10 +61,16 @@ module LMNPCompta
 
         private
 
+        # Vérifie qu'un compte a bien été spécifié avant de définir le sens ou montant de la ligne.
+        # @param options [Hash] options de la commande
+        # @return [void]
         def ensure_current_line_started(options)
           raise "Ligne non initialisée : spécifiez d'abord un compte avec -c/--compte" unless options[:current_line]
         end
 
+        # Valide et ajoute la ligne comptable en cours à la liste des lignes de l'écriture.
+        # @param options [Hash] options de la commande
+        # @return [void]
         def commit_current_line(options)
           l = options[:current_line]
           unless l[:compte] && l[:sens] && l[:montant]
@@ -71,6 +80,9 @@ module LMNPCompta
           options[:current_line] = nil
         end
 
+        # Traite la saisie directe d'écriture passée via les arguments de ligne de commande.
+        # @param options [Hash] options de la commande
+        # @return [void]
         def run_cli_mode(options)
           puts "⚙️  Mode Commande (Strict)"
           unless options[:date] && options[:journal] && options[:libelle]
@@ -99,6 +111,8 @@ module LMNPCompta
           save_entry(entry)
         end
 
+        # Lance la saisie interactive d'une écriture au terminal.
+        # @return [void]
         def run_interactive_mode
           puts "=== NOUVELLE ÉCRITURE ==="
           date = prompt("Date", default: Date.today.to_s)
@@ -135,6 +149,9 @@ module LMNPCompta
           save_entry(entry)
         end
 
+        # Enregistre l'écriture dans le journal correspondant à son année fiscale.
+        # @param entry [Entry] écriture à sauvegarder
+        # @return [void]
         def save_entry(entry)
           settings = Settings.instance
           entry_year = Date.parse(entry.date.to_s).year
@@ -146,6 +163,10 @@ module LMNPCompta
           puts "✅ Écriture #{entry.id} enregistrée dans #{journal_path}."
         end
 
+        # Affiche une invite de saisie au terminal.
+        # @param q [String] question
+        # @param default [String, nil] valeur par défaut
+        # @return [String] saisie
         def prompt(q, default: nil)
           label = default ? "#{q} [#{default}]: " : "#{q}: "
           print label

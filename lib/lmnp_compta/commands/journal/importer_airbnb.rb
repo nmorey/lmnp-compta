@@ -7,9 +7,12 @@ require 'optparse'
 module LMNPCompta
   module Commands
     module Journal
+      # Sous-commande pour importer les réservations et revenus depuis un fichier CSV Airbnb.
       class ImporterAirbnb < SubCommand
         register 'importer-airbnb', 'Importer depuis un CSV Airbnb'
 
+        # Importe les écritures Airbnb et génère optionnellement les frais de blanchisserie associés.
+        # @return [void]
         def execute
           options = {}
           parser = OptionParser.new do |opts|

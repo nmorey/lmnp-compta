@@ -94,6 +94,11 @@ module LMNPCompta
 
         private
 
+        # Gère une facture non reconnue par les parsers connus (création de template ou erreur)
+        # @param file_path [String] Chemin du fichier PDF
+        # @param options [Hash] Options d'exécution
+        # @return [Array<Entry>] Entrée signalant le template créé
+        # @raise [RuntimeError] En mode non-interactif
         def self.handle_unrecognized_invoice(file_path, options)
             # Pour le vérificateur on veut échouer directement (fail-fast) s'il n'y a pas d'interaction
             if options[:interactive] == false
@@ -109,6 +114,11 @@ module LMNPCompta
              )]
         end
 
+        # Charge une facture depuis un fichier YAML d'accompagnement
+        # @param yaml_path [String] Chemin vers le fichier YAML
+        # @param original_file [String] Chemin du fichier d'origine (PDF ou YAML)
+        # @param options [Hash] Options de parsing
+        # @return [Array<Entry>] Écritures générées
         def self.load_yaml_invoice_entry(yaml_path, original_file, options)
             data = YAML.load_file(yaml_path, permitted_classes: [Date, Time, Symbol])
             data = [data] unless data.is_a?(Array)
@@ -175,6 +185,12 @@ module LMNPCompta
             entries_list
         end
 
+        # Calcule la répartition d'une charge mixte selon le prorata de surface et temporis
+        # @param nom_bien [String] Nom du bien immobilier
+        # @param year [Integer] Année fiscale
+        # @param montant_total [Numeric, Montant] Montant total de la facture
+        # @return [Hash] Dictionnaire de calcul (:taux, :p_surface, :p_temporis, :part_pro, :part_perso)
+        # @raise [RuntimeError] Si la configuration du bien ou de disponibilité est manquante
         def self.compute_prorata(nom_bien, year, montant_total)
             raise "Prorata activé mais aucun bien spécifié ('bien' manquant ou option --prorata non fournie)" if nom_bien.nil? || nom_bien.to_s.strip.empty?
 
@@ -210,6 +226,10 @@ module LMNPCompta
             }
         end
 
+        # Valide la structure et les comptes obligatoires d'une entrée YAML de facture
+        # @param d [Hash] Données de la facture
+        # @raise [RuntimeError] Si des champs obligatoires sont manquants ou invalides
+        # @return [void]
         def self.validate_yaml_entry!(d)
             missing = []
             missing << "date" unless d['date']
@@ -243,6 +263,9 @@ module LMNPCompta
             end
         end
 
+        # Crée un fichier template YAML d'accompagnement pour une facture non reconnue
+        # @param file_path [String] Chemin du fichier PDF
+        # @return [void]
         def self.create_invoice_template(file_path)
             tpl_path = "#{file_path}.yaml.tpl"
             return if File.exist?(tpl_path)
@@ -260,6 +283,11 @@ module LMNPCompta
             File.write(tpl_path, tpl.to_yaml)
         end
 
+        # Gère la proposition et l'enregistrement de l'amortissement pour une facture > 600€
+        # @param data [Hash] Données parsées de la facture
+        # @param file_path [String] Chemin du fichier de facture
+        # @param options [Hash] Options d'exécution
+        # @return [void]
         def self.apply_invoice_amortization(data, file_path, options)
             return if options[:no_amortize]
             duration = options[:amortize_duration]
@@ -293,6 +321,12 @@ module LMNPCompta
             data[:compte_charge] = '218400'
         end
 
+        # Enregistre une nouvelle immobilisation dans immobilisations.yaml
+        # @param name [String] Nom de l'actif
+        # @param amount [Montant, Numeric] Montant d'achat
+        # @param date [Date, String] Date d'achat
+        # @param duration [Integer, Numeric] Durée d'amortissement en années
+        # @return [void]
         def self.create_asset_entry(name, amount, date, duration)
             immo_file = Settings.instance.immo_file
             assets = File.exist?(immo_file) ? YAML.load_file(immo_file) : []
@@ -312,6 +346,10 @@ module LMNPCompta
             File.write(immo_file, assets.to_yaml)
         end
 
+        # Extrait le contenu texte d'un fichier PDF via pdftotext
+        # @param path [String] Chemin vers le fichier PDF
+        # @return [String] Texte extrait
+        # @raise [RuntimeError] Si pdftotext échoue ou n'est pas installé
         def self.extract_text(path)
             stdout, stderr, status = Open3.capture3("pdftotext -layout -enc UTF-8 \"#{path}\" -")
             raise "pdftotext error: #{stderr}" unless status.success?

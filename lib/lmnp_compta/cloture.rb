@@ -9,13 +9,22 @@ require 'lmnp_compta/settings'
 require 'lmnp_compta/entry'
 
 module LMNPCompta
+    # Traitements de clôture de l'exercice comptable (amortissements, indemnités km, solde trésorerie)
     module Cloture
+        # Exécute l'ensemble des étapes de clôture de l'exercice
+        # @param journal [Journal] Journal comptable de l'exercice
+        # @param annee [Integer] Année fiscale à clôturer
+        # @return [void]
         def self.cloturer(journal, annee)
             step_amortissements(journal, annee)
             step_indemnites_km(journal, annee)
             step_solde_tresorerie(journal, annee)
         end
 
+        # Génère l'écriture de dotation aux amortissements de fin d'exercice
+        # @param journal [Journal] Journal comptable
+        # @param annee [Integer] Année fiscale
+        # @return [void]
         def self.step_amortissements(journal, annee)
             puts "\n--- 1. Calcul des Amortissements ---"
             immo_file = Settings.instance.immo_file
@@ -74,6 +83,10 @@ module LMNPCompta
             end
         end
 
+        # Calcule et enregistre les écritures d'indemnités kilométriques de fin d'exercice
+        # @param journal [Journal] Journal comptable
+        # @param annee [Integer] Année fiscale
+        # @return [void]
         def self.step_indemnites_km(journal, annee)
             puts "\n--- 2. Calcul des Indemnités Kilométriques ---"
             trips = Trip.load_all(annee)
@@ -126,6 +139,10 @@ module LMNPCompta
             journal.save!
         end
 
+        # Solde le compte bancaire vers le compte de l'exploitant pour clôturer l'exercice
+        # @param journal [Journal] Journal comptable
+        # @param annee [Integer] Année fiscale
+        # @return [void]
         def self.step_solde_tresorerie(journal, annee)
             puts "\n--- 3. Solde de Trésorerie ---"
             compte_banque = "512000"

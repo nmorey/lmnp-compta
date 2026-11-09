@@ -7,10 +7,13 @@ require 'fileutils'
 module LMNPCompta
   module Commands
     module Bilan
+      # Sous-commande pour exporter le Fichier des Écritures Comptables (FEC) normalisé.
       class Fec < SubCommand
         register 'fec', 'Exporter le Fichier des Écritures Comptables'
 
-                def execute
+        # Génère le fichier FEC et son empreinte SHA-256.
+        # @return [void]
+        def execute
           # Parse arguments
           options = {}
           parser = OptionParser.new do |opts|

@@ -10,9 +10,12 @@ require 'date'
 module LMNPCompta
   module Commands
     module Configurer
+      # Sous-commande pour configurer une immobilisation immobilière et sa décomposition par composants.
       class Immo < SubCommand
         register 'immo', 'Créer une immobilisation'
 
+        # Ventilation par défaut de l'immeuble par composants et pourcentages.
+        # @return [Array<Asset::Component>]
         DEFAULT_BREAKDOWN = [
           Asset::Component.new(nom: "Terrain", valeur: 15, duree: 0 ),
           Asset::Component.new(nom: "Gros Oeuvre", valeur: 40, duree: 50 ),
@@ -21,6 +24,8 @@ module LMNPCompta
           Asset::Component.new(nom: "Agencements Intérieurs", valeur: 15, duree: 15 )
         ]
 
+        # Exécute la saisie ou la création de l'immobilisation.
+        # @return [void]
         def execute
           options = {}
           overrides = {}
@@ -146,6 +151,10 @@ module LMNPCompta
 
         private
 
+        # Affiche une invite de commande et lit la saisie utilisateur.
+        # @param q [String] question ou libellé de l'invite
+        # @param default [String, nil] valeur par défaut si saisie vide
+        # @return [String] réponse saisie ou valeur par défaut
         def prompt(q, default: nil)
           label = default ? "#{q} [#{default}]: " : "#{q}: "
           print label

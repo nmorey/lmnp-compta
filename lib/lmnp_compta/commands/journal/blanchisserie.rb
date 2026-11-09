@@ -7,9 +7,12 @@ require 'date'
 module LMNPCompta
   module Commands
     module Journal
+      # Sous-commande pour ajouter ou lister les frais de blanchisserie dans le journal.
       class Blanchisserie < SubCommand
         register 'blanchisserie', 'Ajouter ou lister les frais de blanchisserie'
 
+        # Exécute l'action demandée (ajouter ou lister).
+        # @return [void]
         def execute
           require 'optparse'
           parser = OptionParser.new do |opts|
@@ -45,6 +48,8 @@ module LMNPCompta
 
         private
 
+        # Ajoute une écriture de frais de blanchisserie dans le journal.
+        # @return [void]
         def ajouter_frais
           id_ou_nom = @args.shift
           date_str = @args.shift
@@ -104,6 +109,8 @@ module LMNPCompta
           puts "💾 Journal sauvegardé (#{journal_path})"
         end
 
+        # Affiche la liste des frais de blanchisserie enregistrés dans le journal.
+        # @return [void]
         def lister_frais
           journal_path = Settings.instance.journal_file
           journal = LMNPCompta::Journal.new(journal_path, year: Settings.instance.annee)

@@ -4,7 +4,8 @@ module LMNPCompta
     # Représente une écriture comptable composée de plusieurs lignes (débit/crédit)
     class Entry
         attr_accessor :id, :date, :journal, :libelle, :ref
-        attr_accessor :lines # Array of hashes {compte:, debit:, credit:, libelle_ligne:}
+        # @return [Array<Hash>] Lignes de l'écriture (`{compte:, debit:, credit:, libelle_ligne:}`)
+        attr_accessor :lines
         attr_accessor :created_at, :hash
 
         # Métadonnées pour l'analyse/import (transitoires)
@@ -79,14 +80,20 @@ module LMNPCompta
             balance.zero?
         end
 
+        # Calcule le total des débits de l'écriture
+        # @return [Montant] Somme des débits
         def total_debit
             @lines.sum { |l| l[:debit] }
         end
 
+        # Calcule le total des crédits de l'écriture
+        # @return [Montant] Somme des crédits
         def total_credit
             @lines.sum { |l| l[:credit] }
         end
 
+        # Calcule le total encaissé sur le compte bancaire (débit compte 512000)
+        # @return [Montant] Total perçu en banque
         def total_earned
             @lines.sum { |l| l[:compte] == LMNPCompta::COMPTE["Banque"] ? l[:debit] : 0}
         end

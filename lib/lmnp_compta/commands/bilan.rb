@@ -6,9 +6,12 @@ Dir.glob(File.join(__dir__, 'bilan', '*.rb')).each do |file|
 end
 
 module LMNPCompta
+  # Commande principale pour les opérations de bilan et fin d'exercice.
   class BilanCommand < Command
     register :bilan, "Opérations de fin d'année (cloturer, liasse, fec)"
 
+    # Exécute la sous-commande spécifiée ou affiche l'aide.
+    # @return [void]
     def execute
       subcommand_name = @args.shift
 
@@ -31,6 +34,8 @@ module LMNPCompta
 
     private
 
+    # Affiche l'aide de la commande bilan et la liste des sous-commandes disponibles.
+    # @return [void]
     def show_help
       puts "Usage: lmnp bilan <commande>"
       puts "Commandes disponibles :"

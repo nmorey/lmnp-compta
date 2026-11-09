@@ -14,6 +14,7 @@ require_relative 'lmnp_compta/asset'
 require_relative 'lmnp_compta/settings'
 require_relative 'lmnp_compta/cloture'
 
+# Module principal de gestion comptable pour Loueur en Meublé Non Professionnel (LMNP).
 module LMNPCompta
     # Exception levée lorsque l'utilisateur annule une opération interactive.
     class UserCancelledError < StandardError; end
@@ -35,6 +36,11 @@ module LMNPCompta
         end
     end
 
+    # Formate une date au format FEC (AAAAMMJJ).
+    #
+    # @param date_str [String] Date sous forme de chaîne parsable
+    # @return [String] Date formatée en AAAAMMJJ
+    # @raise [RuntimeError] Si la date est invalide
     def self.format_date(date_str)
         Date.parse(date_str).strftime("%Y%m%d")
     rescue

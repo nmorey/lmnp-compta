@@ -4,6 +4,8 @@ require 'date'
 module LMNPCompta
     # Générateur de fichier FEC (Fichier des Écritures Comptables)
     class FECGenerator
+        # En-têtes normalisés du fichier FEC (Art. A.47 A-1 du Livre des procédures fiscales)
+        # @return [Array<String>]
         HEADERS = %w[
       JournalCode JournalLib EcritureNum EcritureDate CompteNum CompteLib CompAuxNum CompAuxLib
       PieceRef PieceDate EcritureLib Debit Credit EcritureLet DateLet ValidDate Montantdevise Idevise
@@ -23,6 +25,11 @@ module LMNPCompta
 
         private
 
+        # Traite une écriture et ajoute ses lignes au CSV du FEC
+        # @param entry [Entry] Écriture comptable à convertir
+        # @param csv [CSV] Objet CSV dans lequel écrire
+        # @raise [RuntimeError] Si la date de validation est absente ou si l'écriture est déséquilibrée
+        # @return [void]
         def self.process_entry(entry, csv)
             date_formatted = LMNPCompta.format_date(entry.date.to_s)
 

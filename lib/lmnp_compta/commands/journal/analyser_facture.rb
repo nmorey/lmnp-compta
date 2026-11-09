@@ -5,9 +5,12 @@ require 'optparse'
 module LMNPCompta
   module Commands
     module Journal
+      # Sous-commande pour analyser des factures PDF et générer les commandes de saisie correspondantes.
       class AnalyserFacture < SubCommand
         register 'analyser-facture', 'Analyser des PDF pour suggérer des écritures'
 
+        # Analyse les fichiers PDF fournis et affiche les commandes de saisie générées.
+        # @return [void]
         def execute
            options = { type: nil, interactive: true }
            current_prorata = nil
@@ -60,6 +63,11 @@ module LMNPCompta
 
         private
 
+        # Traite un fichier de facture donné et alimente la liste des écritures.
+        # @param file_path [String] chemin du fichier
+        # @param options [Hash] options d'analyse
+        # @param entries_list [Array<Entry>] liste cumulée des écritures
+        # @return [void]
         def process_file(file_path, options, entries_list)
             parsed_entries = LMNPCompta::Invoice.parse(file_path, options)
             parsed_entries.each do |entry|
@@ -67,6 +75,10 @@ module LMNPCompta
             end
         end
 
+        # Ajoute une écriture ou fusionne/remplace si un libellé identique existe déjà.
+        # @param list [Array<Entry>] liste des écritures
+        # @param new_e [Entry] nouvelle écriture à insérer
+        # @return [void]
         def add_or_merge_entry(list, new_e)
             existing_idx = list.find_index { |e| e.libelle == new_e.libelle }
 
@@ -85,6 +97,9 @@ module LMNPCompta
             end
         end
 
+        # Formate une écriture sous forme de commande CLI exécutable.
+        # @param entry [Entry] écriture à formater
+        # @return [String] texte formaté ou commande
         def format_invoice_entry(entry)
             str = "# #{entry.source_file}\n" if entry.source_file
             str ||= ""
@@ -96,6 +111,9 @@ module LMNPCompta
             str
         end
 
+        # Génère la chaîne de commande `lmnp journal saisir` à partir d'une écriture valide.
+        # @param entry [Entry] écriture
+        # @return [String] commande CLI
         def generate_invoice_command(entry)
             cmd_lines = []
             entry.lines.each do |l|

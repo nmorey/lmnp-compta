@@ -4,9 +4,12 @@ require 'lmnp_compta/vehicle'
 module LMNPCompta
   module Commands
     module Configurer
+      # Sous-commande pour gérer les véhicules personnels utilisés pour les indemnités kilométriques.
       class Vehicules < SubCommand
         register 'vehicules', 'Gérer les véhicules personnels (ajouter, lister)'
 
+        # Exécute l'action demandée sur les véhicules (ajouter ou lister).
+        # @return [void]
         def execute
           require 'optparse'
           parser = OptionParser.new do |opts|

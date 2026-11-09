@@ -11,9 +11,12 @@ require 'date'
 module LMNPCompta
   module Commands
     module Bilan
+      # Sous-commande pour générer les écritures de clôture et horodater le journal.
       class Cloturer < SubCommand
         register 'cloturer', 'Générer les écritures de fin d\'année'
 
+        # Exécute le processus de clôture annuelle de l'exercice.
+        # @return [void]
         def execute
           require 'optparse'
           timestamp_only = false
